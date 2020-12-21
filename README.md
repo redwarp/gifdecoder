@@ -10,3 +10,11 @@ http://www.matthewflickinger.com/lab/whatsinagif/lzw_image_data.asp
 
 https://www.eecis.udel.edu/~amer/CISC651/lzw.and.gif.explained.html
 
+About aspect ratio: https://exiftool.org/forum/index.php?topic=11588.0
+
+About decompression: https://stackoverflow.com/questions/14203731/parsing-gif-raster-data-lzw
+
+Transparent pixels: https://engineering.giphy.com/modifying-ffmpeg-to-support-transparent-gifs/
+
+Disposal: http://www.theimage.com/animation/pages/disposal2.html or https://docstore.mik.ua/orelly/web2/wdesign/ch23_05.htm
+

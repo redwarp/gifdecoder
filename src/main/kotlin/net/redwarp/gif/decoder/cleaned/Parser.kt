@@ -18,24 +18,24 @@ private const val ANIMEXTS = "ANIMEXTS1.0"
  */
 class Parser {
 
-    fun parse(file: File): Gif = parse(file.source())
+    fun parse(file: File): GifDescriptor = parse(file.source())
 
-    fun parse(inputStream: InputStream): Gif = parse(inputStream.source())
+    fun parse(inputStream: InputStream): GifDescriptor = parse(inputStream.source())
 
-    private fun parse(source: Source): Gif {
+    private fun parse(source: Source): GifDescriptor {
         source.buffer().use { bufferedSource ->
             val header = bufferedSource.parseHeader()
             val logicalScreenDescriptor = bufferedSource.parseLogicalScreenDescriptor()
 
-            val globalColorTable: ColorTable? = if (logicalScreenDescriptor.hasGlobalColorTable) {
+            val globalColorTable: ColorTable = if (logicalScreenDescriptor.hasGlobalColorTable) {
                 bufferedSource.parseColorTable(logicalScreenDescriptor.sizeOfGlobalColorTable)
             } else {
-                null
+                Palettes.createFakeColorMap(1.shl(logicalScreenDescriptor.sizeOfGlobalColorTable + 1))
             }
 
             val (loopCount, imageDescriptors) = parseLoop(bufferedSource)
 
-            return Gif(header, logicalScreenDescriptor, globalColorTable, loopCount, imageDescriptors)
+            return GifDescriptor(header, logicalScreenDescriptor, globalColorTable, loopCount, imageDescriptors)
         }
     }
 
@@ -52,8 +52,7 @@ class Parser {
 
     private fun BufferedSource.parseLogicalScreenDescriptor(): LogicalScreenDescriptor {
         return LogicalScreenDescriptor(
-            width = readShortLe().toInt(),
-            height = readShortLe().toInt(),
+            dimension = Dimension(readShortLe(), readShortLe()),
             packedFields = readByte().toUByte(),
             backgroundColorIndex = readByte().toInt(),
             pixelAspectRatio = readByte()

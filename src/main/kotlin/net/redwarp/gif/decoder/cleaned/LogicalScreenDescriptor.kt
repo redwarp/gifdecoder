@@ -1,10 +1,7 @@
 package net.redwarp.gif.decoder.cleaned
 
-import kotlin.experimental.and
-
 data class LogicalScreenDescriptor(
-    val width: Int,
-    val height: Int,
+    val dimension: Dimension,
     val packedFields: UByte,
     val backgroundColorIndex: Int,
     val pixelAspectRatio: Byte
