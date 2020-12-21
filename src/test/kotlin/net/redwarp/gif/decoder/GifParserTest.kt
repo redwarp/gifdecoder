@@ -8,10 +8,9 @@ import java.lang.UnsupportedOperationException
 
 class GifParserTest {
 
-
     @Test
     fun inputColorGif_gif89aHeader_returnCorrectHeader() {
-        val gifFile = File("./src/test/resources/sample-2colors-89a.gif")
+        val gifFile = File("./assets/sample-2colors-89a.gif")
 
         val gifParser = GifParser(gifFile)
 
@@ -20,7 +19,7 @@ class GifParserTest {
 
     @Test
     fun inputColorGif_gifCorruptedHeader_throwsException() {
-        val gifFile = File("./src/test/resources/sample-corrupted.gif")
+        val gifFile = File("./assets/sample-corrupted.gif")
 
         assertThrows<UnsupportedOperationException> {
             GifParser(gifFile)
