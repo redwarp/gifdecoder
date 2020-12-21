@@ -3,7 +3,7 @@ package net.redwarp.gif.decoder.cleaned
 data class LogicalScreenDescriptor(
     val dimension: Dimension,
     val packedFields: UByte,
-    val backgroundColorIndex: Int,
+    val backgroundColorIndex: Byte,
     val pixelAspectRatio: Byte
 ) {
     val hasGlobalColorTable: Boolean

@@ -54,7 +54,7 @@ class Parser {
         return LogicalScreenDescriptor(
             dimension = Dimension(readShortLe(), readShortLe()),
             packedFields = readByte().toUByte(),
-            backgroundColorIndex = readByte().toInt(),
+            backgroundColorIndex = readByte(),
             pixelAspectRatio = readByte()
         )
     }

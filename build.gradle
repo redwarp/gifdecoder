@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.4.21'
     id "org.jlleitschuh.gradle.ktlint" version "9.4.1"
+    id "com.github.ben-manes.versions" version "0.36.0"
 }
 
 group 'net.redwarp.gif'
@@ -14,11 +15,12 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.squareup.okio:okio:2.9.0"
 
-    testImplementation "org.junit.jupiter:junit-jupiter:5.6.2"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.7.0"
     testImplementation "com.github.zh79325:open-gif:1.0.4"
 }
 
 sourceSets {
+    main.java.srcDir("src/main/kotlin")
     test {
         java {
             srcDir 'src/test/kotlin'
@@ -44,4 +46,17 @@ compileTestKotlin {
 
 test {
     useJUnitPlatform()
+}
+
+def isNonStable = { String version ->
+    def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { it -> version.toUpperCase().contains(it) }
+    def regex = /^[0-9,.v-]+(-r)?$/
+    return !stableKeyword && !(version ==~ regex)
+}
+
+dependencyUpdates {
+    // Example 1: reject all non stable versions
+    rejectVersionIf {
+        isNonStable(it.candidate.version)
+    }
 }
