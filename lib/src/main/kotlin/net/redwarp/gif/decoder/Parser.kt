@@ -52,7 +52,6 @@ class Parser {
         val dimension = Dimension(readShortLe(), readShortLe())
         val packedFields = readByte().toUByte()
         val hasGlobalColorTableMask: UByte = 0b1000_0000u
-        val newValue = packedFields xor hasGlobalColorTableMask
         val hasGlobalColorTable = (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
         val sizeOfGlobalColorTableMask: UByte = 0b0000_0111u
         val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields).toInt()

@@ -5,11 +5,8 @@ plugins {
 }
 
 group 'net.redwarp.gif'
-version '1.0-SNAPSHOT'
+version '0.1-SNAPSHOT'
 
-repositories {
-    mavenCentral()
-}
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"

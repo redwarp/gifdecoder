@@ -1,0 +1,14 @@
+buildscript {
+    // nothing for the project
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
