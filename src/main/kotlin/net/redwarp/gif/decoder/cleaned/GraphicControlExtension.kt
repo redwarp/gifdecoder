@@ -2,7 +2,7 @@ package net.redwarp.gif.decoder.cleaned
 
 data class GraphicControlExtension(
     val disposalMethod: Disposal,
-    val delayTime: Short,
+    val delayTime: UShort,
     val transparentColorIndex: Byte?
 ) {
     enum class Disposal {

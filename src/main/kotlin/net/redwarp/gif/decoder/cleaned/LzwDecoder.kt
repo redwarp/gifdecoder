@@ -3,8 +3,6 @@ package net.redwarp.gif.decoder.cleaned
 import okio.buffer
 import okio.source
 
-private const val TRANSPARENT_COLOR = 0x00000000
-
 class LzwDecoder(imageData: ByteArray) {
     private val source = imageData.inputStream().source().buffer()
     private val lzwMinimumCodeSize = source.readByte()
@@ -13,7 +11,7 @@ class LzwDecoder(imageData: ByteArray) {
     private var codeSize = lzwMinimumCodeSize.toInt() + 1
     private var mask: Int = (1.shl(codeSize) - 1) // For codeSize = 3, will output 0b0111
 
-    private var dictionary: MutableList<ByteArray> = mutableListOf()
+    private var stringTable: MutableList<ByteArray> = mutableListOf()
     private var bits = 0
     private var currentByte: Int = 0
 
@@ -21,17 +19,17 @@ class LzwDecoder(imageData: ByteArray) {
 
     init {
         for (index in 0 until clear) {
-            dictionary.add(byteArrayOf(index.toByte()))
+            stringTable.add(byteArrayOf(index.toByte()))
         }
         // Reserve clear and end of data
-        dictionary.add(byteArrayOf())
-        dictionary.add(byteArrayOf())
+        stringTable.add(byteArrayOf())
+        stringTable.add(byteArrayOf())
     }
 
     fun read(): Int {
-        if (bits < codeSize) {
+        while (bits < codeSize) {
             if (blockSize == 0) {
-                blockSize = source.readByte().toInt()
+                blockSize = source.readByte().toInt() and 0xff
             }
             currentByte += ((source.readByte().toInt() and 0xff).shl(bits))
             bits += 8
@@ -42,118 +40,68 @@ class LzwDecoder(imageData: ByteArray) {
         bits -= codeSize
         currentByte = currentByte.ushr(codeSize)
 
-        if (code == clear) {
-            codeSize = lzwMinimumCodeSize.toInt() + 1
-            mask = (1.shl(codeSize) - 1)
-        } else if (code == mask) {
-            // Increase code size
-            codeSize += 1
-            mask = mask.shl(1) + 1
-        }
-
         return code
     }
 
-    fun decode(pixels: ByteArray) {
+    /**
+     * Decode the GIF LZW stream into a byte array. It will write down the color indices.
+     */
+    fun decode(destination: ByteArray) {
         var index = 0
-        var previousString: ByteArray? = null
+
+        var previousString: ByteArray = ByteArray(0)
 
         while (true) {
             val code = read()
+            var string: ByteArray
+            var newEntry: ByteArray
+
             if (code == endOfData) {
                 break
             } else if (code == clear) {
-                dictionary = dictionary.take(clear + 2).toMutableList()
-                previousString = null
-            } else if (previousString == null) {
-                val string = dictionary[code]
-                for (color in string) {
-                    pixels[index] = color
-                    index++
-                }
-                previousString = string
-            } else if (code < dictionary.size) {
-                // In table
-                val string = dictionary[code]
-                for (color in string) {
-                    pixels[index] = color
-                    index++
-                }
-                val newEntry = ByteArray(previousString.size + 1)
+                stringTable = stringTable.take(clear + 2).toMutableList()
+                codeSize = lzwMinimumCodeSize.toInt() + 1
+                mask = (1.shl(codeSize) - 1)
+
+                val first = read()
+                // Write the first code
+                destination[index] = stringTable[first][0]
+                index++
+                previousString = stringTable[first]
+
+                continue
+            } else if (code < stringTable.size) {
+                // In table, we output the string from the dictionary, then add to the dictionary a new string,
+                // composed of previousString + first index of string
+                string = stringTable[code]
+
+                newEntry = ByteArray(previousString.size + 1)
                 previousString.copyInto(newEntry)
                 newEntry[newEntry.size - 1] = string[0]
-                dictionary.add(newEntry)
-                previousString = string
-            } else if (code >= dictionary.size) {
-                val string = ByteArray(previousString.size + 1)
+            } else {
+                string = ByteArray(previousString.size + 1)
                 previousString.copyInto(string)
                 string[string.size - 1] = string[0]
-                for (color in string) {
-                    pixels[index] = color
-                    index++
+                newEntry = string
+            }
+            for (color in string) {
+                destination[index] = color
+                index++
+            }
+            previousString = string
+
+            if (stringTable.size <= 4096) {
+                // We can't add a new string if the table size is bigger than 2^12
+                stringTable.add(newEntry)
+                if (stringTable.size - 1 == mask && codeSize < 12) {
+                    // Our new entry's index is equal the the mask, we must increase the decoding code size.
+                    // unless the codeSize is already maxed (12)
+                    codeSize += 1
+                    mask = mask.shl(1) + 1
                 }
-                dictionary.add(string)
-                previousString = string
             }
         }
-    }
 
-    fun decode(pixels: IntArray, colorTable: ColorTable, transparentColorIndex: Byte?) {
-        var index = 0
-        var previousString: ByteArray? = null
-
-        while (true) {
-            val code = read()
-            if (code == endOfData) {
-                break
-            } else if (code == clear) {
-                dictionary = dictionary.take(clear + 2).toMutableList()
-                previousString = null
-            } else if (previousString == null) {
-                val string = dictionary[code]
-                for (colorIndex in string) {
-                    if (colorIndex == transparentColorIndex) {
-                        // We don't write transparent color
-                        index++
-                    } else {
-                        pixels[index] = colorTable.colors[colorIndex.toInt()]
-                        index++
-                    }
-                }
-                previousString = string
-            } else if (code < dictionary.size) {
-                // In table
-                val string = dictionary[code]
-                for (colorIndex in string) {
-                    if (colorIndex == transparentColorIndex) {
-                        // We don't write transparent color
-                        index++
-                    } else {
-                        pixels[index] = colorTable.colors[colorIndex.toInt()]
-                        index++
-                    }
-                }
-                val newEntry = ByteArray(previousString.size + 1)
-                previousString.copyInto(newEntry)
-                newEntry[newEntry.size - 1] = string[0]
-                dictionary.add(newEntry)
-                previousString = string
-            } else if (code >= dictionary.size) {
-                val string = ByteArray(previousString.size + 1)
-                previousString.copyInto(string)
-                string[string.size - 1] = string[0]
-                for (colorIndex in string) {
-                    if (colorIndex == transparentColorIndex) {
-                        // We don't write transparent color
-                        index++
-                    } else {
-                        pixels[index] = colorTable.colors[colorIndex.toInt()]
-                        index++
-                    }
-                }
-                dictionary.add(string)
-                previousString = string
-            }
-        }
+        println("Code size: $codeSize")
     }
 }

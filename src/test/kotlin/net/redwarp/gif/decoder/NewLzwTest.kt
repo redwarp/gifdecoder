@@ -2,6 +2,7 @@ package net.redwarp.gif.decoder
 
 import net.redwarp.gif.decoder.cleaned.LzwDecoder
 import net.redwarp.gif.decoder.cleaned.Parser
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -33,11 +34,11 @@ class NewLzwTest {
         val lzwDecoder = LzwDecoder(sampleData)
         val pixels = ByteArray(15)
 
-        lzwDecoder.decode(pixels = pixels)
+        lzwDecoder.decode(destination = pixels)
 
-        pixels.forEach {
-            println(it)
-        }
+        val expected = byteArrayOf(0, 2, 2, 2, 0, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1)
+
+        assertArrayEquals(expected, pixels)
     }
 
 
@@ -49,6 +50,6 @@ class NewLzwTest {
         val lzwDecoder = LzwDecoder(gif.imageDescriptors[0].imageData)
         val pixels = ByteArray(gif.imageDescriptors[0].dimension.size)
 
-        lzwDecoder.decode(pixels = pixels)
+        lzwDecoder.decode(destination = pixels)
     }
 }

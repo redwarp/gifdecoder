@@ -18,3 +18,6 @@ Transparent pixels: https://engineering.giphy.com/modifying-ffmpeg-to-support-tr
 
 Disposal: http://www.theimage.com/animation/pages/disposal2.html or https://docstore.mik.ua/orelly/web2/wdesign/ch23_05.htm
 
+About transparency: https://ezgif.com/help/gif-transparency
+
+A clear explanation of the lzw decoding loop: https://www.daubnet.com/en/file-format-gif

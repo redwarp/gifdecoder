@@ -28,9 +28,9 @@ class Parser {
             val logicalScreenDescriptor = bufferedSource.parseLogicalScreenDescriptor()
 
             val globalColorTable: ColorTable = if (logicalScreenDescriptor.hasGlobalColorTable) {
-                bufferedSource.parseColorTable(logicalScreenDescriptor.sizeOfGlobalColorTable)
+                bufferedSource.parseColorTable(logicalScreenDescriptor.colorCount)
             } else {
-                Palettes.createFakeColorMap(1.shl(logicalScreenDescriptor.sizeOfGlobalColorTable + 1))
+                Palettes.createFakeColorMap(logicalScreenDescriptor.colorCount)
             }
 
             val (loopCount, imageDescriptors) = parseLoop(bufferedSource)
@@ -51,25 +51,36 @@ class Parser {
     }
 
     private fun BufferedSource.parseLogicalScreenDescriptor(): LogicalScreenDescriptor {
+        val dimension = Dimension(readShortLe(), readShortLe())
+        val packedFields = readByte().toUByte()
+        val hasGlobalColorTableMask: UByte = 0b1000_0000u
+        val hasGlobalColorTable = (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
+        val sizeOfGlobalColorTableMask: UByte = 0b0000_0111u
+        val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields).toInt()
+
+        val backgroundColorIndex = readByte()
+
+
         return LogicalScreenDescriptor(
-            dimension = Dimension(readShortLe(), readShortLe()),
-            packedFields = readByte().toUByte(),
-            backgroundColorIndex = readByte(),
+            dimension = dimension,
+            hasGlobalColorTable = hasGlobalColorTable,
+            sizeOfGlobalColorTable = sizeOfGlobalColorTable,
+            // If there is no global color table, the background color index is meaningless.
+            backgroundColorIndex = if (hasGlobalColorTable) backgroundColorIndex else null,
             pixelAspectRatio = readByte()
         )
     }
 
-    private fun BufferedSource.parseColorTable(sizeOfColorTable: Int): ColorTable {
-        val size = 1.shl(sizeOfColorTable + 1)
+    private fun BufferedSource.parseColorTable(colorCount: Int): ColorTable {
+        val colors = IntArray(colorCount)
+        for (colorIndex in 0 until colorCount) {
+            val r = readByte().toInt()
+            val g = readByte().toInt()
+            val b = readByte().toInt()
 
-        val colors = IntArray(size)
-        for (colorIndex in 0 until size) {
-            val r = readByte().toUInt()
-            val g = readByte().toUInt()
-            val b = readByte().toUInt()
-
-            val color: UInt = 0xff000000u or r.shl(16) or g.shl(8) or b
-            colors[colorIndex] = color.toInt()
+            val color: Int =
+                0xff000000.toInt() or (r.shl(16) and 0x00ff0000) or (g.shl(8) and 0x0000ff00) or (b and 0x000000ff)
+            colors[colorIndex] = color
         }
 
         return ColorTable(colors)
@@ -83,7 +94,7 @@ class Parser {
         val disposalMethod = packedField.shr(2) and 0b0111
         val hasTransparency = packedField and 0b0001 == 1
 
-        val delayTime = readShortLe()
+        val delayTime = readShortLe().toUShort()
         val transparentColorIndex = readByte()
 
         val terminator = readByte()
@@ -175,8 +186,9 @@ class Parser {
 
         val sizeOfLocalTableMask: UByte = 0b0000_0111u
         val sizeOfLocalTable = (sizeOfLocalTableMask and packedFields).toInt()
+        val colorCount = 1.shl(sizeOfLocalTable + 1)
         val localColorTable: ColorTable? = if (usesLocalColorTable) {
-            parseColorTable(sizeOfLocalTable)
+            parseColorTable(colorCount)
         } else {
             null
         }

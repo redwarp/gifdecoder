@@ -1,16 +1,35 @@
 package net.redwarp.gif.decoder.cleaned
 
+private const val TRANSPARENT_COLOR = 0x0
+
 class Gif(private val gifDescriptor: GifDescriptor) {
     private var frameIndex = 0
-    private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
+    private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
+        // Fill the frame with the background color, unless that is transparent, because a new int array
+        // is already initialized to zero.
+        if (backgroundColor != TRANSPARENT_COLOR) fill(backgroundColor)
+    }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private var previousPixels: IntArray? = null
 
     val currentIndex: Int get() = frameIndex
 
-    fun getCurrentFrame(): IntArray {
-        TODO()
-    }
+    val dimension: Dimension = gifDescriptor.logicalScreenDescriptor.dimension
+
+    val frameCount: Int = gifDescriptor.imageDescriptors.size
+
+    val backgroundColor: Int =
+        run {
+            // If at last one of the frame is transparent, let's use transparent as the background color.
+            if (gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }) {
+                TRANSPARENT_COLOR
+            } else {
+                // First, look for the background color in the global color table if it exists. Default to transparent.
+                gifDescriptor.logicalScreenDescriptor.backgroundColorIndex?.let {
+                    gifDescriptor.globalColorTable?.colors?.get(it.toInt() and 0xff)
+                } ?: TRANSPARENT_COLOR
+            }
+        }
 
     fun getFrame(index: Int): IntArray {
         val pixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
@@ -20,7 +39,10 @@ class Gif(private val gifDescriptor: GifDescriptor) {
 
     fun getFrame(index: Int, inPixels: IntArray) {
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
-        val colorTable = imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
+        val colorTable =
+            imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable ?: Palettes.createFakeColorMap(
+                gifDescriptor.logicalScreenDescriptor.colorCount
+            )
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
@@ -36,9 +58,27 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         fillPixels(framePixels, scratch, colorTable, gifDescriptor.logicalScreenDescriptor, imageDescriptor)
 
         framePixels.copyInto(inPixels)
+
+        when (disposal) {
+            GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
+                previousPixels?.copyInto(framePixels)
+            }
+            GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
+            GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
+            GraphicControlExtension.Disposal.RESTORE_TO_BACKGROUND -> {
+                // Restore the section drawn for this frame to the background color.
+                val (frame_width, frame_height) = imageDescriptor.dimension
+                val (offset_x, offset_y) = imageDescriptor.position
+
+                for (line in 0 until frame_height) {
+                    val startIndex = (line + offset_y) * dimension.width + offset_x
+                    framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
+                }
+            }
+        }
     }
 
-    fun fillPixels(
+    private fun fillPixels(
         pixels: IntArray,
         colorData: ByteArray,
         colorTable: ColorTable,
@@ -60,11 +100,12 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         imageDescriptor: ImageDescriptor
     ) {
         for (index in 0 until imageDescriptor.dimension.size) {
-            val colorCode = colorData[index]
-            if (colorCode != logicalScreenDescriptor.backgroundColorIndex) {
-                val color = colorTable.colors[colorCode.toInt()]
+            val colorIndex = colorData[index]
+            // TODO actually replace the transparent color in the table. This makes no sense.
+            if (colorIndex != imageDescriptor.graphicControlExtension?.transparentColorIndex) {
+                val color = colorTable.colors[colorIndex.toInt() and 0xff]
                 val x = index % imageDescriptor.dimension.width
-                val y = index % imageDescriptor.dimension.height
+                val y = index / imageDescriptor.dimension.width
                 val pixelIndex =
                     (y + imageDescriptor.position.y) * logicalScreenDescriptor.dimension.width + imageDescriptor.position.x + x
                 pixels[pixelIndex] = color
