@@ -86,7 +86,7 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         imageDescriptor: ImageDescriptor
     ) {
         if (imageDescriptor.isInterlaced) {
-            fillPixelsInterlaced(pixels, colorData, colorTable, logicalScreenDescriptor, imageDescriptor)
+            fillPixelsInterlaced2(pixels, colorData, colorTable, logicalScreenDescriptor, imageDescriptor)
         } else {
             fillPixelsSimple(pixels, colorData, colorTable, logicalScreenDescriptor, imageDescriptor)
         }
@@ -99,16 +99,73 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         logicalScreenDescriptor: LogicalScreenDescriptor,
         imageDescriptor: ImageDescriptor
     ) {
+        val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
+        val frameWidth = imageDescriptor.dimension.width
+        val (offset_x, offset_y) = imageDescriptor.position
         for (index in 0 until imageDescriptor.dimension.size) {
             val colorIndex = colorData[index]
-            // TODO actually replace the transparent color in the table. This makes no sense.
-            if (colorIndex != imageDescriptor.graphicControlExtension?.transparentColorIndex) {
+            if (colorIndex != transparentColorIndex) {
                 val color = colorTable.colors[colorIndex.toInt() and 0xff]
-                val x = index % imageDescriptor.dimension.width
-                val y = index / imageDescriptor.dimension.width
+                val x = index % frameWidth
+                val y = index / frameWidth
                 val pixelIndex =
-                    (y + imageDescriptor.position.y) * logicalScreenDescriptor.dimension.width + imageDescriptor.position.x + x
+                    (y + offset_y) * logicalScreenDescriptor.dimension.width + offset_x + x
                 pixels[pixelIndex] = color
+            }
+        }
+    }
+
+    private fun fillPixelsInterlaced2(
+        pixels: IntArray,
+        colorData: ByteArray,
+        colorTable: ColorTable,
+        logicalScreenDescriptor: LogicalScreenDescriptor,
+        imageDescriptor: ImageDescriptor
+    ) {
+        val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
+        val (imageWidth, _) = logicalScreenDescriptor.dimension
+        val (frameWidth, frameHeight) = imageDescriptor.dimension
+        val (offset_x, offset_y) = imageDescriptor.position
+        var pass = 0
+        var stride = 8
+        var matchedLine = 0
+
+
+        var lineIndex = 0
+        while (pass < 4) {
+            while (matchedLine < frameHeight) {
+                val copyFromIndex = lineIndex * frameWidth
+                val copyToIndex = (matchedLine + offset_y) * imageWidth + offset_x
+                val indexOffset = copyToIndex - copyFromIndex
+
+                for (index in copyFromIndex until copyFromIndex + frameWidth) {
+                    val colorIndex = colorData[index]
+                    if (colorIndex != transparentColorIndex) {
+                        val color = colorTable.colors[colorIndex.toInt() and 0xff]
+
+                        val pixelIndex = index + indexOffset
+                        pixels[pixelIndex] = color
+                    }
+                }
+
+                lineIndex++
+                matchedLine += stride
+            }
+
+            pass++
+            when (pass) {
+                1 -> {
+                    matchedLine = 4
+                    stride = 8
+                }
+                2 -> {
+                    matchedLine = 2
+                    stride = 4
+                }
+                3 -> {
+                    matchedLine = 1
+                    stride = 2
+                }
             }
         }
     }
@@ -120,21 +177,21 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         logicalScreenDescriptor: LogicalScreenDescriptor,
         imageDescriptor: ImageDescriptor
     ) {
-        val w = imageDescriptor.dimension.width
+        val width = imageDescriptor.dimension.width
         val h = imageDescriptor.dimension.height
-        val wh = w * h
+        val wh = width * h
 
         // Interlaced images are organized in 4 sets of pixel lines
         val set2Y: Int = h + 7 ushr 3 // Line no. = ceil(h/8.0)
         val set3Y: Int = set2Y + (h + 3 ushr 3) // ceil(h-4/8.0)
         val set4Y: Int = set3Y + (h + 1 ushr 2) // ceil(h-2/4.0)
 
-        // Sets' start indices in source array
-        val set2: Int = w * set2Y
-        val set3: Int = w * set3Y
-        val set4: Int = w * set4Y
+        // Sets start indices in source array
+        val set2: Int = width * set2Y
+        val set3: Int = width * set3Y
+        val set4: Int = width * set4Y
         // Line skips in destination array
-        val w2: Int = w shl 1
+        val w2: Int = width shl 1
         val w4 = w2 shl 1
         val w8 = w4 shl 1
         // Group 1 contains every 8th line starting from 0
@@ -144,31 +201,31 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         val flatPixels = ByteArray(imageDescriptor.dimension.size)
 
         while (from < set2) {
-            System.arraycopy(colorData, from, flatPixels, to, w)
-            from += w
+            System.arraycopy(colorData, from, flatPixels, to, width)
+            from += width
             to += w8
         }
         run {
             to = w4
             while (from < set3) {
-                System.arraycopy(colorData, from, flatPixels, to, w)
-                from += w
+                System.arraycopy(colorData, from, flatPixels, to, width)
+                from += width
                 to += w8
             }
         }
         run {
             to = w2
             while (from < set4) {
-                System.arraycopy(colorData, from, flatPixels, to, w)
-                from += w
+                System.arraycopy(colorData, from, flatPixels, to, width)
+                from += width
                 to += w4
             }
         }
         run {
-            to = w
+            to = width
             while (from < wh) {
-                System.arraycopy(colorData, from, flatPixels, to, w)
-                from += w
+                System.arraycopy(colorData, from, flatPixels, to, width)
+                from += width
                 to += w2
             }
         }

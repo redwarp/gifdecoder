@@ -27,10 +27,10 @@ class Parser {
             val header = bufferedSource.parseHeader()
             val logicalScreenDescriptor = bufferedSource.parseLogicalScreenDescriptor()
 
-            val globalColorTable: ColorTable = if (logicalScreenDescriptor.hasGlobalColorTable) {
+            val globalColorTable: ColorTable? = if (logicalScreenDescriptor.hasGlobalColorTable) {
                 bufferedSource.parseColorTable(logicalScreenDescriptor.colorCount)
             } else {
-                Palettes.createFakeColorMap(logicalScreenDescriptor.colorCount)
+                null
             }
 
             val (loopCount, imageDescriptors) = parseLoop(bufferedSource)
@@ -54,12 +54,12 @@ class Parser {
         val dimension = Dimension(readShortLe(), readShortLe())
         val packedFields = readByte().toUByte()
         val hasGlobalColorTableMask: UByte = 0b1000_0000u
+        val newValue = packedFields xor hasGlobalColorTableMask
         val hasGlobalColorTable = (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
         val sizeOfGlobalColorTableMask: UByte = 0b0000_0111u
         val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields).toInt()
 
         val backgroundColorIndex = readByte()
-
 
         return LogicalScreenDescriptor(
             dimension = dimension,
@@ -181,7 +181,7 @@ class Parser {
         val colorTableFlagMask: UByte = 0b1000_0000u
         val usesLocalColorTable = (packedFields and colorTableFlagMask) == colorTableFlagMask
 
-        val interlacedMask: UByte = 0b0100_000u
+        val interlacedMask: UByte = 0b0100_0000u
         val isInterlaced = (packedFields and interlacedMask) == interlacedMask
 
         val sizeOfLocalTableMask: UByte = 0b0000_0111u

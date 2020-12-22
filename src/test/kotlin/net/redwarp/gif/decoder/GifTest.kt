@@ -27,7 +27,7 @@ class GifTest {
 
     @Test
     fun getFrame_transparentBackground_properlyRenders() {
-        val gifDescriptor = Parser().parse(File("./assets/derpy_cat.gif"))
+        val gifDescriptor = Parser().parse(File("./assets/simple-nopalette.gif"))
         val gif = Gif(gifDescriptor)
         val dimension = gif.dimension
 
