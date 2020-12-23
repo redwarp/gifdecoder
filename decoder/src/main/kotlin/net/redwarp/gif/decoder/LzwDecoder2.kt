@@ -16,13 +16,13 @@ class LzwDecoder2 {
     private val pixelStack = ByteArray(MAX_STACK_SIZE + 1)
 
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun ByteArray.readNextCode(): Int {
+    private inline fun readNextCode(imageData: ByteArray): Int {
         while (bits < codeSize) {
             if (blockSize == 0) {
-                blockSize = this[dataIndex].toInt() and 0xff
+                blockSize = imageData[dataIndex].toInt() and 0xff
                 dataIndex++
             }
-            currentByte += ((this[dataIndex].toInt() and 0xff).shl(bits))
+            currentByte += ((imageData[dataIndex].toInt() and 0xff).shl(bits))
             dataIndex++
             bits += 8
             blockSize--
@@ -62,7 +62,7 @@ class LzwDecoder2 {
 
         while (pixelIndex < pixelCount) {
 
-            var code = imageData.readNextCode()
+            var code = readNextCode(imageData)
 
             if (code == clear) {
                 codeSize = lzwMinimumCodeSize.toInt() + 1
