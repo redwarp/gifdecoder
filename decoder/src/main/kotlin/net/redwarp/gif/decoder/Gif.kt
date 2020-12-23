@@ -2,6 +2,8 @@ package net.redwarp.gif.decoder
 
 private const val TRANSPARENT_COLOR = 0x0
 
+private const val EXPERIMENTAL = true
+
 class Gif(private val gifDescriptor: GifDescriptor) {
     private var lastRenderedFrame: Int = -1
     private var frameIndex = 0
@@ -12,6 +14,7 @@ class Gif(private val gifDescriptor: GifDescriptor) {
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private var previousPixels: IntArray? = null
+    private val lzwDecoder = LzwDecoder2()
 
     val currentIndex: Int get() = frameIndex
 
@@ -85,7 +88,6 @@ class Gif(private val gifDescriptor: GifDescriptor) {
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
-        val lzwDecoder = LzwDecoder(imageData = imageDescriptor.imageData)
 
         val disposal = graphicControlExtension?.disposalMethod
             ?: GraphicControlExtension.Disposal.NOT_SPECIFIED
@@ -94,7 +96,13 @@ class Gif(private val gifDescriptor: GifDescriptor) {
             previousPixels = framePixels.clone()
         }
 
-        lzwDecoder.decode(scratch)
+        if (EXPERIMENTAL) {
+            lzwDecoder.decode(imageData = imageDescriptor.imageData, scratch, framePixels.size)
+        } else {
+            val decoder = LzwDecoder(imageDescriptor.imageData)
+            decoder.decode(destination = scratch)
+        }
+
         fillPixels(
             framePixels,
             scratch,

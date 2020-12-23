@@ -19,6 +19,20 @@ class LzwTest {
     )
 
     @Test
+    fun parseSampleData_shadowMatchOriginal() {
+        val lzwDecoder = LzwDecoder(sampleData)
+        val expected = ByteArray(15)
+
+        lzwDecoder.decode(expected)
+
+        val shadowLzwDecoder = LzwDecoder2()
+        val shadow = ByteArray(15)
+        shadowLzwDecoder.decode(sampleData, shadow, 15)
+
+        assertArrayEquals(expected, shadow)
+    }
+
+    @Test
     fun parseSampleData_properlyReturnedIndex() {
         val lzwDecoder = LzwDecoder(sampleData)
         repeat(9) {
