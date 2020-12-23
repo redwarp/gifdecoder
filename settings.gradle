@@ -1,2 +1,3 @@
 rootProject.name = 'gifdecoder'
-include ':lib'
+includeBuild 'decoder'
+include ':android'
