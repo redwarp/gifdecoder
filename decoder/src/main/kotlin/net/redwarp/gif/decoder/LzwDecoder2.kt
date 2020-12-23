@@ -1,27 +1,29 @@
 package net.redwarp.gif.decoder
 
-import okio.BufferedSource
-import okio.buffer
-import okio.source
+private const val MAX_STACK_SIZE = 4096
 
 class LzwDecoder2 {
     private var bits = 0
     private var currentByte: Int = 0
     private var blockSize = 0
     private var codeSize = 0
+    private var dataIndex = 0
 
     private var mask: Int = 0 // For codeSize = 3, will output 0b0111
 
-    private val prefix = ShortArray(4096)
-    private val suffix = ByteArray(4096)
-    private val pixelStack = ByteArray(4097)
+    private val prefix = ShortArray(MAX_STACK_SIZE)
+    private val suffix = ByteArray(MAX_STACK_SIZE)
+    private val pixelStack = ByteArray(MAX_STACK_SIZE + 1)
 
-    private fun BufferedSource.readNextCode(): Int {
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun ByteArray.readNextCode(): Int {
         while (bits < codeSize) {
             if (blockSize == 0) {
-                blockSize = readByte().toInt() and 0xff
+                blockSize = this[dataIndex].toInt() and 0xff
+                dataIndex++
             }
-            currentByte += ((readByte().toInt() and 0xff).shl(bits))
+            currentByte += ((this[dataIndex].toInt() and 0xff).shl(bits))
+            dataIndex++
             bits += 8
             blockSize--
         }
@@ -34,9 +36,9 @@ class LzwDecoder2 {
     }
 
     fun decode(imageData: ByteArray, destination: ByteArray, pixelCount: Int) {
-        val source = imageData.inputStream().source().buffer()
-
-        val lzwMinimumCodeSize = source.readByte()
+        dataIndex = 0
+        val lzwMinimumCodeSize = imageData[dataIndex]
+        dataIndex++
         val clear: Int = 1.shl(lzwMinimumCodeSize.toInt())
         val endOfData: Int = clear + 1
         codeSize = lzwMinimumCodeSize.toInt() + 1
@@ -60,7 +62,7 @@ class LzwDecoder2 {
 
         while (pixelIndex < pixelCount) {
 
-            var code = source.readNextCode()
+            var code = imageData.readNextCode()
 
             if (code == clear) {
                 codeSize = lzwMinimumCodeSize.toInt() + 1
@@ -102,11 +104,11 @@ class LzwDecoder2 {
                 pixelIndex++
             }
 
-            if (available < 4096) {
+            if (available < MAX_STACK_SIZE) {
                 prefix[available] = oldCode.toShort()
                 suffix[available] = first.toByte()
                 available++
-                if (available and mask == 0 && available < 4096) {
+                if (available and mask == 0 && available < MAX_STACK_SIZE) {
                     codeSize++
                     mask += available
                 }
