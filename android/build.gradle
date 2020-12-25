@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
+    id "org.mozilla.rust-android-gradle.rust-android"
 }
 
 android {
@@ -29,6 +30,21 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    sourceSets {
+        main {
+            assets.srcDirs += ["../decoder/assets"]
+        }
+    }
+
+    ndkVersion "22.0.7026061"
+}
+
+cargo {
+    module = "../giflzwdecoder"
+    libname = "giflzwdecoder"
+    targets = ["arm", "x86", "arm64", "x86_64"]
+    profile = 'release'
 }
 
 dependencies {
@@ -41,4 +57,10 @@ dependencies {
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+}
+
+tasks.whenTaskAdded { task ->
+    if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
+        task.dependsOn 'cargoBuild'
+    }
 }

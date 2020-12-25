@@ -1,6 +1,15 @@
 package net.redwarp.gif.decoder
 
-import okio.*
+import net.redwarp.gif.decoder.descriptors.Dimension
+import net.redwarp.gif.decoder.descriptors.GifDescriptor
+import net.redwarp.gif.decoder.descriptors.GraphicControlExtension
+import net.redwarp.gif.decoder.descriptors.Header
+import net.redwarp.gif.decoder.descriptors.ImageDescriptor
+import net.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
+import net.redwarp.gif.decoder.descriptors.Point
+import net.redwarp.gif.decoder.utils.readAsciiString
+import net.redwarp.gif.decoder.utils.readByte
+import net.redwarp.gif.decoder.utils.readShortLe
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -18,43 +27,46 @@ private const val ANIMEXTS = "ANIMEXTS1.0"
  */
 object Parser {
 
-    fun parse(file: File): GifDescriptor = parse(file.source())
+    fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): GifDescriptor =
+        parse(file.inputStream(), pixelPacking)
 
-    fun parse(inputStream: InputStream): GifDescriptor = parse(inputStream.source())
-
-    fun parse(source: Source): GifDescriptor {
-        source.buffer().use { bufferedSource ->
-            val header = bufferedSource.parseHeader()
-            val logicalScreenDescriptor = bufferedSource.parseLogicalScreenDescriptor()
+    fun parse(
+        inputStream: InputStream,
+        pixelPacking: PixelPacking = PixelPacking.ARGB
+    ): GifDescriptor {
+        inputStream.buffered(2048).use { stream ->
+            val header = stream.parseHeader()
+            val logicalScreenDescriptor = stream.parseLogicalScreenDescriptor()
 
             val globalColorTable: IntArray? = if (logicalScreenDescriptor.hasGlobalColorTable) {
-                bufferedSource.parseColorTable(logicalScreenDescriptor.colorCount)
+                stream.parseColorTable(logicalScreenDescriptor.colorCount, pixelPacking)
             } else {
                 null
             }
 
-            val (loopCount, imageDescriptors) = parseLoop(bufferedSource)
+            val (loopCount, imageDescriptors) = parseLoop(stream, pixelPacking)
 
             return GifDescriptor(
-                header,
-                logicalScreenDescriptor,
-                globalColorTable,
-                loopCount,
-                imageDescriptors
+                header = header,
+                logicalScreenDescriptor = logicalScreenDescriptor,
+                globalColorTable = globalColorTable,
+                // If only one image, no loop.
+                loopCount = if (imageDescriptors.size <= 1) null else loopCount,
+                imageDescriptors = imageDescriptors
             )
         }
     }
 
     @Throws(InvalidGifException::class)
-    private fun BufferedSource.parseHeader(): Header {
-        return when (val headerString = readByteString(6L).string(Charsets.US_ASCII)) {
+    private fun InputStream.parseHeader(): Header {
+        return when (val headerString = readAsciiString(6)) {
             "GIF87a" -> Header.GIF87a
             "GIF89a" -> Header.GIF89a
             else -> throw InvalidGifException("$headerString is not a valid GIF header")
         }
     }
 
-    private fun BufferedSource.parseLogicalScreenDescriptor(): LogicalScreenDescriptor {
+    private fun InputStream.parseLogicalScreenDescriptor(): LogicalScreenDescriptor {
         val dimension = Dimension(readShortLe(), readShortLe())
         val packedFields = readByte().toUByte()
         val hasGlobalColorTableMask: UByte = 0b1000_0000u
@@ -75,22 +87,24 @@ object Parser {
         )
     }
 
-    private fun BufferedSource.parseColorTable(colorCount: Int): IntArray {
+    private fun InputStream.parseColorTable(colorCount: Int, pixelPacking: PixelPacking): IntArray {
         val colors = IntArray(colorCount)
         for (colorIndex in 0 until colorCount) {
             val r = readByte().toInt()
             val g = readByte().toInt()
             val b = readByte().toInt()
 
-            val color: Int =
-                0xff000000.toInt() or (r.shl(16) and 0x00ff0000) or (g.shl(8) and 0x0000ff00) or (b and 0x000000ff)
+            val color: Int = when (pixelPacking) {
+                PixelPacking.ARGB -> 0xff000000.toInt() or (r.shl(16) and 0x00ff0000) or (g.shl(8) and 0x0000ff00) or (b and 0x000000ff)
+                PixelPacking.ABGR -> 0xff000000.toInt() or (b.shl(16) and 0x00ff0000) or (g.shl(8) and 0x0000ff00) or (r and 0x000000ff)
+            }
             colors[colorIndex] = color
         }
 
         return colors
     }
 
-    private fun BufferedSource.parseGraphicControl(): GraphicControlExtension {
+    private fun InputStream.parseGraphicControl(): GraphicControlExtension {
         val blockSize = readByte()
         if (blockSize != 4.toByte()) throw InvalidGifException("Block size of the graphic control should be 4")
 
@@ -114,12 +128,12 @@ object Parser {
         )
     }
 
-    private fun BufferedSource.parseApplicationId(): String {
+    private fun InputStream.parseApplicationId(): String {
         skip(1)
-        return readString(11, Charsets.US_ASCII)
+        return readAsciiString(11)
     }
 
-    private fun BufferedSource.parseLoopCount(): Int {
+    private fun InputStream.parseLoopCount(): Int {
         skip(2)
         val count = readShortLe().toInt()
         skip(1)
@@ -127,7 +141,7 @@ object Parser {
         return count
     }
 
-    private fun BufferedSource.skipSubBlocks() {
+    private fun InputStream.skipSubBlocks() {
         var subBlockSize: Long = readByte().toLong()
         while (subBlockSize != 0L) {
             skip(subBlockSize)
@@ -135,14 +149,22 @@ object Parser {
         }
     }
 
-    private fun parseLoop(bufferedSource: BufferedSource): Pair<Int?, List<ImageDescriptor>> {
+    private fun parseLoop(
+        bufferedSource: InputStream,
+        pixelPacking: PixelPacking
+    ): Pair<Int?, List<ImageDescriptor>> {
         var loopCount: Int? = 0
         var pendingGraphicControl: GraphicControlExtension? = null
         val imageDescriptors: MutableList<ImageDescriptor> = mutableListOf()
         while (true) {
             when (bufferedSource.readByte()) {
                 IMAGE_DESCRIPTOR_SEPARATOR -> {
-                    imageDescriptors.add(bufferedSource.parseImageDescriptor(pendingGraphicControl))
+                    imageDescriptors.add(
+                        bufferedSource.parseImageDescriptor(
+                            pendingGraphicControl,
+                            pixelPacking
+                        )
+                    )
                     pendingGraphicControl = null
                 }
                 GIF_TERMINATOR -> {
@@ -174,8 +196,9 @@ object Parser {
         return Pair(loopCount, imageDescriptors)
     }
 
-    private fun BufferedSource.parseImageDescriptor(
-        graphicControlExtension: GraphicControlExtension?
+    private fun InputStream.parseImageDescriptor(
+        graphicControlExtension: GraphicControlExtension?,
+        pixelPacking: PixelPacking
     ): ImageDescriptor {
         val position = Point(readShortLe(), readShortLe())
         val dimension = Dimension(readShortLe(), readShortLe())
@@ -192,7 +215,7 @@ object Parser {
         val sizeOfLocalTable = (sizeOfLocalTableMask and packedFields).toInt()
         val colorCount = 1.shl(sizeOfLocalTable + 1)
         val localColorTable: IntArray? = if (usesLocalColorTable) {
-            parseColorTable(colorCount)
+            parseColorTable(colorCount, pixelPacking)
         } else {
             null
         }
@@ -209,23 +232,21 @@ object Parser {
         )
     }
 
-    internal fun BufferedSource.readImageData(): ByteArray {
+    internal fun InputStream.readImageData(): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
-        val sink = byteArrayOutputStream.sink().buffer()
-
-        // LZW Minimum Code Size
-        sink.writeByte(readByte().toInt())
+        byteArrayOutputStream.write(readByte().toInt())
 
         while (true) {
             val blockSize = readByte().toUByte().toInt()
-            sink.writeByte(blockSize)
+            byteArrayOutputStream.write(blockSize)
             if (blockSize == 0) {
                 break
             }
-            sink.write(this, blockSize.toLong())
+            repeat(blockSize) {
+                byteArrayOutputStream.write(read())
+            }
         }
 
-        sink.flush()
         return byteArrayOutputStream.toByteArray()
     }
 }

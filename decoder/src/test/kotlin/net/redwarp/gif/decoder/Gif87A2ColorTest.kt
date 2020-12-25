@@ -1,5 +1,6 @@
 package net.redwarp.gif.decoder
 
+import net.redwarp.gif.decoder.descriptors.Header
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

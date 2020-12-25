@@ -1,7 +1,5 @@
 package net.redwarp.gif.decoder
 
-import okio.buffer
-import okio.source
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -16,9 +14,9 @@ class ParserTest {
             1, 2, 3, 4, 5,
             3, // Block size
             1, 2, 3,
-            0  // Terminator
+            0 // Terminator
         )
-        val bufferedSource = data.inputStream().source().buffer()
+        val bufferedSource = data.inputStream()
 
         with(Parser) {
             val copied = bufferedSource.readImageData()

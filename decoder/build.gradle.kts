@@ -16,10 +16,8 @@ repositories {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    api("com.squareup.okio:okio:2.9.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
-    testImplementation("com.github.zh79325:open-gif:1.0.4")
 }
 
 sourceSets {
@@ -29,7 +27,6 @@ sourceSets {
         resources.srcDir("assets")
     }
 }
-
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {

@@ -1,7 +1,9 @@
 package net.redwarp.gif.decoder
 
+import net.redwarp.gif.decoder.descriptors.Dimension
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
@@ -100,6 +102,36 @@ class GifTest {
 
             ImageIO.write(image, "png", File("../output/frame_$index.png"))
         }
+    }
+
+    @Test
+    fun getFrameDelay_animatedWithZeroDelaySpecified_returns0() {
+        val gif = Gif(File("./assets/butterfly.gif"))
+
+        assertEquals(100L, gif.currentDelay)
+    }
+
+    @Test
+    fun getFrameDelay_animatedWithDelaySpecified_returnsDelay() {
+        val gif = Gif(File("./assets/domo.gif"))
+
+        assertEquals(0L, gif.currentDelay)
+    }
+
+    @Test
+    fun getRatio_gifWith1To1Ratio_returns1() {
+        val gif = Gif(File("./assets/domo.gif"))
+        val aspectRatio = gif.aspectRatio
+
+        assertEquals(1.0f, aspectRatio)
+    }
+
+    @Test
+    fun getRatio_gifWith3To1Ratio_returns3Something() {
+        val gif = Gif(File("./assets/glasses-aspect_ratio.gif"))
+        val aspectRatio = gif.aspectRatio
+
+        assertTrue { aspectRatio > 3.0 && aspectRatio < 3.2 }
     }
 
     private fun loadExpectedPixels(file: File): IntArray {

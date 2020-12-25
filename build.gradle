@@ -9,6 +9,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:4.1.1"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'gradle.plugin.org.mozilla.rust-android-gradle:plugin:0.8.3'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -37,4 +38,16 @@ subprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+task cargoClean(type: Exec) {
+    workingDir "$projectDir/giflzwdecoder"
+    commandLine "cargo", "clean"
+    group "rust"
+}
+
+tasks.whenTaskAdded { task ->
+    if ((task.name == 'clean')) {
+        task.dependsOn 'cargoClean'
+    }
 }

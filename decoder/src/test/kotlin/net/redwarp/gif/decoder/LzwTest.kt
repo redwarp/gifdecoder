@@ -1,8 +1,8 @@
 package net.redwarp.gif.decoder
 
+import net.redwarp.gif.decoder.lzw.JvmLzwDecoder
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
-import java.io.File
 
 class LzwTest {
     private val sampleData = byteArrayOf(
@@ -19,49 +19,14 @@ class LzwTest {
     )
 
     @Test
-    fun parseSampleData_shadowMatchOriginal() {
-        val lzwDecoder = LzwDecoder(sampleData)
-        val expected = ByteArray(15)
-
-        lzwDecoder.decode(expected)
-
-        val shadowLzwDecoder = LzwDecoder2()
-        val shadow = ByteArray(15)
-        shadowLzwDecoder.decode(sampleData, shadow, 15)
-
-        assertArrayEquals(expected, shadow)
-    }
-
-    @Test
-    fun parseSampleData_properlyReturnedIndex() {
-        val lzwDecoder = LzwDecoder(sampleData)
-        repeat(9) {
-            val code = lzwDecoder.read()
-            println(code.toUByte().toString(2))
-        }
-    }
-
-    @Test
     fun decode_properlyReturnedData() {
-        val lzwDecoder = LzwDecoder(sampleData)
+        val lzwDecoder = JvmLzwDecoder()
         val pixels = ByteArray(15)
 
-        lzwDecoder.decode(destination = pixels)
+        lzwDecoder.decode(imageData = sampleData, destination = pixels, pixelCount = 15)
 
         val expected = byteArrayOf(0, 2, 2, 2, 0, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1)
 
         assertArrayEquals(expected, pixels)
-    }
-
-
-    @Test
-    fun decode_domo_properlyReturnedData() {
-        val gif = Parser.parse(
-            file = File("./assets/domo.gif")
-        )
-        val lzwDecoder = LzwDecoder(gif.imageDescriptors[0].imageData)
-        val pixels = ByteArray(gif.imageDescriptors[0].dimension.size)
-
-        lzwDecoder.decode(destination = pixels)
     }
 }

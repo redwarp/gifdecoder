@@ -1,10 +1,30 @@
 package net.redwarp.gif.decoder
 
+import net.redwarp.gif.decoder.descriptors.Dimension
+import net.redwarp.gif.decoder.descriptors.GifDescriptor
+import net.redwarp.gif.decoder.descriptors.GraphicControlExtension
+import net.redwarp.gif.decoder.descriptors.ImageDescriptor
+import net.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
+import net.redwarp.gif.decoder.lzw.JvmLzwDecoder
+import net.redwarp.gif.decoder.lzw.LzwDecoder
+import net.redwarp.gif.decoder.utils.Palettes
+import java.io.File
+import java.io.InputStream
+
 private const val TRANSPARENT_COLOR = 0x0
 
-private const val EXPERIMENTAL = true
+class Gif(
+    private val gifDescriptor: GifDescriptor,
+    private val lzwDecoder: LzwDecoder = JvmLzwDecoder()
+) {
+    constructor(inputStream: InputStream, pixelPacking: PixelPacking = PixelPacking.ARGB) :
+        this(Parser.parse(inputStream, pixelPacking))
 
-class Gif(private val gifDescriptor: GifDescriptor) {
+    constructor(
+        file: File,
+        pixelPacking: PixelPacking = PixelPacking.ARGB
+    ) : this(Parser.parse(file, pixelPacking))
+
     private var lastRenderedFrame: Int = -1
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
@@ -14,14 +34,17 @@ class Gif(private val gifDescriptor: GifDescriptor) {
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private var previousPixels: IntArray? = null
-    private val lzwDecoder = LzwDecoder2()
+
+    private val isTransparent: Boolean =
+        gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }
 
     val currentIndex: Int get() = frameIndex
 
     /**
-     * Returns the delay time of the current frame. If the gif is not animated, returns zero.
-     * If the graphic control extension does not specify it, then returns 32L,
-     * equivalent to two frames.
+     * Returns the delay time of the current frame, in millisecond.
+     * This delay represents how long we should show this frame before displaying the next one in the animation.
+     * If the gif is not animated, returns zero.
+     * Some animated GIFs have a specified delay of 0L, meaning we should draw the next frame as fast as possible.
      */
     val currentDelay: Long
         get() {
@@ -33,7 +56,7 @@ class Gif(private val gifDescriptor: GifDescriptor) {
                         it.toLong() * 10L
                     }
 
-                delay ?: 32L
+                delay ?: 0L
             }
         }
 
@@ -41,10 +64,23 @@ class Gif(private val gifDescriptor: GifDescriptor) {
 
     val frameCount: Int = gifDescriptor.imageDescriptors.size
 
+    val loopCount: LoopCount = when (val count = gifDescriptor.loopCount) {
+        null -> LoopCount.NoLoop
+        0 -> LoopCount.Infinite
+        else -> LoopCount.Fixed(count)
+    }
+
+    val aspectRatio: Double = run {
+        val ratio = gifDescriptor.logicalScreenDescriptor.pixelAspectRatio.toInt() and 0xff
+        if (ratio == 0) 1.0 else {
+            (ratio + 15).toDouble() / 64.0
+        }
+    }
+
     val backgroundColor: Int =
         run {
             // If at last one of the frame is transparent, let's use transparent as the background color.
-            if (gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }) {
+            if (isTransparent) {
                 TRANSPARENT_COLOR
             } else {
                 // First, look for the background color in the global color table if it exists. Default to transparent.
@@ -56,6 +92,10 @@ class Gif(private val gifDescriptor: GifDescriptor) {
 
     val isAnimated: Boolean = gifDescriptor.imageDescriptors.size > 1
 
+    /**
+     * Advance the frame index, and loop back to zero after the last frame.
+     * Does not care about loop count.
+     */
     fun advance() {
         if (isAnimated) {
             frameIndex = (currentIndex + 1) % frameCount
@@ -88,7 +128,6 @@ class Gif(private val gifDescriptor: GifDescriptor) {
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
-
         val disposal = graphicControlExtension?.disposalMethod
             ?: GraphicControlExtension.Disposal.NOT_SPECIFIED
 
@@ -96,12 +135,7 @@ class Gif(private val gifDescriptor: GifDescriptor) {
             previousPixels = framePixels.clone()
         }
 
-        if (EXPERIMENTAL) {
-            lzwDecoder.decode(imageData = imageDescriptor.imageData, scratch, framePixels.size)
-        } else {
-            val decoder = LzwDecoder(imageDescriptor.imageData)
-            decoder.decode(destination = scratch)
-        }
+        lzwDecoder.decode(imageData = imageDescriptor.imageData, scratch, framePixels.size)
 
         fillPixels(
             framePixels,
@@ -168,6 +202,8 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
         val frameWidth = imageDescriptor.dimension.width
         val (offset_x, offset_y) = imageDescriptor.position
+        val imageWidth = logicalScreenDescriptor.dimension.width
+
         for (index in 0 until imageDescriptor.dimension.size) {
             val colorIndex = colorData[index]
             if (colorIndex != transparentColorIndex) {
@@ -175,7 +211,7 @@ class Gif(private val gifDescriptor: GifDescriptor) {
                 val x = index % frameWidth
                 val y = index / frameWidth
                 val pixelIndex =
-                    (y + offset_y) * logicalScreenDescriptor.dimension.width + offset_x + x
+                    (y + offset_y) * imageWidth + offset_x + x
                 pixels[pixelIndex] = color
             }
         }
@@ -189,13 +225,12 @@ class Gif(private val gifDescriptor: GifDescriptor) {
         imageDescriptor: ImageDescriptor
     ) {
         val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
-        val (imageWidth, _) = logicalScreenDescriptor.dimension
+        val imageWidth = logicalScreenDescriptor.dimension.width
         val (frameWidth, frameHeight) = imageDescriptor.dimension
         val (offset_x, offset_y) = imageDescriptor.position
         var pass = 0
         var stride = 8
         var matchedLine = 0
-
 
         var lineIndex = 0
         while (pass < 4) {
@@ -235,5 +270,4 @@ class Gif(private val gifDescriptor: GifDescriptor) {
             }
         }
     }
-
 }
