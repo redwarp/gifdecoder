@@ -145,7 +145,13 @@ class NativeGif(
             previousPixels = framePixels.clone()
         }
 
-        lzwDecoder.decode(imageData = imageDescriptor.imageData, scratch, framePixels.size)
+
+
+        // lzwDecoder.decode(
+        //     imageData = imageDescriptor.imageData,
+        //     scratch,
+        //     imageDescriptor.dimension.size
+        // )
 
         // fillPixels(
         //     framePixels,
@@ -156,24 +162,36 @@ class NativeGif(
         // )
         val transparentColorIndexRef: Byte? =
             imageDescriptor.graphicControlExtension?.transparentColorIndex
-        val transparentColorIndex:Int = if (transparentColorIndexRef!=null ){
+        val transparentColorIndex: Int = if (transparentColorIndexRef != null) {
             transparentColorIndexRef.toInt() and 0xFF
         } else {
             1024
         }
 
-        lzwDecoder.fillPixels(
-            pixels = framePixels,
-            colorData = scratch,
-            colorTable = colorTable,
+        // lzwDecoder.fillPixels(
+        //     pixels = framePixels,
+        //     colorData = scratch,
+        //     colorTable = colorTable,
+        //     transparentColorIndex = transparentColorIndex,
+        //     imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
+        //     frameWidth = imageDescriptor.dimension.width,
+        //     frameHeight = imageDescriptor.dimension.height,
+        //     offsetX = imageDescriptor.position.x,
+        //     offsetY = imageDescriptor.position.y,
+        //     interlaced = imageDescriptor.isInterlaced
+        // )
+
+        lzwDecoder.decodeFull(
+            imageData = imageDescriptor.imageData,
+            scratch = scratch,
+            pixels = framePixels,colorTable = colorTable,
             transparentColorIndex = transparentColorIndex,
             imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
             frameWidth = imageDescriptor.dimension.width,
             frameHeight = imageDescriptor.dimension.height,
             offsetX = imageDescriptor.position.x,
             offsetY = imageDescriptor.position.y,
-            interlaced = imageDescriptor.isInterlaced
-        )
+            interlaced = imageDescriptor.isInterlaced)
 
         framePixels.copyInto(inPixels)
 

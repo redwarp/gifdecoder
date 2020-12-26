@@ -102,6 +102,67 @@ pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_fillP
     )
 }
 
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_decodeFull(
+    env: JNIEnv,
+    _class: JClass,
+    image_data: jbyteArray,
+    scratch: jbyteArray,
+    pixels: jintArray,
+    color_table: jintArray,
+    transparent_color_index: jint,
+    image_width: jint,
+    frame_width: jint,
+    frame_height: jint,
+    offset_x: jint,
+    offset_y: jint,
+    interlaced: jboolean,
+) {
+    let image_data_length = env.get_array_length(image_data).unwrap() as usize;
+    let auto_image_data = env
+        .get_auto_primitive_array_critical(image_data, ReleaseMode::CopyBack)
+        .unwrap();
+    let image_data =
+        std::slice::from_raw_parts(auto_image_data.as_ptr() as *const u8, image_data_length);
+
+    let scratch_length = env.get_array_length(scratch).unwrap() as usize;
+    let auto_scratch = env
+        .get_auto_primitive_array_critical(scratch, ReleaseMode::CopyBack)
+        .unwrap();
+    let mut scratch =
+        std::slice::from_raw_parts_mut(auto_scratch.as_ptr() as *mut u8, scratch_length);
+
+    decode(image_data, scratch, (frame_width * frame_height) as usize);
+
+    let pixels_length = env.get_array_length(pixels).unwrap() as usize;
+    let auto_pixels = env
+        .get_auto_primitive_array_critical(pixels, ReleaseMode::CopyBack)
+        .unwrap();
+    let mut pixels =
+        std::slice::from_raw_parts_mut(auto_pixels.as_ptr() as *mut u32, pixels_length);
+
+    let color_table_length = env.get_array_length(color_table).unwrap() as usize;
+    let auto_color_table = env
+        .get_auto_primitive_array_critical(color_table, ReleaseMode::CopyBack)
+        .unwrap();
+    let color_table =
+        std::slice::from_raw_parts(auto_color_table.as_ptr() as *const u32, color_table_length);
+
+    fill_pixel(
+        &mut pixels,
+        &scratch,
+        &color_table,
+        transparent_color_index as usize,
+        image_width as u32,
+        frame_width as u32,
+        frame_height as u32,
+        offset_x as u32,
+        offset_y as u32,
+        interlaced == JNI_TRUE,
+    )
+}
+
 fn decode(image_data: &[u8], destination: &mut [u8], pixel_count: usize) {
     let mut prefix: [i16; MAX_STACK_SIZE] = [0; MAX_STACK_SIZE];
     let mut suffix: [u8; MAX_STACK_SIZE] = [0; MAX_STACK_SIZE];
