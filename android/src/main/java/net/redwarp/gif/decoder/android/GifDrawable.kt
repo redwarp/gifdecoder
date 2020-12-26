@@ -17,6 +17,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import net.redwarp.gif.decoder.Gif
 import net.redwarp.gif.decoder.LoopCount
+import net.redwarp.gif.decoder.NativeGif
 import net.redwarp.gif.decoder.Parser
 import net.redwarp.gif.decoder.PixelPacking
 import net.redwarp.gif.decoder.lzw.NativeLzwDecoder
@@ -28,7 +29,7 @@ class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
     constructor(file: File) : this(file.inputStream())
 
     private val gifDescriptor = Parser.parse(inputStream, PixelPacking.ARGB)
-    private val gif = Gif(gifDescriptor, NativeLzwDecoder())
+    private val gif = NativeGif(gifDescriptor)
 
     private val bitmapCache = BitmapCache()
 

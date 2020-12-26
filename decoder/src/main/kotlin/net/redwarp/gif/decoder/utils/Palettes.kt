@@ -1,6 +1,6 @@
 package net.redwarp.gif.decoder.utils
 
-internal object Palettes {
+object Palettes {
     private val Apple2 = intArrayOf(
         0xff000000.toInt(),
         0xff6c2940.toInt(),

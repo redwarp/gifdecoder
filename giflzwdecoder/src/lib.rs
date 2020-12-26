@@ -1,6 +1,6 @@
 use jni::{
-    objects::{JClass, ReleaseMode},
-    sys::{jbyteArray, jint},
+    objects::{JClass, JObject, JValue, ReleaseMode},
+    sys::{jboolean, jbyteArray, jint, jintArray, JNI_TRUE},
     JNIEnv,
 };
 
@@ -34,6 +34,72 @@ pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_decod
         &mut converted_destination,
         pixel_count as usize,
     );
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_access(
+    env: JNIEnv,
+    _class: JClass,
+    bridge: JObject,
+) {
+    let field = env.get_field(bridge, "interlaced", "Z").unwrap();
+    let field_value = field.z().unwrap();
+
+    let test = JValue::Bool(!field_value as jboolean);
+
+    env.set_field(bridge, "interlaced", "Z", test).unwrap();
+}
+
+#[no_mangle]
+#[allow(non_snake_case)]
+pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_fillPixels(
+    env: JNIEnv,
+    _class: JClass,
+    pixels: jintArray,
+    color_data: jbyteArray,
+    color_table: jintArray,
+    transparent_color_index: jint,
+    image_width: jint,
+    frame_width: jint,
+    frame_height: jint,
+    offset_x: jint,
+    offset_y: jint,
+    interlaced: jboolean,
+) {
+    let pixels_length = env.get_array_length(pixels).unwrap() as usize;
+    let auto_pixels = env
+        .get_auto_primitive_array_critical(pixels, ReleaseMode::CopyBack)
+        .unwrap();
+    let mut pixels =
+        std::slice::from_raw_parts_mut(auto_pixels.as_ptr() as *mut u32, pixels_length);
+
+    let color_data_length = env.get_array_length(color_data).unwrap() as usize;
+    let auto_color_data = env
+        .get_auto_primitive_array_critical(color_data, ReleaseMode::CopyBack)
+        .unwrap();
+    let color_data =
+        std::slice::from_raw_parts(auto_color_data.as_ptr() as *const u8, color_data_length);
+
+    let color_table_length = env.get_array_length(color_table).unwrap() as usize;
+    let auto_color_table = env
+        .get_auto_primitive_array_critical(color_table, ReleaseMode::CopyBack)
+        .unwrap();
+    let color_table =
+        std::slice::from_raw_parts(auto_color_table.as_ptr() as *const u32, color_table_length);
+
+    fill_pixel(
+        &mut pixels,
+        &color_data,
+        &color_table,
+        transparent_color_index as usize,
+        image_width as u32,
+        frame_width as u32,
+        frame_height as u32,
+        offset_x as u32,
+        offset_y as u32,
+        interlaced == JNI_TRUE,
+    )
 }
 
 fn decode(image_data: &[u8], destination: &mut [u8], pixel_count: usize) {
@@ -135,6 +201,127 @@ fn decode(image_data: &[u8], destination: &mut [u8], pixel_count: usize) {
             }
         }
         old_code = Some(initial_code);
+    }
+}
+
+fn fill_pixel(
+    pixels: &mut [u32],
+    color_data: &[u8],
+    color_table: &[u32],
+    transparent_color_index: usize,
+    image_width: u32,
+    frame_width: u32,
+    frame_height: u32,
+    offset_x: u32,
+    offset_y: u32,
+    interlaced: bool,
+) {
+    if interlaced {
+        fill_pixels_interlaced(
+            pixels,
+            color_data,
+            color_table,
+            transparent_color_index,
+            image_width,
+            frame_width,
+            frame_height,
+            offset_x,
+            offset_y,
+        )
+    } else {
+        fill_pixels_simple(
+            pixels,
+            color_data,
+            color_table,
+            transparent_color_index,
+            image_width,
+            frame_width,
+            frame_height,
+            offset_x,
+            offset_y,
+        )
+    }
+}
+
+fn fill_pixels_simple(
+    pixels: &mut [u32],
+    color_data: &[u8],
+    color_table: &[u32],
+    transparent_color_index: usize,
+    image_width: u32,
+    frame_width: u32,
+    frame_height: u32,
+    offset_x: u32,
+    offset_y: u32,
+) {
+    let size = (frame_width * frame_height) as usize;
+
+    for index in 0..size {
+        let color_index = color_data[index] as usize & 0xff;
+        if color_index != transparent_color_index {
+            let color = color_table[color_index];
+            let x = index % frame_width as usize;
+            let y = index / frame_width as usize;
+            let pixel_index =
+                (y + offset_y as usize) * image_width as usize + offset_x as usize + x;
+            pixels[pixel_index] = color;
+        }
+    }
+}
+
+fn fill_pixels_interlaced(
+    pixels: &mut [u32],
+    color_data: &[u8],
+    color_table: &[u32],
+    transparent_color_index: usize,
+    image_width: u32,
+    frame_width: u32,
+    frame_height: u32,
+    offset_x: u32,
+    offset_y: u32,
+) {
+    let mut pass = 0;
+    let mut stride = 8;
+    let mut matched_line = 0;
+
+    let mut line_index = 0;
+    while pass < 4 {
+        while matched_line < frame_height {
+            let copy_from_index = (line_index * frame_width) as usize;
+            let copy_to_index = ((matched_line + offset_y) * image_width + offset_x) as usize;
+            let index_offset = copy_to_index - copy_from_index;
+
+            for index in copy_from_index..(copy_from_index + frame_width as usize) {
+                let color_index = color_data[index] as usize & 0xff;
+                if color_index != transparent_color_index {
+                    let color = color_table[color_index];
+
+                    let pixel_index = index + index_offset;
+                    pixels[pixel_index] = color;
+                }
+            }
+
+            line_index += 1;
+            matched_line += stride;
+        }
+
+        pass += 1;
+
+        match pass {
+            1 => {
+                matched_line = 4;
+                stride = 8;
+            }
+            2 => {
+                matched_line = 2;
+                stride = 4;
+            }
+            3 => {
+                matched_line = 1;
+                stride = 2;
+            }
+            _ => {}
+        }
     }
 }
 

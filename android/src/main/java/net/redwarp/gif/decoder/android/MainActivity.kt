@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
 
         val imageView = findViewById<ImageView>(R.id.imageView)
 
-        val gifStream: InputStream = assets.open("full_colour.gif")
+        val gifStream: InputStream = assets.open("glasses-aspect_ratio.gif")
         drawable = GifDrawable(gifStream)
         drawable.setLoopCount(LoopCount.Infinite)
 
