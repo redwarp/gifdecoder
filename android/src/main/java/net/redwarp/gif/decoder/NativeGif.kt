@@ -1,12 +1,10 @@
 package net.redwarp.gif.decoder
 
-import android.util.Log
 import net.redwarp.gif.decoder.descriptors.Dimension
 import net.redwarp.gif.decoder.descriptors.GifDescriptor
 import net.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import net.redwarp.gif.decoder.descriptors.ImageDescriptor
 import net.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
-import net.redwarp.gif.decoder.lzw.DecodeJniBridge
 import net.redwarp.gif.decoder.lzw.NativeLzwDecoder
 import net.redwarp.gif.decoder.utils.Palettes
 import java.io.File
@@ -41,14 +39,6 @@ class NativeGif(
         gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }
 
     val currentIndex: Int get() = frameIndex
-
-    init {
-        val bridge = DecodeJniBridge(interlaced = true)
-
-        lzwDecoder.access(bridge)
-
-        Log.d("Test", "Value of interlaced: ${bridge.interlaced}")
-    }
 
     /**
      * Returns the delay time of the current frame, in millisecond.
@@ -145,8 +135,6 @@ class NativeGif(
             previousPixels = framePixels.clone()
         }
 
-
-
         // lzwDecoder.decode(
         //     imageData = imageDescriptor.imageData,
         //     scratch,
@@ -184,14 +172,15 @@ class NativeGif(
         lzwDecoder.decodeFull(
             imageData = imageDescriptor.imageData,
             scratch = scratch,
-            pixels = framePixels,colorTable = colorTable,
+            pixels = framePixels, colorTable = colorTable,
             transparentColorIndex = transparentColorIndex,
             imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
             frameWidth = imageDescriptor.dimension.width,
             frameHeight = imageDescriptor.dimension.height,
             offsetX = imageDescriptor.position.x,
             offsetY = imageDescriptor.position.y,
-            interlaced = imageDescriptor.isInterlaced)
+            interlaced = imageDescriptor.isInterlaced
+        )
 
         framePixels.copyInto(inPixels)
 

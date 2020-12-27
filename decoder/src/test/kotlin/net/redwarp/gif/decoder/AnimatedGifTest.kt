@@ -8,7 +8,7 @@ import java.io.File
 class AnimatedGifTest {
     @Test
     fun parseAnimatedGif_graphicControlAllSet() {
-        val gifFile = File("./assets/domo.gif")
+        val gifFile = File("../assets/domo.gif")
 
         val gifDescriptor: GifDescriptor = Parser.parse(gifFile)
         val gif = Gif(gifDescriptor)

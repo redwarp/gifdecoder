@@ -1,16 +1,14 @@
 package net.redwarp.gif.decoder.android
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import net.redwarp.gif.decoder.LoopCount
-import net.redwarp.gif.decoder.lzw.NativeLzwDecoder
 import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var drawable: GifDrawable
+    private val drawables: MutableList<GifDrawable> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -18,26 +16,35 @@ class MainActivity : AppCompatActivity() {
 
         val imageView = findViewById<ImageView>(R.id.imageView)
 
-        val gifStream: InputStream = assets.open("derpy_cat-interlaced.gif")
-        drawable = GifDrawable(gifStream)
+        val gifStream: InputStream = assets.open("full_colour.gif")
+        val drawable = GifDrawable(gifStream)
         drawable.setLoopCount(LoopCount.Infinite)
-
+        drawables.add(drawable)
         imageView.setImageDrawable(drawable)
 
-        val imageData = ByteArray(10) { 1 }
-        val destination = ByteArray(10)
+        // val imageView2 = findViewById<ImageView>(R.id.imageView2)
+        // val drawable2 = GifDrawable(assets.open("derpy_cat.gif"))
+        // imageView2.setImageDrawable(drawable2)
+        // drawables.add(drawable2)
 
-        val decoder = NativeLzwDecoder()
+        // val imageView3 = findViewById<ImageView>(R.id.imageView3)
+        // val drawable3 = GifDrawable(assets.open("glasses-aspect_ratio.gif"))
+        // imageView3.setImageDrawable(drawable3)
+        // drawables.add(drawable3)
 
+        // val imageView4 = findViewById<ImageView>(R.id.imageView4)
+        // val drawable4 = GifDrawable(assets.open("domo-interlaced.gif"))
+        // imageView4.setImageDrawable(drawable4)
+        // drawables.add(drawable4)
     }
 
     override fun onResume() {
         super.onResume()
-        drawable.start()
+        drawables.forEach(GifDrawable::start)
     }
 
     override fun onPause() {
         super.onPause()
-        drawable.stop()
+        drawables.forEach(GifDrawable::stop)
     }
 }

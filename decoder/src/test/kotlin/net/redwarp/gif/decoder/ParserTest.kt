@@ -26,7 +26,7 @@ class ParserTest {
 
     @Test
     fun parse_properCountOfImageDescriptors() {
-        val gifFile = File("./assets/domo.gif")
+        val gifFile = File("../assets/domo.gif")
 
         val gif = Parser.parse(gifFile)
 

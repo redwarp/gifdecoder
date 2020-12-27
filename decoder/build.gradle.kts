@@ -24,7 +24,7 @@ sourceSets {
     getByName("main").java.srcDir("src/main/kotlin")
     getByName("test") {
         java.srcDir("src/test/kotlin")
-        resources.srcDir("assets")
+        resources.srcDir("../assets")
     }
 }
 

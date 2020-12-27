@@ -33,7 +33,7 @@ android {
 
     sourceSets {
         main {
-            assets.srcDirs += ["../decoder/assets"]
+            assets.srcDirs += ["../assets"]
         }
     }
 
@@ -44,7 +44,7 @@ cargo {
     module = "../giflzwdecoder"
     libname = "giflzwdecoder"
     targets = ["arm", "x86", "arm64", "x86_64"]
-    profile = 'release'
+    profile = "release"
 }
 
 dependencies {

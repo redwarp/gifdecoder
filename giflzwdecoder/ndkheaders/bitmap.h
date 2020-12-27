@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
  * @addtogroup Bitmap
  * @{
  */
+
 /**
  * @file bitmap.h
  */
+
 #ifndef ANDROID_BITMAP_H
 #define ANDROID_BITMAP_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <jni.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 /** AndroidBitmap functions result code. */
 enum {
     /** Operation was successful. */
@@ -39,8 +45,10 @@ enum {
     /** Allocation failed. */
     ANDROID_BITMAP_RESULT_ALLOCATION_FAILED = -3,
 };
+
 /** Backward compatibility: this macro used to be misspelled. */
 #define ANDROID_BITMAP_RESUT_SUCCESS ANDROID_BITMAP_RESULT_SUCCESS
+
 /** Bitmap pixel format. */
 enum AndroidBitmapFormat {
     /** No format. */
@@ -56,6 +64,7 @@ enum AndroidBitmapFormat {
     /** Each component is stored as a half float. **/
     ANDROID_BITMAP_FORMAT_RGBA_F16  = 9,
 };
+
 /** Bitmap alpha format */
 enum {
     /** Pixel components are premultiplied by alpha. */
@@ -69,6 +78,7 @@ enum {
     /** Shift for AndroidBitmapFormat.flags to isolate the alpha. */
     ANDROID_BITMAP_FLAGS_ALPHA_SHIFT    = 0,
 };
+
 enum {
     /** If this bit is set in AndroidBitmapInfo.flags, the Bitmap uses the
       * HARDWARE Config, and its {@link AHardwareBuffer} can be retrieved via
@@ -76,6 +86,7 @@ enum {
       */
     ANDROID_BITMAP_FLAGS_IS_HARDWARE = 1 << 31,
 };
+
 /** Bitmap info, see AndroidBitmap_getInfo(). */
 typedef struct {
     /** The bitmap width in pixels. */
@@ -98,13 +109,16 @@ typedef struct {
      */
     uint32_t    flags;
 } AndroidBitmapInfo;
+
 /**
  * Given a java bitmap object, fill out the {@link AndroidBitmapInfo} struct for it.
  * If the call fails, the info parameter will be ignored.
  */
 int AndroidBitmap_getInfo(JNIEnv* env, jobject jbitmap,
                           AndroidBitmapInfo* info);
+
 #if __ANDROID_API__ >= 30
+
 /**
  * Given a java bitmap object, return its {@link ADataSpace}.
  *
@@ -115,7 +129,9 @@ int AndroidBitmap_getInfo(JNIEnv* env, jobject jbitmap,
  * Available since API level 30.
  */
 int32_t AndroidBitmap_getDataSpace(JNIEnv* env, jobject jbitmap)  __INTRODUCED_IN(30);
+
 #endif // __ANDROID_API__ >= 30
+
 /**
  * Given a java bitmap object, attempt to lock the pixel address.
  * Locking will ensure that the memory for the pixels will not move
@@ -130,12 +146,16 @@ int32_t AndroidBitmap_getDataSpace(JNIEnv* env, jobject jbitmap)  __INTRODUCED_I
  * fails, addrPtr will be ignored.
  */
 int AndroidBitmap_lockPixels(JNIEnv* env, jobject jbitmap, void** addrPtr);
+
 /**
  * Call this to balance a successful call to AndroidBitmap_lockPixels.
  */
 int AndroidBitmap_unlockPixels(JNIEnv* env, jobject jbitmap);
+
 #if __ANDROID_API__ >= 30
+
 // Note: these values match android.graphics.Bitmap#compressFormat.
+
 /**
  *  Specifies the formats that can be compressed to with
  *  {@link AndroidBitmap_compress}.
@@ -167,6 +187,7 @@ enum AndroidBitmapCompressFormat {
      */
     ANDROID_BITMAP_COMPRESS_FORMAT_WEBP_LOSSLESS = 4,
 };
+
 /**
  *  User-defined function for writing the output of compression.
  *
@@ -181,6 +202,7 @@ enum AndroidBitmapCompressFormat {
 typedef bool (*AndroidBitmap_CompressWriteFunc)(void* userContext,
                                                 const void* data,
                                                 size_t size) __INTRODUCED_IN(30);
+
 /**
  *  Compress |pixels| as described by |info|.
  *
@@ -209,8 +231,10 @@ int AndroidBitmap_compress(const AndroidBitmapInfo* info,
                            int32_t format, int32_t quality,
                            void* userContext,
                            AndroidBitmap_CompressWriteFunc fn) __INTRODUCED_IN(30);
+
 struct AHardwareBuffer;
 typedef struct AHardwareBuffer AHardwareBuffer;
+
 /**
  *  Retrieve the native object associated with a HARDWARE Bitmap.
  *
@@ -229,9 +253,13 @@ typedef struct AHardwareBuffer AHardwareBuffer;
  */
 int AndroidBitmap_getHardwareBuffer(JNIEnv* env, jobject bitmap,
         AHardwareBuffer** outBuffer) __INTRODUCED_IN(30);
+
 #endif // __ANDROID_API__ >= 30
+
 #ifdef __cplusplus
 }
 #endif
+
 #endif
+
 /** @} */

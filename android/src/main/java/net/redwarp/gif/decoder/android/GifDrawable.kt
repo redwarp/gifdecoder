@@ -7,22 +7,20 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
+import android.util.Log
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
-import net.redwarp.gif.decoder.Gif
 import net.redwarp.gif.decoder.LoopCount
 import net.redwarp.gif.decoder.NativeGif
 import net.redwarp.gif.decoder.Parser
 import net.redwarp.gif.decoder.PixelPacking
-import net.redwarp.gif.decoder.lzw.NativeLzwDecoder
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.CancellationException
 import kotlin.coroutines.coroutineContext
 
 class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
@@ -35,6 +33,7 @@ class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
 
     private val callbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
 
+    @Volatile
     private var isRunning: Boolean = false
     private var loopJob: Job? = null
     private val width = gif.dimension.width
@@ -108,10 +107,11 @@ class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
         if (!gif.isAnimated) return // No need to animate single gifs
 
         val previousJob = loopJob
-        loopJob = CoroutineScope(Dispatchers.Default).launch {
-            previousJob?.cancelAndJoin()
-            animationLoop()
-        }
+        loopJob = loopJob(previousJob)
+        // loopJob = CoroutineScope(Dispatchers.Default).launch {
+        //     previousJob?.cancelAndJoin()
+        //     animationLoop()
+        // }
 
         callbacks.forEach { callback ->
             callback.onAnimationStart(this)
@@ -124,7 +124,7 @@ class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
         if (!isRunning) return // Already stopped.
 
         synchronized(this) {
-            loopJob?.cancel()
+            loopJob?.cancel(CancellationException("Finishing the job"))
         }
 
         callbacks.forEach { callback ->
@@ -148,6 +148,60 @@ class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
         callbacks.clear()
     }
 
+    private fun loopJob(previousJob: Job?): Job {
+        return GlobalScope.launch {
+            previousJob?.cancel(CancellationException())
+            previousJob?.join()
+
+            if (!gif.isAnimated || getLoopCount() == LoopCount.NoLoop) return@launch
+            val loopCount = getLoopCount()
+            if (loopCount is LoopCount.Fixed) {
+                if (loopIteration >= loopCount.count) {
+                    return@launch
+                }
+            }
+
+            while (true) {
+                ensureActive()
+                val frameDelay = gif.currentDelay.let {
+                    // If the frame delay is 0, let's at last have 2 frame before we display it.
+                    if (it == 0L) 32L else it
+                }
+                gif.advance()
+                if (gif.currentIndex == 0) {
+                    // We looped back to the first frame
+                    loopIteration++
+                }
+                // Checking if we are finished looping already
+                @Suppress("NAME_SHADOWING") val loopCount = getLoopCount()
+                if (loopCount is LoopCount.Fixed) {
+                    if (loopIteration >= loopCount.count) {
+                        return@launch
+                    }
+                }
+
+                val startTime = SystemClock.elapsedRealtime()
+
+                val nextFrame = getCurrentFrame()
+
+                val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
+                val delay: Long = (frameDelay - elapsedTime).coerceIn(0L, frameDelay)
+
+                ensureActive()
+                delay(delay)
+
+                synchronized(this) {
+                    ensureActive()
+                    val oldBitmap = bitmap
+                    bitmap = nextFrame
+                    bitmapCache.release(oldBitmap)
+                    bitmapPaint.isDither = bitmap.config == Bitmap.Config.RGB_565
+                    invalidateSelf()
+                }
+            }
+        }
+    }
+
     private suspend fun animationLoop() {
         if (!gif.isAnimated || getLoopCount() == LoopCount.NoLoop) return
         val loopCount = getLoopCount()
@@ -158,6 +212,7 @@ class GifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
         }
 
         while (true) {
+            Log.d("GifDrawable", "Looping again")
             coroutineContext.ensureActive()
             val frameDelay = gif.currentDelay.let {
                 // If the frame delay is 0, let's at last have 2 frame before we display it.

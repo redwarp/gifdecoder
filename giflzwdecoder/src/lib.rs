@@ -4,6 +4,10 @@ use jni::{
     JNIEnv,
 };
 
+mod android {
+    mod graphics;
+}
+
 const MAX_STACK_SIZE: usize = 4096;
 
 #[no_mangle]
@@ -120,39 +124,42 @@ pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_decod
     interlaced: jboolean,
 ) {
     let image_data_length = env.get_array_length(image_data).unwrap() as usize;
-    let auto_image_data = env
-        .get_auto_primitive_array_critical(image_data, ReleaseMode::CopyBack)
-        .unwrap();
-    let image_data =
-        std::slice::from_raw_parts(auto_image_data.as_ptr() as *const u8, image_data_length);
+    let (auto_image_data, _) = env.get_primitive_array_critical(image_data).unwrap();
+    let rust_image_data =
+        std::slice::from_raw_parts(auto_image_data as *const u8, image_data_length);
 
     let scratch_length = env.get_array_length(scratch).unwrap() as usize;
-    let auto_scratch = env
-        .get_auto_primitive_array_critical(scratch, ReleaseMode::CopyBack)
-        .unwrap();
-    let mut scratch =
-        std::slice::from_raw_parts_mut(auto_scratch.as_ptr() as *mut u8, scratch_length);
+    let (auto_scratch, _) = env.get_primitive_array_critical(scratch).unwrap();
+    let rust_scratch = std::slice::from_raw_parts_mut(auto_scratch as *mut u8, scratch_length);
 
-    decode(image_data, scratch, (frame_width * frame_height) as usize);
+    decode(
+        rust_image_data,
+        rust_scratch,
+        (frame_width * frame_height) as usize,
+    );
+
+    env.release_primitive_array_critical(image_data, &mut *auto_image_data, ReleaseMode::CopyBack)
+        .unwrap();
+
+    env.release_primitive_array_critical(scratch, &mut *auto_scratch, ReleaseMode::CopyBack)
+        .unwrap();
+
+    let (auto_scratch, _) = env.get_primitive_array_critical(scratch).unwrap();
+    let rust_scratch = std::slice::from_raw_parts_mut(auto_scratch as *mut u8, scratch_length);
 
     let pixels_length = env.get_array_length(pixels).unwrap() as usize;
-    let auto_pixels = env
-        .get_auto_primitive_array_critical(pixels, ReleaseMode::CopyBack)
-        .unwrap();
-    let mut pixels =
-        std::slice::from_raw_parts_mut(auto_pixels.as_ptr() as *mut u32, pixels_length);
+    let (auto_pixels, _) = env.get_primitive_array_critical(pixels).unwrap();
+    let mut rust_pixels = std::slice::from_raw_parts_mut(auto_pixels as *mut u32, pixels_length);
 
     let color_table_length = env.get_array_length(color_table).unwrap() as usize;
-    let auto_color_table = env
-        .get_auto_primitive_array_critical(color_table, ReleaseMode::CopyBack)
-        .unwrap();
-    let color_table =
-        std::slice::from_raw_parts(auto_color_table.as_ptr() as *const u32, color_table_length);
+    let (auto_color_table, _) = env.get_primitive_array_critical(color_table).unwrap();
+    let rust_color_table =
+        std::slice::from_raw_parts(auto_color_table as *const u32, color_table_length);
 
     fill_pixel(
-        &mut pixels,
-        &scratch,
-        &color_table,
+        &mut rust_pixels,
+        &rust_scratch,
+        &rust_color_table,
         transparent_color_index as usize,
         image_width as u32,
         frame_width as u32,
@@ -160,7 +167,19 @@ pub unsafe extern "C" fn Java_net_redwarp_gif_decoder_lzw_NativeLzwDecoder_decod
         offset_x as u32,
         offset_y as u32,
         interlaced == JNI_TRUE,
+    );
+
+    env.release_primitive_array_critical(scratch, &mut *auto_scratch, ReleaseMode::CopyBack)
+        .unwrap();
+
+    env.release_primitive_array_critical(pixels, &mut *auto_pixels, ReleaseMode::CopyBack)
+        .unwrap();
+    env.release_primitive_array_critical(
+        color_table,
+        &mut *auto_color_table,
+        ReleaseMode::CopyBack,
     )
+    .unwrap();
 }
 
 fn decode(image_data: &[u8], destination: &mut [u8], pixel_count: usize) {
