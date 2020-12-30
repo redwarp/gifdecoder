@@ -5,3 +5,9 @@ plugins {
 repositories {
     jcenter()
 }
+
+sourceSets {
+    main {
+        java.srcDir("../../buildSrc/src/main/kotlin")
+    }
+}

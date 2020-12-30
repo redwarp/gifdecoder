@@ -4,10 +4,14 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
     id("com.github.ben-manes.versions") version "0.36.0"
     id("org.jetbrains.dokka") version Versions.DOKKA
+    id("maven-publish")
 }
 
-project.group = Configuration.GROUP
-project.version = Configuration.VERSION
+base {
+    archivesBaseName = "decoder"
+    group = Configuration.GROUP
+    version = Configuration.VERSION
+}
 
 repositories {
     mavenCentral()
@@ -40,6 +44,20 @@ tasks.withType<Test> {
 }
 
 tasks.jar {
+}
+
+task("sourceJar", Jar::class) {
+    from(sourceSets.getByName("main").java)
+    archiveClassifier.set("sources")
+}
+
+publishing {
+    publications {
+        register<MavenPublication>("maven") {
+            from(components["java"])
+            artifact(tasks.getByName("sourceJar"))
+        }
+    }
 }
 
 val isNonStable = { version: String ->

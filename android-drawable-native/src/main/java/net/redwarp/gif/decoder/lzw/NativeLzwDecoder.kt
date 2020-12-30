@@ -1,6 +1,6 @@
 package net.redwarp.gif.decoder.lzw
 
-class NativeLzwDecoder : LzwDecoder {
+class NativeLzwDecoder {
 
     companion object {
         init {
@@ -8,9 +8,7 @@ class NativeLzwDecoder : LzwDecoder {
         }
     }
 
-    external override fun decode(imageData: ByteArray, destination: ByteArray, pixelCount: Int)
-
-    external fun access(bridge: DecodeJniBridge)
+    external fun decode(imageData: ByteArray, destination: ByteArray, pixelCount: Int)
 
     external fun decodeFull(
         imageData: ByteArray,

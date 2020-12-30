@@ -1,22 +1,32 @@
-package net.redwarp.gif.decoder.android
+package net.redwarp.gif.android
 
 import android.graphics.Bitmap
+import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Queue
 
-internal class BitmapCache {
+internal class BitmapPool private constructor() {
 
     private val bitmaps = mutableMapOf<Int, Queue<Bitmap>>()
 
-    fun obtain(width: Int, height: Int, config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
+    fun obtain(width: Int, height: Int, config: Bitmap.Config): Bitmap {
         val key = calculateSize(width, height, config)
 
-        return findBitmap(key)?.also { it.reconfigure(width, height, config) }
-            ?: createBitmap(width, height, config)
+        synchronized(this) {
+            return findBitmap(key)?.also { it.reconfigure(width, height, config) }
+                ?: createBitmap(width, height, config)
+        }
     }
 
     fun release(bitmap: Bitmap?) {
         if (bitmap == null || bitmap.isRecycled) return
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
+            && bitmap.config == Bitmap.Config.HARDWARE
+        ) {
+            bitmap.recycle()
+            return
+        }
 
         synchronized(this) {
             val queue = bitmaps[bitmap.allocationByteCount]
@@ -55,5 +65,15 @@ internal class BitmapCache {
 
     protected fun finalize() {
         flush()
+    }
+
+    companion object {
+        private var sharedBitmapPool: WeakReference<BitmapPool>? = null
+
+        fun obtain(): BitmapPool {
+            return sharedBitmapPool?.get() ?: BitmapPool().also {
+                sharedBitmapPool = WeakReference(it)
+            }
+        }
     }
 }

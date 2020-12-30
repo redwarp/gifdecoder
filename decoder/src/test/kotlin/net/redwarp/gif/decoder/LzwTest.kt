@@ -1,6 +1,6 @@
 package net.redwarp.gif.decoder
 
-import net.redwarp.gif.decoder.lzw.JvmLzwDecoder
+import net.redwarp.gif.decoder.lzw.LzwDecoder
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 
@@ -20,7 +20,7 @@ class LzwTest {
 
     @Test
     fun decode_properlyReturnedData() {
-        val lzwDecoder = JvmLzwDecoder()
+        val lzwDecoder = LzwDecoder()
         val pixels = ByteArray(15)
 
         lzwDecoder.decode(imageData = sampleData, destination = pixels, pixelCount = 15)

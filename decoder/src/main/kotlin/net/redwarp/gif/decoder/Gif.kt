@@ -5,7 +5,6 @@ import net.redwarp.gif.decoder.descriptors.GifDescriptor
 import net.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import net.redwarp.gif.decoder.descriptors.ImageDescriptor
 import net.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
-import net.redwarp.gif.decoder.lzw.JvmLzwDecoder
 import net.redwarp.gif.decoder.lzw.LzwDecoder
 import net.redwarp.gif.decoder.utils.Palettes
 import java.io.File
@@ -14,8 +13,7 @@ import java.io.InputStream
 private const val TRANSPARENT_COLOR = 0x0
 
 class Gif(
-    private val gifDescriptor: GifDescriptor,
-    private val lzwDecoder: LzwDecoder = JvmLzwDecoder()
+    private val gifDescriptor: GifDescriptor
 ) {
     constructor(inputStream: InputStream, pixelPacking: PixelPacking = PixelPacking.ARGB) :
         this(Parser.parse(inputStream, pixelPacking))
@@ -34,6 +32,8 @@ class Gif(
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private var previousPixels: IntArray? = null
+
+    private val lzwDecoder: LzwDecoder = LzwDecoder()
 
     private val isTransparent: Boolean =
         gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }

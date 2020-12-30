@@ -21,3 +21,5 @@ Disposal: http://www.theimage.com/animation/pages/disposal2.html or https://docs
 About transparency: https://ezgif.com/help/gif-transparency
 
 A clear explanation of the lzw decoding loop: https://www.daubnet.com/en/file-format-gif
+
+Gradle kts config for rust: https://github.com/shadowsocks/shadowsocks-android/blob/master/core/build.gradle.kts
