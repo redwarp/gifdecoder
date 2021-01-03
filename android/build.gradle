@@ -38,7 +38,6 @@ android {
 }
 
 dependencies {
-//    implementation "net.redwarp.gif:decoder:0.1.0"
     implementation project(":android-drawable")
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

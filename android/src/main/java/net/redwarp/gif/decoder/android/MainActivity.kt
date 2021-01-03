@@ -1,6 +1,8 @@
 package net.redwarp.gif.decoder.android
 
+import android.graphics.drawable.AnimatedImageDrawable
 import android.os.Bundle
+import android.view.SurfaceView
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -9,6 +11,7 @@ import net.redwarp.gif.android.GifDrawable
 class MainActivity : AppCompatActivity() {
 
     private val drawables: MutableList<Animatable2Compat> = mutableListOf()
+    private lateinit var onSurfaceDrawablePainter: OnSurfaceDrawablePainter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,19 +19,21 @@ class MainActivity : AppCompatActivity() {
 
         drawables.clear()
 
-        val imageView = findViewById<ImageView>(R.id.imageView)
+        val imageView1 = findViewById<ImageView>(R.id.imageView1)
         val drawable = GifDrawable.from(assets.open("full_colour.gif"))
         drawable.setRepeatCount(GifDrawable.REPEAT_INFINITE)
         drawables.add(drawable)
-        imageView.setImageDrawable(drawable)
+        imageView1.setImageDrawable(drawable)
         drawable.start()
-        imageView.setOnClickListener {
-            if(drawable.isRunning){
+        imageView1.setOnClickListener {
+            if (drawable.isRunning) {
                 drawable.stop()
             } else {
                 drawable.start()
             }
         }
+
+        val bob: AnimatedImageDrawable
 
         val imageView2 = findViewById<ImageView>(R.id.imageView2)
         val drawable2 = GifDrawable.from(assets.open("derpy_cat.gif"))
@@ -36,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         drawables.add(drawable2)
         drawable2.start()
         imageView2.setOnClickListener {
-            if(drawable2.isRunning){
+            if (drawable2.isRunning) {
                 drawable2.stop()
             } else {
                 drawable2.start()
@@ -49,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         drawables.add(drawable3)
         drawable3.start()
         imageView3.setOnClickListener {
-            if(drawable3.isRunning){
+            if (drawable3.isRunning) {
                 drawable3.stop()
             } else {
                 drawable3.start()
@@ -62,21 +67,36 @@ class MainActivity : AppCompatActivity() {
         drawables.add(drawable4)
         drawable4.start()
         imageView4.setOnClickListener {
-            if(drawable4.isRunning){
+            if (drawable4.isRunning) {
                 drawable4.stop()
             } else {
                 drawable4.start()
+            }
+        }
+
+        val surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
+        val drawable5 = GifDrawable.from(assets.open("glasses-aspect_ratio.gif"))
+        drawable5.setRepeatCount(GifDrawable.REPEAT_INFINITE)
+        val wrapper = GifWrapperDrawable(drawable5)
+        onSurfaceDrawablePainter = OnSurfaceDrawablePainter(surfaceView.holder, wrapper)
+        drawables.add(drawable5)
+        drawable5.start()
+        surfaceView.setOnClickListener {
+            if (drawable5.isRunning) {
+                drawable5.stop()
+            } else {
+                drawable5.start()
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        drawables.forEach(Animatable2Compat::start)
+        // drawables.forEach(Animatable2Compat::start)
     }
 
     override fun onPause() {
-        drawables.forEach(Animatable2Compat::stop)
+        // drawables.forEach(Animatable2Compat::stop)
         super.onPause()
     }
 }

@@ -11,7 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         tools:srcCompat="@tools:sample/avatars"
-        android:id="@+id/imageView"
+        android:id="@+id/imageView1"
         android:scaleType="fitCenter"
         android:contentDescription="@null"
         app:layout_constraintTop_toTopOf="parent"
@@ -25,10 +25,10 @@
         android:layout_height="0dp"
         tools:srcCompat="@tools:sample/avatars"
         android:id="@+id/imageView2"
-        app:layout_constraintStart_toEndOf="@+id/imageView"
+        app:layout_constraintStart_toEndOf="@+id/imageView1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imageView"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView"
+        app:layout_constraintTop_toTopOf="@+id/imageView1"
+        app:layout_constraintBottom_toBottomOf="@+id/imageView1"
         app:layout_constraintHorizontal_bias="0.5"
         android:scaleType="fitCenter" />
 
@@ -37,9 +37,9 @@
         android:layout_height="0dp"
         tools:srcCompat="@tools:sample/avatars"
         android:id="@+id/imageView3"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
+        app:layout_constraintTop_toBottomOf="@+id/imageView1"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/surfaceView"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintEnd_toStartOf="@+id/imageView4"
         android:scaleType="fitCenter" />
@@ -55,4 +55,13 @@
         app:layout_constraintBottom_toBottomOf="@+id/imageView3"
         app:layout_constraintHorizontal_bias="0.5"
         android:scaleType="fitCenter" />
+
+    <SurfaceView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:id="@+id/surfaceView"
+        app:layout_constraintTop_toBottomOf="@+id/imageView3"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
