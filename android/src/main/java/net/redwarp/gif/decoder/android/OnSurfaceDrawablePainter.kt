@@ -6,7 +6,6 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.SurfaceHolder
 
 class OnSurfaceDrawablePainter(private val holder: SurfaceHolder, private val drawable: Drawable) :
@@ -43,7 +42,7 @@ class OnSurfaceDrawablePainter(private val holder: SurfaceHolder, private val dr
         isCreated = false
     }
 
-    fun drawOnSurface() {
+    private fun drawOnSurface() {
         if (isCreated) {
             val canvas =
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -64,13 +63,11 @@ class OnSurfaceDrawablePainter(private val holder: SurfaceHolder, private val dr
     }
 
     override fun invalidateDrawable(who: Drawable) {
-        Log.d("OnSurfaceStuff", "Drawable invalidated")
         drawOnSurface()
     }
 
     private val drawRunnable = { drawOnSurface() }
     override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
-
         handler.postAtTime(drawRunnable, `when`)
     }
 

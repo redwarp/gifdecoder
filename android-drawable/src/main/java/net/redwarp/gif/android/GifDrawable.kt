@@ -1,16 +1,20 @@
 package net.redwarp.gif.android
 
 import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.ColorFilter
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PixelFormat
+import android.graphics.RectF
+import android.graphics.Shader.TileMode
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.SystemClock
-import android.util.Log
+import androidx.core.graphics.withMatrix
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -38,8 +42,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     @Volatile
     private var isRunning: Boolean = false
     private var loopJob: Job? = null
-    private val width = gif.dimension.width
-    private val height = gif.dimension.height
+    private val gifWidth = gif.dimension.width
+    private val gifHeight = gif.dimension.height
 
     private val pixels = IntArray(gif.dimension.size)
     private var bitmap: Bitmap = getCurrentFrame()
@@ -48,7 +52,9 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         isAntiAlias = false
         isFilterBitmap = false
         isDither = bitmap.config == Bitmap.Config.RGB_565
+        shader = BitmapShader(bitmap, TileMode.CLAMP, TileMode.CLAMP)
     }
+    private val matrix = Matrix()
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + CoroutineName("GifDrawable"))
 
@@ -61,7 +67,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private val handler: Handler by lazy {
         DrawHandler(Looper.getMainLooper())
     }
-    private var lastFrameTime: Long = 0
 
     fun setRepeatCount(repeatCount: Int) {
         _loopCount = when {
@@ -89,30 +94,32 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     override fun getIntrinsicWidth(): Int {
         return if (gif.aspectRatio >= 1.0) {
-            (width.toDouble() * gif.aspectRatio).toInt()
+            (gifWidth.toDouble() * gif.aspectRatio).toInt()
         } else {
-            width
+            gifWidth
         }
     }
 
     override fun getIntrinsicHeight(): Int {
         return if (gif.aspectRatio >= 1.0) {
-            height
+            gifHeight
         } else {
-            (height.toDouble() / gif.aspectRatio).toInt()
+            (gifHeight.toDouble() / gif.aspectRatio).toInt()
         }
     }
 
     override fun draw(canvas: Canvas) {
         synchronized(lock) {
-            canvas.drawBitmap(bitmap, null, bounds, bitmapPaint)
+            canvas.withMatrix(matrix) {
+                drawRect(
+                    0f,
+                    0f,
+                    gifWidth.toFloat(),
+                    gifHeight.toFloat(),
+                    bitmapPaint
+                )
+            }
         }
-
-        val currentTime = SystemClock.elapsedRealtime()
-        if (lastFrameTime != 0L) {
-            Log.d("GifDrawable", "Time between frames: " + (currentTime - lastFrameTime))
-        }
-        lastFrameTime = currentTime
 
         if (isRunning && !handler.hasMessages(DRAW_MESSAGE) && !(loopJob?.isActive == true)) {
             loopJob = coroutineScope.launch {
@@ -166,6 +173,16 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     override fun clearAnimationCallbacks() {
         animationCallbacks.clear()
+    }
+
+    override fun setBounds(left: Int, top: Int, right: Int, bottom: Int) {
+        super.setBounds(left, top, right, bottom)
+
+        matrix.setRectToRect(
+            RectF(0f, 0f, gifWidth.toFloat(), gifHeight.toFloat()),
+            RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat()),
+            Matrix.ScaleToFit.FILL
+        )
     }
 
     private fun postAnimationStart() {
@@ -235,12 +252,12 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         val transparent = pixels.any { it == 0 }
 
         val nextFrame: Bitmap = bitmapCache.obtain(
-            width = width,
-            height = height,
+            width = gifWidth,
+            height = gifHeight,
             config = if (transparent) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
         )
 
-        nextFrame.setPixels(pixels, 0, width, 0, 0, width, height)
+        nextFrame.setPixels(pixels, 0, gifWidth, 0, 0, gifWidth, gifHeight)
         return nextFrame
     }
 
@@ -257,8 +274,11 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 synchronized(lock) {
                     val oldBitmap = bitmap
                     bitmap = nextFrame
-                    bitmapCache.release(oldBitmap)
+                    bitmapPaint.shader =
+                        BitmapShader(bitmap, TileMode.CLAMP, TileMode.CLAMP)
                     bitmapPaint.isDither = bitmap.config == Bitmap.Config.RGB_565
+
+                    bitmapCache.release(oldBitmap)
                 }
 
                 invalidateSelf()

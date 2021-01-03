@@ -33,8 +33,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val bob: AnimatedImageDrawable
-
         val imageView2 = findViewById<ImageView>(R.id.imageView2)
         val drawable2 = GifDrawable.from(assets.open("derpy_cat.gif"))
         imageView2.setImageDrawable(drawable2)
@@ -88,15 +86,5 @@ class MainActivity : AppCompatActivity() {
                 drawable5.start()
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // drawables.forEach(Animatable2Compat::start)
-    }
-
-    override fun onPause() {
-        // drawables.forEach(Animatable2Compat::stop)
-        super.onPause()
     }
 }
