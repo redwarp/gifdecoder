@@ -10,7 +10,7 @@ import android.graphics.drawable.Drawable
 import net.redwarp.gif.android.GifDrawable
 
 class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
-    private val backgroundColor = gifDrawable.backgroundColor()
+    private var backgroundColor = gifDrawable.backgroundColor()
     private val paint = Paint().apply {
         color = backgroundColor
         style = Paint.Style.FILL
@@ -32,6 +32,11 @@ class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
 
     init {
         gifDrawable.callback = chainingCallback
+    }
+
+    fun setBackgroundColor(color: Int) {
+        backgroundColor = color
+        paint.color = color
     }
 
     override fun draw(canvas: Canvas) {

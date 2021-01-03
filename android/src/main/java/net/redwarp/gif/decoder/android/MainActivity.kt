@@ -1,6 +1,6 @@
 package net.redwarp.gif.decoder.android
 
-import android.graphics.drawable.AnimatedImageDrawable
+import android.graphics.Color
 import android.os.Bundle
 import android.view.SurfaceView
 import android.widget.ImageView
@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
         val drawable5 = GifDrawable.from(assets.open("glasses-aspect_ratio.gif"))
         drawable5.setRepeatCount(GifDrawable.REPEAT_INFINITE)
         val wrapper = GifWrapperDrawable(drawable5)
+        wrapper.setBackgroundColor(Color.WHITE)
         onSurfaceDrawablePainter = OnSurfaceDrawablePainter(surfaceView.holder, wrapper)
         drawables.add(drawable5)
         drawable5.start()
