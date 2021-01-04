@@ -2,13 +2,14 @@
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    `maven-publish`
+    id("maven-publish")
+    id("org.jetbrains.dokka") version Versions.DOKKA
 }
 
 base {
-    group = Configuration.GROUP
+    group = Publication.GROUP
     archivesBaseName = "android-drawable"
-    version = Configuration.VERSION
+    version = Publication.VERSION
 }
 
 repositories {
@@ -65,21 +66,36 @@ task("sourceJar", Jar::class) {
     archiveClassifier.set("sources")
 }
 
+task("javadocJar", Jar::class) {
+    dependsOn("dokkaJavadoc")
+    archiveClassifier.set("javadoc")
+    from("$buildDir/dokka/javadoc")
+}
+
 publishing {
     publications {
         register<MavenPublication>("maven") {
-            groupId = Configuration.GROUP
+            groupId = Publication.GROUP
             artifactId = "android-drawable"
-            version = Configuration.VERSION
+            version = Publication.VERSION
 
             afterEvaluate {
                 artifact(tasks.getByName("bundleReleaseAar"))
 
             }
-            // artifact(tasks.getByName("androidJavadocJar"))
+            artifact(tasks.getByName("javadocJar"))
             artifact(tasks.getByName("sourceJar"))
 
             pom {
+                name.set("Android Gif Drawable")
+                url.set(Publication.Pom.URL)
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+
                 withXml {
                     fun groovy.util.Node.addDependency(dependency: Dependency, scope: String) {
                         appendNode("dependency").apply {

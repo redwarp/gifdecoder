@@ -1,16 +1,18 @@
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
-    id("org.jlleitschuh.gradle.ktlint") version "9.4.1"
+    id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT
     id("com.github.ben-manes.versions") version "0.36.0"
-    id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
+    id("org.jetbrains.dokka") version Versions.DOKKA
 }
 
 base {
     archivesBaseName = "decoder"
-    group = Configuration.GROUP
-    version = Configuration.VERSION
+    group = Publication.GROUP
+    version = Publication.VERSION
 }
 
 repositories {
@@ -43,32 +45,47 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.jar {
-}
-
 task("sourceJar", Jar::class) {
     from(sourceSets.getByName("main").java)
     archiveClassifier.set("sources")
+}
+
+task("javadocJar", Jar::class) {
+    dependsOn("dokkaJavadoc")
+    archiveClassifier.set("javadoc")
+    from("$buildDir/dokka/javadoc")
 }
 
 publishing {
     publications {
         register<MavenPublication>("maven") {
             from(components["java"])
+
+            artifact(tasks.getByName("javadocJar"))
             artifact(tasks.getByName("sourceJar"))
+
+            pom {
+                name.set("Kotlin Gif Decoder")
+                url.set(Publication.Pom.URL)
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+            }
         }
     }
 }
 
 val isNonStable = { version: String ->
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { it -> version.toUpperCase().contains(it) }
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
     val regex = Regex("/^[0-9,.v-]+(-r)?$/")
     !stableKeyword && !(regex.matches(version))
 }
 
-tasks.named("dependencyUpdates", com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask::class.java)
-    .configure {
-        rejectVersionIf {
-            isNonStable(candidate.version)
-        }
+tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
+    rejectVersionIf {
+        isNonStable(candidate.version)
     }
+}
