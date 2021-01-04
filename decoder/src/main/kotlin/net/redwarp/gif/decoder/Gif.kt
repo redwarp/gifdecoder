@@ -122,9 +122,9 @@ class Gif(
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
         val colorTable =
             imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
-            ?: Palettes.createFakeColorMap(
-                gifDescriptor.logicalScreenDescriptor.colorCount
-            )
+                ?: Palettes.createFakeColorMap(
+                    gifDescriptor.logicalScreenDescriptor.colorCount
+                )
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 

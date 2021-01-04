@@ -1,5 +1,3 @@
-import org.gradle.groovy.scripts.internal.AstUtils
-
 // See https://medium.com/@saschpe/android-library-publication-in-2020-93e8c0e106c8
 plugins {
     id("com.android.library")
@@ -33,9 +31,12 @@ android {
     }
 
     buildTypes {
-        getByName("release"){
+        getByName("release") {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -70,7 +71,19 @@ dependencies {
 }
 
 tasks.whenTaskAdded {
-    when(name) {
+    when (name) {
         "mergeDebugJniLibFolders", "mergeReleaseJniLibFolders" -> dependsOn("cargoBuild")
+    }
+}
+
+tasks.register("cargoClean", Exec::class.java) {
+    workingDir("$rootDir/giflzwdecoder")
+    commandLine("cargo", "clean")
+    group = "rust"
+}
+
+tasks.whenTaskAdded {
+    if(name == "clean") {
+        dependsOn("cargoClean")
     }
 }

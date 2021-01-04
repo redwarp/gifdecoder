@@ -22,8 +22,8 @@ internal class BitmapPool private constructor() {
     fun release(bitmap: Bitmap?) {
         if (bitmap == null || bitmap.isRecycled) return
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
-            && bitmap.config == Bitmap.Config.HARDWARE
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+            bitmap.config == Bitmap.Config.HARDWARE
         ) {
             bitmap.recycle()
             return
