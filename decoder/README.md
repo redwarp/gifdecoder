@@ -1,3 +1,5 @@
+Bunch of docs I had to read to understand the spec:
+
 https://www.fileformat.info/format/gif/spec/index.htm
 
 https://www.w3.org/Graphics/GIF/spec-gif87.txt
