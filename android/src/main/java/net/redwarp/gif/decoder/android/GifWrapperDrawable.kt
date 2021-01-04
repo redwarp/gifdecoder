@@ -3,9 +3,12 @@ package net.redwarp.gif.decoder.android
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.PorterDuff
+import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import net.redwarp.gif.android.GifDrawable
 
@@ -15,6 +18,7 @@ class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
         color = backgroundColor
         style = Paint.Style.FILL
     }
+    private val matrix = Matrix()
 
     private val chainingCallback: Callback = object : Callback {
         override fun invalidateDrawable(who: Drawable) {
@@ -45,7 +49,10 @@ class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
         } else {
             canvas.drawPaint(paint)
         }
+        val checkpoint = canvas.save()
+        canvas.concat(matrix)
         gifDrawable.draw(canvas)
+        canvas.restoreToCount(checkpoint)
     }
 
     override fun setAlpha(alpha: Int) {
@@ -71,29 +78,13 @@ class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
     override fun setBounds(left: Int, top: Int, right: Int, bottom: Int) {
         super.setBounds(left, top, right, bottom)
 
-        val width = right - left
-        val height = bottom - top
-
-        val gifWidth = gifDrawable.intrinsicWidth
-        val gifHeight = gifDrawable.intrinsicHeight
-
-        val ratio = width.toFloat() / height.toFloat()
-        val gifRatio = gifWidth.toFloat() / gifHeight.toFloat()
-
-        if (ratio > gifRatio) {
-            val gifTop = 0
-            val gifBottom = height
-            val newWidth = (height * gifRatio).toInt()
-            val gifLeft = (width - newWidth) / 2
-            val gifRight = newWidth + (width - newWidth) / 2
-            gifDrawable.setBounds(gifLeft, gifTop, gifRight, gifBottom)
-        } else {
-            val gifLeft = 0
-            val gifRight = width
-            val newHeight = (width / gifRatio).toInt()
-            val gifTop = (height - newHeight) / 2
-            val gifBottom = newHeight + (height - newHeight) / 2
-            gifDrawable.setBounds(gifLeft, gifTop, gifRight, gifBottom)
-        }
+        matrix.setRectToRect(
+            gifDrawable.bounds.toRectF(),
+            bounds.toRectF(),
+            Matrix.ScaleToFit.CENTER
+        )
     }
+
+    private fun Rect.toRectF(): RectF =
+        RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
 }

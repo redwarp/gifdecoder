@@ -14,7 +14,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.SystemClock
-import androidx.core.graphics.withMatrix
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -110,15 +109,16 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     override fun draw(canvas: Canvas) {
         synchronized(lock) {
-            canvas.withMatrix(matrix) {
-                drawRect(
-                    0f,
-                    0f,
-                    gifWidth.toFloat(),
-                    gifHeight.toFloat(),
-                    bitmapPaint
-                )
-            }
+            val checkpoint = canvas.save()
+            canvas.concat(matrix)
+            canvas.drawRect(
+                0f,
+                0f,
+                gifWidth.toFloat(),
+                gifHeight.toFloat(),
+                bitmapPaint
+            )
+            canvas.restoreToCount(checkpoint)
         }
 
         if (isRunning && !handler.hasMessages(DRAW_MESSAGE) && !(loopJob?.isActive == true)) {

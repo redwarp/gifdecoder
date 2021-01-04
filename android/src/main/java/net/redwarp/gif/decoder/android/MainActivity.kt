@@ -1,8 +1,10 @@
 package net.redwarp.gif.decoder.android
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.SurfaceView
+import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -11,7 +13,7 @@ import net.redwarp.gif.android.GifDrawable
 class MainActivity : AppCompatActivity() {
 
     private val drawables: MutableList<Animatable2Compat> = mutableListOf()
-    private lateinit var onSurfaceDrawablePainter: OnSurfaceDrawablePainter
+    private lateinit var surfaceDrawableRenderer: SurfaceDrawableRenderer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         drawable5.setRepeatCount(GifDrawable.REPEAT_INFINITE)
         val wrapper = GifWrapperDrawable(drawable5)
         wrapper.setBackgroundColor(Color.WHITE)
-        onSurfaceDrawablePainter = OnSurfaceDrawablePainter(surfaceView.holder, wrapper)
+        surfaceDrawableRenderer = SurfaceDrawableRenderer(surfaceView.holder, wrapper)
         drawables.add(drawable5)
         drawable5.start()
         surfaceView.setOnClickListener {

@@ -51,7 +51,6 @@ android {
 dependencies {
     api("net.redwarp.gif:decoder:0.1.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN}")
-    implementation("androidx.core:core-ktx:1.3.2")
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2")
@@ -61,7 +60,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }
 
-task("sourceJar", Jar::class){
+task("sourceJar", Jar::class) {
     from(android.sourceSets.getByName("main").java.srcDirs)
     archiveClassifier.set("sources")
 }

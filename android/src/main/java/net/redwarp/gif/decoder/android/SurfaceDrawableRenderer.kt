@@ -8,7 +8,10 @@ import android.os.Handler
 import android.os.Looper
 import android.view.SurfaceHolder
 
-class OnSurfaceDrawablePainter(private val holder: SurfaceHolder, private val drawable: Drawable) :
+/**
+ * Simple class do draw a [Drawable] on a [SurfaceHolder]
+ */
+class SurfaceDrawableRenderer(private val holder: SurfaceHolder, private val drawable: Drawable) :
     SurfaceHolder.Callback,
     Drawable.Callback {
     private var width: Int = 0

@@ -2,12 +2,13 @@ package net.redwarp.gif.android
 
 import android.graphics.Bitmap
 import java.lang.ref.WeakReference
-import java.util.LinkedList
-import java.util.Queue
+import java.util.TreeMap
+
+// Reuse the idea from Coil to not use a bitmap that is more than 10 times too big.
+private const val MAX_SIZE_MULTIPLE = 4
 
 internal class BitmapPool private constructor() {
-
-    private val bitmaps = mutableMapOf<Int, Queue<Bitmap>>()
+    private val bitmaps = Store()
 
     fun obtain(width: Int, height: Int, config: Bitmap.Config): Bitmap {
         val key = calculateSize(width, height, config)
@@ -29,15 +30,12 @@ internal class BitmapPool private constructor() {
         }
 
         synchronized(this) {
-            val queue = bitmaps[bitmap.allocationByteCount]
-                ?: LinkedList<Bitmap>().also { bitmaps[bitmap.allocationByteCount] = it }
-            queue.offer(bitmap)
+            bitmaps.put(bitmap.allocationByteCount, bitmap)
         }
     }
 
-    @Synchronized
     private fun findBitmap(cacheKey: Int): Bitmap? {
-        return bitmaps[cacheKey]?.poll()
+        return bitmaps[cacheKey]
     }
 
     private fun createBitmap(width: Int, height: Int, config: Bitmap.Config): Bitmap {
@@ -53,14 +51,9 @@ internal class BitmapPool private constructor() {
 
     @Synchronized
     fun flush() {
-        bitmaps.iterator().forEach { entry ->
-            val queueIterator = entry.value.iterator()
-            while (queueIterator.hasNext()) {
-                queueIterator.next().recycle()
-                queueIterator.remove()
-            }
+        bitmaps.flush {
+            it.recycle()
         }
-        bitmaps.clear()
     }
 
     protected fun finalize() {
@@ -74,6 +67,39 @@ internal class BitmapPool private constructor() {
             return sharedBitmapPool?.get() ?: BitmapPool().also {
                 sharedBitmapPool = WeakReference(it)
             }
+        }
+    }
+
+    private class Store {
+        private val bitmaps = TreeMap<Int, MutableList<Bitmap>>()
+
+        operator fun get(key: Int): Bitmap? {
+            val optimizedKey =
+                bitmaps.ceilingKey(key)?.takeIf { it < MAX_SIZE_MULTIPLE * key } ?: key
+
+            val entries = bitmaps[optimizedKey] ?: return null
+
+            val bitmap = entries.removeLast()
+            if (entries.isEmpty()) {
+                // Cleaning up
+                bitmaps.remove(optimizedKey)
+            }
+            return bitmap
+        }
+
+        fun put(key: Int, bitmap: Bitmap) {
+            bitmaps.getOrPut(key) {
+                mutableListOf()
+            }.add(bitmap)
+        }
+
+        fun flush(forEach: (Bitmap) -> Unit) {
+            for (sizeCategory in bitmaps.values) {
+                for (entry in sizeCategory) {
+                    forEach(entry)
+                }
+            }
+            bitmaps.clear()
         }
     }
 }
