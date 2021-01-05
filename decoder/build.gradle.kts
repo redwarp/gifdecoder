@@ -1,12 +1,14 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
+import com.jfrog.bintray.gradle.BintrayExtension
 
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT
     id("com.github.ben-manes.versions") version "0.36.0"
-    id("maven-publish")
     id("org.jetbrains.dokka") version Versions.DOKKA
+    id("maven-publish")
+    id("com.jfrog.bintray") version Versions.BINTRAY
 }
 
 base {
@@ -58,7 +60,7 @@ task("javadocJar", Jar::class) {
 
 publishing {
     publications {
-        register<MavenPublication>("maven") {
+        register<MavenPublication>("release") {
             from(components["java"])
 
             artifact(tasks.getByName("javadocJar"))
@@ -88,4 +90,29 @@ tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
     rejectVersionIf {
         isNonStable(candidate.version)
     }
+}
+
+bintray {
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_API_KEY")
+    setPublications("release")
+    publish = true
+
+    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
+        repo = "maven"
+        name = "gif-decoder"
+        websiteUrl = Publication.Pom.URL
+        vcsUrl = Publication.Pom.URL
+        issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
+        setLicenses("Apache-2.0")
+        setLabels("kotlin", "gif")
+        userOrg = "redwarp"
+        publicDownloadNumbers = true
+        override = true
+
+        version(delegateClosureOf<BintrayExtension.VersionConfig> {
+            name = Publication.VERSION
+            vcsTag = "v${Publication.VERSION}"
+        })
+    })
 }

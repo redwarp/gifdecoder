@@ -4,5 +4,6 @@ object Publication {
 
     object Pom {
         const val URL = "https://github.com/redwarp/gifdecoder"
+        const val ISSUE_TRACKER_URL = "https://github.com/redwarp/gifdecoder/issues"
     }
 }

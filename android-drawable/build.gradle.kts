@@ -1,9 +1,12 @@
+import com.jfrog.bintray.gradle.BintrayExtension
+
 // See https://medium.com/@saschpe/android-library-publication-in-2020-93e8c0e106c8
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("maven-publish")
     id("org.jetbrains.dokka") version Versions.DOKKA
+    id("maven-publish")
+    id("com.jfrog.bintray") version Versions.BINTRAY
 }
 
 base {
@@ -74,7 +77,7 @@ task("javadocJar", Jar::class) {
 
 publishing {
     publications {
-        register<MavenPublication>("maven") {
+        register<MavenPublication>("release") {
             groupId = Publication.GROUP
             artifactId = "android-drawable"
             version = Publication.VERSION
@@ -120,4 +123,29 @@ publishing {
             }
         }
     }
+}
+
+bintray {
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_API_KEY")
+    setPublications("release")
+    publish = true
+
+    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
+        repo = "maven"
+        name = "gif-android-drawable"
+        websiteUrl = Publication.Pom.URL
+        vcsUrl = Publication.Pom.URL
+        issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
+        setLicenses("Apache-2.0")
+        setLabels("kotlin", "gif", "android", "drawable")
+        userOrg = "redwarp"
+        publicDownloadNumbers = true
+        override = true
+
+        version(delegateClosureOf<BintrayExtension.VersionConfig> {
+            name = Publication.VERSION
+            vcsTag = "v${Publication.VERSION}"
+        })
+    })
 }
