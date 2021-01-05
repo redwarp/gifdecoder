@@ -10,22 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
-      - name: Install Rust Toolchain
-        id: rust_toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Cache NDK
-        id: cache-ndk
-        uses: actions/cache@v2
-        with:
-          path: /Users/runner/android/ndk-bundle
-          key: ${{ runner.os }}-cached-ndk
-      - name: Install Android NDK
-        if: steps.cache-ndk.outputs.cache-hit != 'true'
-        run: $ANDROID_SDK_ROOT/tools/bin/sdkmanager ndk-bundle
       - name: Checkout Repo
         uses: actions/checkout@v2
       - name: Cache Gradle Caches

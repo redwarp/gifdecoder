@@ -2,7 +2,7 @@
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("org.mozilla.rust-android-gradle.rust-android")
+    // id("org.mozilla.rust-android-gradle.rust-android")
 }
 
 base {
@@ -50,12 +50,12 @@ android {
     ndkVersion = "22.0.7026061"
 }
 
-cargo {
-    module = "../giflzwdecoder"
-    libname = "giflzwdecoder"
-    targets = listOf("arm", "x86", "arm64", "x86_64")
-    profile = "release"
-}
+// cargo {
+//     module = "../giflzwdecoder"
+//     libname = "giflzwdecoder"
+//     targets = listOf("arm", "x86", "arm64", "x86_64")
+//     profile = "release"
+// }
 
 dependencies {
     api("net.redwarp.gif:decoder:0.1.0")
