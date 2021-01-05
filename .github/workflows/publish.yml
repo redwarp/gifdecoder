@@ -8,9 +8,6 @@ on:
 jobs:
   gradle:
     runs-on: ubuntu-latest
-    env:
-      BINTRAY_API_KEY: ${{ secrets.BINTRAY_API_KEY }}
-      BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
     if: ${{ !contains(github.event.head_commit.message, 'ci skip') }}
     steps:
       - name: Checkout Repo
@@ -28,7 +25,21 @@ jobs:
       - name: Test both libraries
         run: ./gradlew testLibraries
       - name: Compile and upload both libraries to Bintray
+        env:
+          BINTRAY_API_KEY: ${{ secrets.BINTRAY_API_KEY }}
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
         run: ./gradlew uploadLibraries
+        if: success()
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
         if: success()
       - name: Stop Gradle
         run: ./gradlew --stop
