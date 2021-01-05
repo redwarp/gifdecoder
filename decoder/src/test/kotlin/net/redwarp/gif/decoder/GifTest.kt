@@ -100,7 +100,7 @@ class GifTest {
         for (index in 0 until gif.frameCount) {
             gif.getFrame(index, pixels)
 
-            ImageIO.write(image, "png", File("../output/frame_$index.png"))
+            // ImageIO.write(image, "png", File("../output/frame_$index.png"))
         }
     }
 
