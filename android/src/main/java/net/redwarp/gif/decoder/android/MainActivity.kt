@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val imageView3 = findViewById<ImageView>(R.id.imageView3)
-        val drawable3 = GifDrawable.from(assets.open("glasses-aspect_ratio.gif"))
+        val drawable3 = GifDrawable.from(assets.open("timers.gif"))
         imageView3.setImageDrawable(drawable3)
         drawables.add(drawable3)
         drawable3.start()

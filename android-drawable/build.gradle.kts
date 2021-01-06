@@ -12,7 +12,7 @@ plugins {
 base {
     group = Publication.GROUP
     archivesBaseName = "android-drawable"
-    version = Publication.VERSION
+    version = Publication.VERSION_NAME
 }
 
 repositories {
@@ -27,8 +27,8 @@ android {
     defaultConfig {
         minSdkVersion(21)
         targetSdkVersion(30)
-        versionCode(1)
-        versionName("1.0")
+        versionCode(Publication.VERSION_CODE)
+        versionName(Publication.VERSION_NAME)
 
         testInstrumentationRunner("androidx.test.runner.AndroidJUnitRunner")
         consumerProguardFiles("consumer-rules.pro")
@@ -80,7 +80,7 @@ publishing {
         register<MavenPublication>("release") {
             groupId = Publication.GROUP
             artifactId = "android-drawable"
-            version = Publication.VERSION
+            version = Publication.VERSION_NAME
 
             afterEvaluate {
                 artifact(tasks.getByName("bundleReleaseAar"))
@@ -135,7 +135,7 @@ bintray {
         repo = "maven"
         name = "gif-android-drawable"
         websiteUrl = Publication.Pom.URL
-        vcsUrl = Publication.Pom.URL
+        vcsUrl = Publication.Pom.VCS_URL
         issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
         setLicenses("Apache-2.0")
         setLabels("kotlin", "gif", "android", "drawable")
@@ -144,8 +144,8 @@ bintray {
         override = true
 
         version(delegateClosureOf<BintrayExtension.VersionConfig> {
-            name = Publication.VERSION
-            vcsTag = "v${Publication.VERSION}"
+            name = Publication.VERSION_NAME
+            vcsTag = "v${Publication.VERSION_NAME}"
         })
     })
 }

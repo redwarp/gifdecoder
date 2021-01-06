@@ -121,7 +121,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             canvas.restoreToCount(checkpoint)
         }
 
-        if (isRunning && !handler.hasMessages(DRAW_MESSAGE) && !(loopJob?.isActive == true)) {
+        if (isRunning && !handler.hasMessages(DRAW_MESSAGE) && loopJob?.isActive != true) {
             loopJob = coroutineScope.launch {
                 animationJob()
             }
@@ -143,8 +143,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         // No need to animate gifs with single frame, or already finished gifs.
         if (!shouldAnimate()) return
-
-        // loopJob?.cancel()
 
         isRunning = true
         postAnimationStart()

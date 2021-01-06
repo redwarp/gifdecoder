@@ -14,7 +14,7 @@ plugins {
 base {
     archivesBaseName = "decoder"
     group = Publication.GROUP
-    version = Publication.VERSION
+    version = Publication.VERSION_NAME
 }
 
 repositories {
@@ -102,7 +102,7 @@ bintray {
         repo = "maven"
         name = "gif-decoder"
         websiteUrl = Publication.Pom.URL
-        vcsUrl = Publication.Pom.URL
+        vcsUrl = Publication.Pom.VCS_URL
         issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
         setLicenses("Apache-2.0")
         setLabels("kotlin", "gif")
@@ -111,8 +111,8 @@ bintray {
         override = true
 
         version(delegateClosureOf<BintrayExtension.VersionConfig> {
-            name = Publication.VERSION
-            vcsTag = "v${Publication.VERSION}"
+            name = Publication.VERSION_NAME
+            vcsTag = "v${Publication.VERSION_NAME}"
         })
     })
 }

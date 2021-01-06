@@ -8,7 +8,7 @@ plugins {
 base {
     group = Publication.GROUP
     archivesBaseName = "android-drawable-native"
-    version = Publication.VERSION
+    version = Publication.VERSION_NAME
 }
 
 repositories {
