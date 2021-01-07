@@ -1,10 +1,8 @@
 package net.redwarp.gif.decoder.android
 
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.SurfaceView
-import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -49,7 +47,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val imageView3 = findViewById<ImageView>(R.id.imageView3)
-        val drawable3 = GifDrawable.from(assets.open("timers.gif"))
+        val drawable3 = GifDrawable.from(assets.open("glasses-aspect_ratio.gif"))
         imageView3.setImageDrawable(drawable3)
         drawables.add(drawable3)
         drawable3.start()

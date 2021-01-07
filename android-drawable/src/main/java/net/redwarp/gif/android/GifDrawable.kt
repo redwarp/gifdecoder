@@ -10,24 +10,21 @@ import android.graphics.PixelFormat
 import android.graphics.RectF
 import android.graphics.Shader.TileMode
 import android.graphics.drawable.Drawable
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
 import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.redwarp.gif.decoder.Gif
 import net.redwarp.gif.decoder.LoopCount
 import net.redwarp.gif.decoder.Parser
 import net.redwarp.gif.decoder.PixelPacking
 import net.redwarp.gif.decoder.descriptors.GifDescriptor
 import java.io.InputStream
-
-private const val DRAW_MESSAGE = 1024
 
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
 
@@ -37,6 +34,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
     private val lock = Object()
+
+    private var didRefresh = false
 
     @Volatile
     private var isRunning: Boolean = false
@@ -63,9 +62,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     private var loopIteration = 0
     private var _loopCount: LoopCount? = null
-    private val handler: Handler by lazy {
-        DrawHandler(Looper.getMainLooper())
-    }
 
     fun setRepeatCount(repeatCount: Int) {
         _loopCount = when {
@@ -119,11 +115,12 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 bitmapPaint
             )
             canvas.restoreToCount(checkpoint)
+            didRefresh = true
         }
 
-        if (isRunning && !handler.hasMessages(DRAW_MESSAGE) && loopJob?.isActive != true) {
+        if (isRunning && loopJob?.isActive != true) {
             loopJob = coroutineScope.launch {
-                animationJob()
+                animationLoop()
             }
         }
     }
@@ -154,8 +151,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         if (!isRunning) return // Already stopped.
 
         isRunning = false
-        loopJob?.cancel()
-        handler.removeMessages(DRAW_MESSAGE)
+        // loopJob?.cancel()
         postAnimationEnd()
     }
 
@@ -184,21 +180,23 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     private fun postAnimationStart() {
-        if (animationCallbacks.isNotEmpty())
-            handler.post {
+        if (animationCallbacks.isNotEmpty()) {
+            CoroutineScope(Dispatchers.Main).launch {
                 animationCallbacks.forEach { callback ->
-                    callback.onAnimationStart(this)
+                    callback.onAnimationStart(this@GifDrawable)
                 }
             }
+        }
     }
 
     private fun postAnimationEnd() {
-        if (animationCallbacks.isNotEmpty())
-            handler.post {
+        if (animationCallbacks.isNotEmpty()) {
+            CoroutineScope(Dispatchers.Main).launch {
                 animationCallbacks.forEach { callback ->
-                    callback.onAnimationEnd(this)
+                    callback.onAnimationEnd(this@GifDrawable)
                 }
             }
+        }
     }
 
     private fun shouldAnimate(): Boolean {
@@ -208,40 +206,61 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         return repeatCount != 0 || loopIteration < repeatCount
     }
 
-    private fun animationJob() {
-        val startTime = SystemClock.elapsedRealtime()
-        if (handler.hasMessages(DRAW_MESSAGE)) return
-
+    private suspend fun animationLoop() = withContext(Dispatchers.IO) loop@{
         if (!shouldAnimate()) {
             postAnimationEnd()
             isRunning = false
-            return
+            return@loop
         }
 
-        val frameDelay = gif.currentDelay.let {
-            // If the frame delay is 0, let's at last have 2 frame before we display it.
-            if (it == 0L) 32L else it
-        }
-        gif.advance()
-        if (gif.currentIndex == 0) {
-            // We looped back to the first frame
-            loopIteration++
-        }
-        // Checking if we are finished looping already
-        if (!shouldAnimate()) {
-            postAnimationEnd()
-            isRunning = false
-            return
-        }
+        var startTime = SystemClock.elapsedRealtime()
+        while (true) {
+            if (!isRunning) return@loop
 
-        val nextFrame = getCurrentFrame()
-        nextFrame.prepareToDraw()
+            val frameDelay = gif.currentDelay.let {
+                // If the frame delay is 0, let's at last have 2 frame before we display it.
+                if (it == 0L) 32L else it
+            }
+            gif.advance()
+            if (gif.currentIndex == 0) {
+                // We looped back to the first frame
+                loopIteration++
+            }
+            // Checking if we are finished looping already
+            if (!shouldAnimate()) {
+                postAnimationEnd()
+                isRunning = false
+                return@loop
+            }
 
-        val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
-        val delay: Long = (frameDelay - elapsedTime).coerceIn(0L, frameDelay)
+            val nextFrame = getCurrentFrame()
+            val nextShader = BitmapShader(nextFrame, TileMode.CLAMP, TileMode.CLAMP)
 
-        val message = handler.obtainMessage(DRAW_MESSAGE, nextFrame)
-        handler.sendMessageDelayed(message, delay)
+            val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
+            val delay: Long = (frameDelay - elapsedTime).coerceIn(0L, frameDelay)
+
+            delay(delay)
+
+            startTime = SystemClock.elapsedRealtime()
+
+            synchronized(lock) {
+                val oldBitmap = bitmap
+                bitmap = nextFrame
+                bitmapPaint.shader = nextShader
+                bitmapPaint.isDither = bitmap.config == Bitmap.Config.RGB_565
+
+                bitmapCache.release(oldBitmap)
+
+                if (!didRefresh) {
+                    return@loop
+                } else {
+                    didRefresh = false
+                }
+            }
+            withContext(Dispatchers.Main) {
+                invalidateSelf()
+            }
+        }
     }
 
     private fun getCurrentFrame(): Bitmap {
@@ -264,23 +283,5 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         fun from(inputStream: InputStream): GifDrawable =
             GifDrawable(Parser.parse(inputStream, PixelPacking.ARGB))
-    }
-
-    private inner class DrawHandler(looper: Looper) : Handler(looper) {
-        override fun handleMessage(msg: Message) {
-            (msg.obj as? Bitmap)?.let { nextFrame ->
-                synchronized(lock) {
-                    val oldBitmap = bitmap
-                    bitmap = nextFrame
-                    bitmapPaint.shader =
-                        BitmapShader(bitmap, TileMode.CLAMP, TileMode.CLAMP)
-                    bitmapPaint.isDither = bitmap.config == Bitmap.Config.RGB_565
-
-                    bitmapCache.release(oldBitmap)
-                }
-
-                invalidateSelf()
-            }
-        }
     }
 }
