@@ -27,8 +27,7 @@ import net.redwarp.gif.decoder.descriptors.GifDescriptor
 import java.io.InputStream
 
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
-
-    private val gif = Gif(gifDescriptor)
+    private val state = GifDrawableState(gifDescriptor)
 
     private val bitmapCache = BitmapPool.obtain()
 
@@ -40,10 +39,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     @Volatile
     private var isRunning: Boolean = false
     private var loopJob: Job? = null
-    private val gifWidth = gif.dimension.width
-    private val gifHeight = gif.dimension.height
+    private val gifWidth = state.gif.dimension.width
+    private val gifHeight = state.gif.dimension.height
 
-    private val pixels = IntArray(gif.dimension.size)
+    private val pixels = IntArray(state.gif.dimension.size)
     private var bitmap: Bitmap = getCurrentFrame()
 
     private val bitmapPaint = Paint().apply {
@@ -60,11 +59,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         setBounds(0, 0, intrinsicWidth, intrinsicHeight)
     }
 
-    private var loopIteration = 0
-    private var _loopCount: LoopCount? = null
-
     fun setRepeatCount(repeatCount: Int) {
-        _loopCount = when {
+        state.loopCount = when {
             repeatCount == REPEAT_INFINITE -> {
                 LoopCount.Infinite
             }
@@ -76,7 +72,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     fun getRepeatCount(): Int {
-        return when (val loopCount = _loopCount ?: gif.loopCount) {
+        return when (val loopCount = state.loopCount ?: state.gif.loopCount) {
             LoopCount.Infinite -> REPEAT_INFINITE
             LoopCount.NoLoop -> 0
             is LoopCount.Fixed -> loopCount.count
@@ -84,22 +80,22 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     fun backgroundColor(): Int {
-        return gif.backgroundColor
+        return state.gif.backgroundColor
     }
 
     override fun getIntrinsicWidth(): Int {
-        return if (gif.aspectRatio >= 1.0) {
-            (gifWidth.toDouble() * gif.aspectRatio).toInt()
+        return if (state.gif.aspectRatio >= 1.0) {
+            (gifWidth.toDouble() * state.gif.aspectRatio).toInt()
         } else {
             gifWidth
         }
     }
 
     override fun getIntrinsicHeight(): Int {
-        return if (gif.aspectRatio >= 1.0) {
+        return if (state.gif.aspectRatio >= 1.0) {
             gifHeight
         } else {
-            (gifHeight.toDouble() / gif.aspectRatio).toInt()
+            (gifHeight.toDouble() / state.gif.aspectRatio).toInt()
         }
     }
 
@@ -169,6 +165,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         animationCallbacks.clear()
     }
 
+    override fun getConstantState(): ConstantState {
+        return state
+    }
+
     override fun setBounds(left: Int, top: Int, right: Int, bottom: Int) {
         super.setBounds(left, top, right, bottom)
 
@@ -200,10 +200,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     private fun shouldAnimate(): Boolean {
-        if (!gif.isAnimated) return false
+        if (!state.gif.isAnimated) return false
 
         val repeatCount = getRepeatCount()
-        return repeatCount != 0 || loopIteration < repeatCount
+        return repeatCount != 0 || state.loopIteration < repeatCount
     }
 
     private suspend fun animationLoop() = withContext(Dispatchers.IO) loop@{
@@ -217,14 +217,14 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         while (true) {
             if (!isRunning) return@loop
 
-            val frameDelay = gif.currentDelay.let {
+            val frameDelay = state.gif.currentDelay.let {
                 // If the frame delay is 0, let's at last have 2 frame before we display it.
                 if (it == 0L) 32L else it
             }
-            gif.advance()
-            if (gif.currentIndex == 0) {
+            state.gif.advance()
+            if (state.gif.currentIndex == 0) {
                 // We looped back to the first frame
-                loopIteration++
+                state.loopIteration++
             }
             // Checking if we are finished looping already
             if (!shouldAnimate()) {
@@ -264,7 +264,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     private fun getCurrentFrame(): Bitmap {
-        gif.getCurrentFrame(pixels)
+        state.gif.getCurrentFrame(pixels)
 
         val transparent = pixels.any { it == 0 }
 
@@ -283,5 +283,21 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         fun from(inputStream: InputStream): GifDrawable =
             GifDrawable(Parser.parse(inputStream, PixelPacking.ARGB))
+    }
+
+    private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {
+        val gif = Gif(gifDescriptor)
+        var loopCount: LoopCount? = null
+        var loopIteration = 0
+
+        override fun newDrawable(): Drawable {
+            return GifDrawable(gifDescriptor).also { copiedDrawable ->
+                copiedDrawable.state.loopCount = loopCount
+                copiedDrawable.state.loopIteration = loopIteration
+            }
+        }
+
+        // No need to recreate the drawable for any configurations.
+        override fun getChangingConfigurations(): Int = 0
     }
 }

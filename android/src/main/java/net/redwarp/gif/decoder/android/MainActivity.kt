@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
-        val drawable5 = GifDrawable.from(assets.open("glasses-aspect_ratio.gif"))
+        val drawable5 = drawable3.constantState.newDrawable() as GifDrawable
         drawable5.setRepeatCount(GifDrawable.REPEAT_INFINITE)
         val wrapper = GifWrapperDrawable(drawable5)
         wrapper.setBackgroundColor(Color.WHITE)

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.2] (2010-01-08)
+
+- Adds a constant state to the GifDrawable, to facilitate copy. Uncharted territory.
+
 ## [0.2.1] (2010-01-08)
 
 - Increase robustness of GIF parsing by not throwing an exception on a wrong disposal method.
