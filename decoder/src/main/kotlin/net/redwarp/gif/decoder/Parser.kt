@@ -27,9 +27,11 @@ private const val ANIMEXTS = "ANIMEXTS1.0"
  */
 object Parser {
 
+    @Throws(InvalidGifException::class)
     fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): GifDescriptor =
         parse(file.inputStream(), pixelPacking)
 
+    @Throws(InvalidGifException::class)
     fun parse(
         inputStream: InputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
@@ -109,7 +111,7 @@ object Parser {
         if (blockSize != 4.toByte()) throw InvalidGifException("Block size of the graphic control should be 4")
 
         val packedField = readByte().toInt()
-        val disposalMethod = packedField.shr(2) and 0b0111
+        val disposalMethodValue = packedField.shr(2) and 0b0111
         val hasTransparency = packedField and 0b0001 == 1
 
         val delayTime = readShortLe().toUShort()
@@ -117,12 +119,17 @@ object Parser {
 
         val terminator = readByte()
         if (terminator != 0.toByte()) throw InvalidGifException("Terminator not properly set")
-        if (disposalMethod >= GraphicControlExtension.Disposal.values().size) {
-            throw InvalidGifException("Unsupported disposal method")
-        }
+
+        val disposalMethod =
+            if (disposalMethodValue >= GraphicControlExtension.Disposal.values().size) {
+                // Unsupported disposal method, we default to not specified.
+                GraphicControlExtension.Disposal.NOT_SPECIFIED
+            } else {
+                GraphicControlExtension.Disposal.values()[disposalMethodValue]
+            }
 
         return GraphicControlExtension(
-            disposalMethod = GraphicControlExtension.Disposal.values()[disposalMethod],
+            disposalMethod = disposalMethod,
             delayTime = delayTime,
             transparentColorIndex = if (hasTransparency) transparentColorIndex else null
         )

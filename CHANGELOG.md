@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] (2010-01-08)
+
+- Increase robustness of GIF parsing by not throwing an exception on a wrong disposal method.
+  Instead, default to "not specified".
+
 ## [0.2.0] (2010-01-08)
 
 - Improve timing of frames by having the loop independant of the draw call.

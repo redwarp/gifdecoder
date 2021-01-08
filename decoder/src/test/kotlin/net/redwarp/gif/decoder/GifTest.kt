@@ -90,21 +90,6 @@ class GifTest {
     }
 
     @Test
-    fun getFrame_transparentBackground_properlyRenders() {
-        val gifDescriptor = Parser.parse(File("../assets/simple-nopalette.gif"))
-        val gif = Gif(gifDescriptor)
-        val dimension = gif.dimension
-
-        val image = BufferedImage(dimension.width, dimension.height, BufferedImage.TYPE_INT_ARGB)
-        val pixels = (image.raster.dataBuffer as DataBufferInt).data
-        for (index in 0 until gif.frameCount) {
-            gif.getFrame(index, pixels)
-
-            // ImageIO.write(image, "png", File("../output/frame_$index.png"))
-        }
-    }
-
-    @Test
     fun getFrameDelay_animatedWithZeroDelaySpecified_returns0() {
         val gif = Gif(File("../assets/butterfly.gif"))
 
