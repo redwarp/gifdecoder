@@ -15,7 +15,7 @@ In code, create a GifDrawable from any InputStream.
 GifDrawable implements `Animatable2Compat`, and should be started if animated.
 
 ```kotlin
-// With a gif included in your app as an asset
+// Example: with a gif included in your app as an asset
 val inputStream = context.assets.open("some_animated.gif")
 
 val drawable:GifDrawable = GifDrawable.from(inputStream)
