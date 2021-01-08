@@ -84,7 +84,6 @@ publishing {
 
             afterEvaluate {
                 artifact(tasks.getByName("bundleReleaseAar"))
-
             }
             artifact(tasks.getByName("javadocJar"))
             artifact(tasks.getByName("sourceJar"))
@@ -131,21 +130,25 @@ bintray {
     setPublications("release")
     publish = true
 
-    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
-        repo = "maven"
-        name = "gif-android-drawable"
-        websiteUrl = Publication.Pom.URL
-        vcsUrl = Publication.Pom.VCS_URL
-        issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
-        setLicenses("Apache-2.0")
-        setLabels("kotlin", "gif", "android", "drawable")
-        userOrg = "redwarp"
-        publicDownloadNumbers = true
-        override = true
+    pkg(
+        delegateClosureOf<BintrayExtension.PackageConfig> {
+            repo = "maven"
+            name = "gif-android-drawable"
+            websiteUrl = Publication.Pom.URL
+            vcsUrl = Publication.Pom.VCS_URL
+            issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
+            setLicenses("Apache-2.0")
+            setLabels("kotlin", "gif", "android", "drawable")
+            userOrg = "redwarp"
+            publicDownloadNumbers = true
+            override = true
 
-        version(delegateClosureOf<BintrayExtension.VersionConfig> {
-            name = Publication.VERSION_NAME
-            vcsTag = "v${Publication.VERSION_NAME}"
-        })
-    })
+            version(
+                delegateClosureOf<BintrayExtension.VersionConfig> {
+                    name = Publication.VERSION_NAME
+                    vcsTag = "v${Publication.VERSION_NAME}"
+                }
+            )
+        }
+    )
 }

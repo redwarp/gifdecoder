@@ -120,8 +120,8 @@ class NativeGif(
 
     fun getFrame(index: Int, inPixels: IntArray) {
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
-        val colorTable =
-            imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
+        val colorTable = imageDescriptor.localColorTable
+            ?: gifDescriptor.globalColorTable
             ?: Palettes.createFakeColorMap(
                 gifDescriptor.logicalScreenDescriptor.colorCount
             )

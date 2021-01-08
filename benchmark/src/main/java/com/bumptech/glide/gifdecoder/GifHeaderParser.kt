@@ -358,7 +358,8 @@ class GifHeaderParser(data: ByteArray) {
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(
                         TAG,
-                        "Error Reading Block n: $n count: $count blockSize: $blockSize", e
+                        "Error Reading Block n: $n count: $count blockSize: $blockSize",
+                        e
                     )
                 }
                 header.status = GifDecoder.STATUS_FORMAT_ERROR

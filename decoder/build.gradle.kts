@@ -98,21 +98,25 @@ bintray {
     setPublications("release")
     publish = true
 
-    pkg(delegateClosureOf<BintrayExtension.PackageConfig> {
-        repo = "maven"
-        name = "gif-decoder"
-        websiteUrl = Publication.Pom.URL
-        vcsUrl = Publication.Pom.VCS_URL
-        issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
-        setLicenses("Apache-2.0")
-        setLabels("kotlin", "gif")
-        userOrg = "redwarp"
-        publicDownloadNumbers = true
-        override = true
+    pkg(
+        delegateClosureOf<BintrayExtension.PackageConfig> {
+            repo = "maven"
+            name = "gif-decoder"
+            websiteUrl = Publication.Pom.URL
+            vcsUrl = Publication.Pom.VCS_URL
+            issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
+            setLicenses("Apache-2.0")
+            setLabels("kotlin", "gif")
+            userOrg = "redwarp"
+            publicDownloadNumbers = true
+            override = true
 
-        version(delegateClosureOf<BintrayExtension.VersionConfig> {
-            name = Publication.VERSION_NAME
-            vcsTag = "v${Publication.VERSION_NAME}"
-        })
-    })
+            version(
+                delegateClosureOf<BintrayExtension.VersionConfig> {
+                    name = Publication.VERSION_NAME
+                    vcsTag = "v${Publication.VERSION_NAME}"
+                }
+            )
+        }
+    )
 }

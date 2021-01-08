@@ -83,7 +83,7 @@ tasks.register("cargoClean", Exec::class.java) {
 }
 
 tasks.whenTaskAdded {
-    if(name == "clean") {
+    if (name == "clean") {
         dependsOn("cargoClean")
     }
 }

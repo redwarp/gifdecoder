@@ -1,6 +1,6 @@
 package net.redwarp.gif
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
