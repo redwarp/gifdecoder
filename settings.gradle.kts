@@ -1,6 +1,6 @@
 rootProject.name = "gifdecoder"
 
-dependencyResolutionManagement {
+pluginManagement {
     repositories {
         google()
         jcenter()
