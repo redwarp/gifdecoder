@@ -23,8 +23,6 @@ jobs:
           restore-keys: |
             cache-gradle-
             cache-gradle-
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
       - name: Test both libraries
         run: ./gradlew testLibraries
       - name: Compile and upload both libraries to Bintray
