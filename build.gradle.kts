@@ -14,8 +14,16 @@ buildscript {
 }
 
 plugins {
-    id("org.jlleitschuh.gradle.ktlint") version "9.4.1" apply false
+    id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("com.github.ben-manes.versions") version "0.36.0" apply false
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+    }
 }
 
 subprojects {
@@ -23,9 +31,13 @@ subprojects {
         plugin("org.jlleitschuh.gradle.ktlint")
         plugin("com.github.ben-manes.versions")
     }
+
+    ktlint {
+        version.set(Versions.KTLINT)
+    }
 }
 
-tasks.register("clean", Delete::class.java){
+tasks.register("clean", Delete::class.java) {
     dependsOn(gradle.includedBuild("decoder").task(":clean"))
     delete(rootProject.buildDir)
 }

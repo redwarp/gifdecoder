@@ -2,6 +2,7 @@ rootProject.name = "gifdecoder"
 
 pluginManagement {
     repositories {
+        gradlePluginPortal()
         google()
         jcenter()
         mavenCentral()
@@ -9,4 +10,4 @@ pluginManagement {
 }
 
 includeBuild("decoder")
-include(":android-drawable",":android-drawable-native", ":android", ":benchmark")
+include(":android-drawable", ":android-drawable-native", ":android", ":benchmark")
