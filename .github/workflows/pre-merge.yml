@@ -1,0 +1,67 @@
+name: Pre Merge Checks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    runs-on: [ubuntu-latest]
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Cache Gradle Folders
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: cache-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            cache-gradle-
+      - name: Run all the tests
+        run: ./gradlew test
+      - name: Stop Gradle
+        run: ./gradlew --stop
+
+  lint:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Cache Gradle Folders
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: cache-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            cache-gradle-
+      - name: Run lint
+        run: ./gradlew lint
+      - name: Stop Gradle
+        run: ./gradlew --stop
+
+  ktlint:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Cache Gradle Folders
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches/
+            ~/.gradle/wrapper/
+          key: cache-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            cache-gradle-
+      - name: Run ktlint
+        run: ./gradlew ktlintCheck
+      - name: Stop Gradle
+        run: ./gradlew --stop
