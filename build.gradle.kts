@@ -1,21 +1,10 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-buildscript {
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:4.1.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.KOTLIN}")
-        classpath("gradle.plugin.org.mozilla.rust-android-gradle:plugin:0.8.3")
-        classpath("androidx.benchmark:benchmark-gradle-plugin:1.0.0")
-    }
-}
-
 plugins {
+    id("com.android.application") version Versions.AGP apply false
+    id("com.android.library") version Versions.AGP apply false
+    id("androidx.benchmark") version Versions.BENCHMARK apply false
+    kotlin("android") version Versions.KOTLIN apply false
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
-    id("com.github.ben-manes.versions") version "0.36.0" apply false
+    id("com.github.ben-manes.versions") version Versions.VERSIONS apply false
 }
 
 allprojects {

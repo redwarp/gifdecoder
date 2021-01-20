@@ -3,7 +3,7 @@ import com.jfrog.bintray.gradle.BintrayExtension
 // See https://medium.com/@saschpe/android-library-publication-in-2020-93e8c0e106c8
 plugins {
     id("com.android.library")
-    id("kotlin-android")
+    kotlin("android")
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
     id("com.jfrog.bintray") version Versions.BINTRAY
