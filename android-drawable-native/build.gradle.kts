@@ -70,12 +70,6 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }
 
-tasks.whenTaskAdded {
-    when (name) {
-        "mergeDebugJniLibFolders", "mergeReleaseJniLibFolders" -> dependsOn("cargoBuild")
-    }
-}
-
 tasks.register("cargoClean", Exec::class.java) {
     workingDir("$rootDir/giflzwdecoder")
     commandLine("cargo", "clean")
