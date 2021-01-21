@@ -4,7 +4,7 @@ import com.jfrog.bintray.gradle.BintrayExtension
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
-    id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT
+    id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("com.github.ben-manes.versions") version "0.36.0"
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")

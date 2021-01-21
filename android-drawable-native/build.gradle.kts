@@ -1,7 +1,7 @@
 // See https://medium.com/@saschpe/android-library-publication-in-2020-93e8c0e106c8
 plugins {
     id("com.android.library")
-    id("kotlin-android")
+    kotlin("android")
     // id("org.mozilla.rust-android-gradle.rust-android")
 }
 
