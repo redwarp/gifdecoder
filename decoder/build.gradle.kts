@@ -23,8 +23,6 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
 }
 
