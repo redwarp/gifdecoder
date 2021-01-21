@@ -22,5 +22,13 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+    }
+}
+
 includeBuild("decoder")
 include(":android-drawable", ":android-drawable-native", ":android", ":benchmark")

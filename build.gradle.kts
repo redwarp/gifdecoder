@@ -7,14 +7,6 @@ plugins {
     id("com.github.ben-manes.versions") version Versions.VERSIONS apply false
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        jcenter()
-    }
-}
-
 subprojects {
     apply {
         plugin("org.jlleitschuh.gradle.ktlint")
