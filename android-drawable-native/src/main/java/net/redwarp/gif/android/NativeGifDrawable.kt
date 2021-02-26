@@ -20,10 +20,10 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import net.redwarp.gif.decoder.LoopCount
+import app.redwarp.gif.decoder.LoopCount
 import net.redwarp.gif.decoder.NativeGif
-import net.redwarp.gif.decoder.Parser
-import net.redwarp.gif.decoder.PixelPacking
+import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.PixelPacking
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.CancellationException

@@ -8,9 +8,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
-import net.redwarp.gif.decoder.Gif
+import app.redwarp.gif.decoder.Gif
 import net.redwarp.gif.decoder.NativeGif
-import net.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.Parser
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

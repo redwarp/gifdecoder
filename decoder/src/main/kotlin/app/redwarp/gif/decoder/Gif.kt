@@ -1,22 +1,19 @@
-package net.redwarp.gif.decoder
+package app.redwarp.gif.decoder
 
-import app.redwarp.gif.decoder.LoopCount
-import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.PixelPacking
 import app.redwarp.gif.decoder.descriptors.Dimension
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
-import net.redwarp.gif.decoder.lzw.NativeLzwDecoder
+import app.redwarp.gif.decoder.lzw.LzwDecoder
 import app.redwarp.gif.decoder.utils.Palettes
 import java.io.File
 import java.io.InputStream
 
 private const val TRANSPARENT_COLOR = 0x0
 
-class NativeGif(
-    private val gifDescriptor: GifDescriptor,
+class Gif(
+    private val gifDescriptor: GifDescriptor
 ) {
     constructor(inputStream: InputStream, pixelPacking: PixelPacking = PixelPacking.ARGB) :
         this(Parser.parse(inputStream, pixelPacking))
@@ -36,7 +33,7 @@ class NativeGif(
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private var previousPixels: IntArray? = null
 
-    private val lzwDecoder: NativeLzwDecoder = NativeLzwDecoder()
+    private val lzwDecoder: LzwDecoder = LzwDecoder()
 
     private val isTransparent: Boolean =
         gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }
@@ -123,11 +120,11 @@ class NativeGif(
 
     fun getFrame(index: Int, inPixels: IntArray) {
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
-        val colorTable = imageDescriptor.localColorTable
-            ?: gifDescriptor.globalColorTable
-            ?: Palettes.createFakeColorMap(
-                gifDescriptor.logicalScreenDescriptor.colorCount
-            )
+        val colorTable =
+            imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
+                ?: Palettes.createFakeColorMap(
+                    gifDescriptor.logicalScreenDescriptor.colorCount
+                )
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
@@ -138,51 +135,14 @@ class NativeGif(
             previousPixels = framePixels.clone()
         }
 
-        // lzwDecoder.decode(
-        //     imageData = imageDescriptor.imageData,
-        //     scratch,
-        //     imageDescriptor.dimension.size
-        // )
+        lzwDecoder.decode(imageData = imageDescriptor.imageData, scratch, framePixels.size)
 
-        // fillPixels(
-        //     framePixels,
-        //     scratch,
-        //     colorTable,
-        //     gifDescriptor.logicalScreenDescriptor,
-        //     imageDescriptor
-        // )
-        val transparentColorIndexRef: Byte? =
-            imageDescriptor.graphicControlExtension?.transparentColorIndex
-        val transparentColorIndex: Int = if (transparentColorIndexRef != null) {
-            transparentColorIndexRef.toInt() and 0xFF
-        } else {
-            1024
-        }
-
-        // lzwDecoder.fillPixels(
-        //     pixels = framePixels,
-        //     colorData = scratch,
-        //     colorTable = colorTable,
-        //     transparentColorIndex = transparentColorIndex,
-        //     imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
-        //     frameWidth = imageDescriptor.dimension.width,
-        //     frameHeight = imageDescriptor.dimension.height,
-        //     offsetX = imageDescriptor.position.x,
-        //     offsetY = imageDescriptor.position.y,
-        //     interlaced = imageDescriptor.isInterlaced
-        // )
-
-        lzwDecoder.decodeFull(
-            imageData = imageDescriptor.imageData,
-            scratch = scratch,
-            pixels = framePixels, colorTable = colorTable,
-            transparentColorIndex = transparentColorIndex,
-            imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
-            frameWidth = imageDescriptor.dimension.width,
-            frameHeight = imageDescriptor.dimension.height,
-            offsetX = imageDescriptor.position.x,
-            offsetY = imageDescriptor.position.y,
-            interlaced = imageDescriptor.isInterlaced
+        fillPixels(
+            framePixels,
+            scratch,
+            colorTable,
+            gifDescriptor.logicalScreenDescriptor,
+            imageDescriptor
         )
 
         framePixels.copyInto(inPixels)

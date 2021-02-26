@@ -19,11 +19,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.redwarp.gif.decoder.Gif
-import net.redwarp.gif.decoder.LoopCount
-import net.redwarp.gif.decoder.Parser
-import net.redwarp.gif.decoder.PixelPacking
-import net.redwarp.gif.decoder.descriptors.GifDescriptor
+import app.redwarp.gif.decoder.Gif
+import app.redwarp.gif.decoder.LoopCount
+import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.PixelPacking
+import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import java.io.InputStream
 
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
@@ -76,6 +76,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             LoopCount.Infinite -> REPEAT_INFINITE
             LoopCount.NoLoop -> 0
             is LoopCount.Fixed -> loopCount.count
+            else -> 0
         }
     }
 
