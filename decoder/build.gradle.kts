@@ -113,7 +113,7 @@ publishing {
     }
 
     val signingKey = "SIGNING_KEY".byProperty
-    val signingPwd = "SIGNING_PWD".byProperty
+    val signingPwd = "SIGNING_PASSWORD".byProperty
 
     signing {
         @Suppress("UnstableApiUsage")

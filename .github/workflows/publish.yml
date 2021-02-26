@@ -29,7 +29,7 @@ jobs:
       - name: Compile and upload both libraries to Maven Central
         env:
           ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_SIGNING_PWD: ${{ secrets.SIGNING_PWD }}
+          ORG_GRADLE_PROJECT_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           ORG_GRADLE_PROJECT_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
         run: ./gradlew uploadLibraries
