@@ -1,5 +1,4 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import com.jfrog.bintray.gradle.BintrayExtension
 
 plugins {
     id("java-library")
@@ -8,7 +7,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.36.0"
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
-    id("com.jfrog.bintray") version Versions.BINTRAY
+    id("signing")
 }
 
 base {
@@ -56,6 +55,25 @@ task("javadocJar", Jar::class) {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "nexus"
+            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = "NEXUS_USERNAME".byProperty
+                password = "NEXUS_PASSWORD".byProperty
+            }
+        }
+        maven {
+            name = "snapshot"
+            url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+            credentials {
+                username = "NEXUS_USERNAME".byProperty
+                password = "NEXUS_PASSWORD".byProperty
+            }
+        }
+    }
+
     publications {
         register<MavenPublication>("release") {
             from(components["java"])
@@ -72,8 +90,34 @@ publishing {
                         url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
+                developers {
+                    developer {
+                        id.set("redwarp")
+                        name.set("Benoît Vermont")
+                        email.set("redwarp@gmail.com")
+                        url.set("https://github.com/redwarp")
+                    }
+                }
+                scm {
+                    connection.set(Publication.Pom.SCM_CONNECTION)
+                    developerConnection.set(Publication.Pom.SCM_DEVELOPER_CONNECTION)
+                    url.set(Publication.Pom.SCM_URL)
+                }
+                issueManagement {
+                    system.set("GitHub issues")
+                    url.set(Publication.Pom.ISSUE_TRACKER_URL)
+                }
             }
         }
+    }
+
+    val signingKey = "SIGNING_KEY".byProperty
+    val signingPwd = "SIGNING_PWD".byProperty
+
+    signing {
+        @Suppress("UnstableApiUsage")
+        useInMemoryPgpKeys(signingKey, signingPwd)
+        sign(publishing.publications["release"])
     }
 }
 
@@ -89,31 +133,4 @@ tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
     }
 }
 
-bintray {
-    user = System.getenv("BINTRAY_USER")
-    key = System.getenv("BINTRAY_API_KEY")
-    setPublications("release")
-    publish = true
-
-    pkg(
-        delegateClosureOf<BintrayExtension.PackageConfig> {
-            repo = "maven"
-            name = "gif-decoder"
-            websiteUrl = Publication.Pom.URL
-            vcsUrl = Publication.Pom.VCS_URL
-            issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
-            setLicenses("Apache-2.0")
-            setLabels("kotlin", "gif")
-            userOrg = "redwarp"
-            publicDownloadNumbers = true
-            override = true
-
-            version(
-                delegateClosureOf<BintrayExtension.VersionConfig> {
-                    name = Publication.VERSION_NAME
-                    vcsTag = "v${Publication.VERSION_NAME}"
-                }
-            )
-        }
-    )
-}
+val String.byProperty: String? get() = findProperty(this) as? String

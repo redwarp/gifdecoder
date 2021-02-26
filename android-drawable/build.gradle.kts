@@ -1,12 +1,10 @@
-import com.jfrog.bintray.gradle.BintrayExtension
-
 // See https://medium.com/@saschpe/android-library-publication-in-2020-93e8c0e106c8
 plugins {
     id("com.android.library")
     kotlin("android")
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
-    id("com.jfrog.bintray") version Versions.BINTRAY
+    id("signing")
 }
 
 base {
@@ -106,6 +104,9 @@ publishing {
             artifact(tasks.getByName("sourceJar"))
 
             pom {
+                if (!"USE_SNAPSHOT".byProperty.isNullOrBlank()) {
+                    version = "$version-SNAPSHOT"
+                }
                 name.set("Android Gif Drawable")
                 url.set(Publication.Pom.URL)
                 licenses {
@@ -119,12 +120,13 @@ publishing {
                         id.set("redwarp")
                         name.set("Benoît Vermont")
                         email.set("redwarp@gmail.com")
+                        url.set("https://github.com/redwarp")
                     }
                 }
                 scm {
-                    connection.set(Publication.Pom.CONNECTION)
-                    developerConnection.set(Publication.Pom.DEVELOPER_CONNECTION)
-                    url.set(Publication.Pom.URL)
+                    connection.set(Publication.Pom.SCM_CONNECTION)
+                    developerConnection.set(Publication.Pom.SCM_DEVELOPER_CONNECTION)
+                    url.set(Publication.Pom.SCM_URL)
                 }
                 issueManagement {
                     system.set("GitHub issues")
@@ -155,35 +157,16 @@ publishing {
             }
         }
     }
-}
 
-bintray {
-    user = System.getenv("BINTRAY_USER")
-    key = System.getenv("BINTRAY_API_KEY")
-    setPublications("release")
-    publish = true
+    val signingKey = "SIGNING_KEY".byProperty
+    val signingPwd = "SIGNING_PWD".byProperty
 
-    pkg(
-        delegateClosureOf<BintrayExtension.PackageConfig> {
-            repo = "maven"
-            name = "gif-android-drawable"
-            websiteUrl = Publication.Pom.URL
-            vcsUrl = Publication.Pom.VCS_URL
-            issueTrackerUrl = Publication.Pom.ISSUE_TRACKER_URL
-            setLicenses("Apache-2.0")
-            setLabels("kotlin", "gif", "android", "drawable")
-            userOrg = "redwarp"
-            publicDownloadNumbers = true
-            override = true
+    signing {
+        @Suppress("UnstableApiUsage")
+        useInMemoryPgpKeys(signingKey, signingPwd)
+        sign(publishing.publications["release"])
+    }
 
-            version(
-                delegateClosureOf<BintrayExtension.VersionConfig> {
-                    name = Publication.VERSION_NAME
-                    vcsTag = "v${Publication.VERSION_NAME}"
-                }
-            )
-        }
-    )
 }
 
 val String.byProperty: String? get() = findProperty(this) as? String

@@ -24,15 +24,15 @@ tasks.register("clean", Delete::class.java) {
 }
 
 tasks.register("testLibraries") {
-    description = "Upload both decoder and gif-drawable artifact to bintray"
+    description = "Run tests on both libraries"
 
     dependsOn(gradle.includedBuild("decoder").task(":test"))
     dependsOn(":android-drawable:test")
 }
 
 tasks.register("uploadLibraries") {
-    description = "Upload both decoder and gif-drawable artifact to bintray"
+    description = "Upload both decoder and gif-drawable artifact to maven central"
 
-    dependsOn(gradle.includedBuild("decoder").task(":bintrayUpload"))
-    dependsOn(":android-drawable:bintrayUpload")
+    dependsOn(gradle.includedBuild("decoder").task(":publishReleasePublicationToNexusRepository"))
+    dependsOn(":android-drawable:publishReleasePublicationToNexusRepository")
 }
