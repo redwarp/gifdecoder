@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="net.redwarp.gif.decoder.android">
+    package="app.redwarp.gif.decoder.android">
 
 
     <!-- Important: disable debuggable for accurate performance results -->
