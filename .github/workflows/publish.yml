@@ -26,24 +26,32 @@ jobs:
             cache-gradle-
       - name: Test both libraries
         run: ./gradlew testLibraries
-      - name: Compile and upload both libraries to Maven Central
+      - name: Compile and upload the decoder
         env:
           ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           ORG_GRADLE_PROJECT_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           ORG_GRADLE_PROJECT_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew uploadLibraries
+        run: ./gradlew :decoder:publishReleasePublicationToNexusRepository
         if: success()
-      # - name: Create Release
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ github.ref }}
-      #     release_name: Release ${{ github.ref }}
-      #     draft: false
-      #     prerelease: false
-      #   if: success()
+      - name: Compile and upload the drawable
+        env:
+          ORG_GRADLE_PROJECT_SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+          ORG_GRADLE_PROJECT_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+        run: ./gradlew :android-drawable:publishReleasePublicationToNexusRepository
+        if: success()
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+        if: success()
       - name: Stop Gradle
         run: ./gradlew --stop

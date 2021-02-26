@@ -10,9 +10,9 @@ This project contains several parts.
 
 A simple jvm library written 100% in kotlin that handles the parsing of the gif format, headers, lzw decoder and so on.
 
-`decoder` is available on `jcenter()`
+`decoder` is available on `mavenCentral()`
 
-`implementation "net.redwarp.gif:decoder:x.y.z"`
+`implementation "app.redwarp.gif:decoder:x.y.z"`
 
 See [decoder](decoder).
 
@@ -23,9 +23,9 @@ See [decoder](decoder).
 An implementation of an Android Drawable, using the decoder, as a simple way to display a gif in an
 Android app.
 
-`android-drawable` is available on `jcenter()`
+`android-drawable` is available on `mavenCentral()`
 
-`implementation "net.redwarp.gif:android-drawable:x.y.z"`
+`implementation "app.redwarp.gif:android-drawable:x.y.z"`
 
 See [android-drawable](android-drawable).
 
