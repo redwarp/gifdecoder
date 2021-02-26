@@ -85,6 +85,8 @@ publishing {
             pom {
                 name.set("Kotlin Gif Decoder")
                 url.set(Publication.Pom.URL)
+                description.set("""A simple jvm library written 100% in kotlin that handles 
+                    |the parsing of the gif format, headers, lzw decoder and so on.""".trimMargin())
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")

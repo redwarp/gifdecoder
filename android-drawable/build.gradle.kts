@@ -110,6 +110,8 @@ publishing {
                 }
                 name.set("Android Gif Drawable")
                 url.set(Publication.Pom.URL)
+                description.set("""An implementation of an Android Drawable providing a simple way 
+                    |to display a gif in an Android app""".trimMargin())
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
