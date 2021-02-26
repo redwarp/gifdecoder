@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-    api("app.redwarp.gif:decoder:0.2.2")
+    api("app.redwarp.gif:decoder:${Publication.VERSION_NAME}")
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2")
