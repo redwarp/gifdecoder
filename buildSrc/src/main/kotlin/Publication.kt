@@ -7,5 +7,7 @@ object Publication {
         const val URL = "https://github.com/redwarp/gifdecoder"
         const val VCS_URL = "https://github.com/redwarp/gifdecoder.git"
         const val ISSUE_TRACKER_URL = "https://github.com/redwarp/gifdecoder/issues"
+        const val CONNECTION = "scm:git:https://github.com/redwarp/gifdecoder.git"
+        const val DEVELOPER_CONNECTION = "scm:git:https://github.com/redwarp/gifdecoder.git"
     }
 }

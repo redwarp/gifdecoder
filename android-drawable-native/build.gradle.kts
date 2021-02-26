@@ -13,7 +13,6 @@ base {
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
 }
 

@@ -17,7 +17,6 @@ base {
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
 }
 
@@ -53,12 +52,12 @@ android {
 }
 
 dependencies {
-    api("net.redwarp.gif:decoder:0.1.0")
+    api("net.redwarp.gif:decoder:0.2.2")
     implementation("androidx.appcompat:appcompat:1.2.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2")
 
-    testImplementation("junit:junit:4.13.1")
+    testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }
@@ -75,6 +74,25 @@ task("javadocJar", Jar::class) {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "nexus"
+            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = "NEXUS_USERNAME".byProperty
+                password = "NEXUS_PASSWORD".byProperty
+            }
+        }
+        maven {
+            name = "snapshot"
+            url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+            credentials {
+                username = "NEXUS_USERNAME".byProperty
+                password = "NEXUS_PASSWORD".byProperty
+            }
+        }
+    }
+
     publications {
         register<MavenPublication>("release") {
             groupId = Publication.GROUP
@@ -95,6 +113,22 @@ publishing {
                         name.set("The Apache License, Version 2.0")
                         url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
+                }
+                developers {
+                    developer {
+                        id.set("redwarp")
+                        name.set("Benoît Vermont")
+                        email.set("redwarp@gmail.com")
+                    }
+                }
+                scm {
+                    connection.set(Publication.Pom.CONNECTION)
+                    developerConnection.set(Publication.Pom.DEVELOPER_CONNECTION)
+                    url.set(Publication.Pom.URL)
+                }
+                issueManagement {
+                    system.set("GitHub issues")
+                    url.set(Publication.Pom.ISSUE_TRACKER_URL)
                 }
 
                 withXml {
@@ -151,3 +185,5 @@ bintray {
         }
     )
 }
+
+val String.byProperty: String? get() = findProperty(this) as? String
