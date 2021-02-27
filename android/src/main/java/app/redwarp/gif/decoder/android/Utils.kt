@@ -1,4 +1,4 @@
-package net.redwarp.gif.decoder.android
+package app.redwarp.gif.decoder.android
 
 import android.content.Context
 import java.io.File

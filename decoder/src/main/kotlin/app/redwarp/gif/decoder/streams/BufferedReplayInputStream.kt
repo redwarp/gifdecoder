@@ -1,18 +1,25 @@
-package net.redwarp.gif.decoder.streams
+package app.redwarp.gif.decoder.streams
 
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import java.io.InputStream
 
-// Check https://netty.io/4.0/api/io/netty/buffer/Unpooled.html#buffer-int-
-class BufferedSeekableInputStream(inputStream: InputStream) : SeekableInputStream() {
-    val inputStream = inputStream.buffered()
+/**
+ * A super naive implementation of a replay input stream: if we call the seek method even once,
+ * then we will stop reading the original stream, and only use the in memory data.
+ *
+ * Check https://netty.io/4.0/api/io/netty/buffer/Unpooled.html#buffer-int-
+ */
 
+class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() {
+    private val inputStream = inputStream.buffered()
     private val byteBuf: ByteBuf = Unpooled.buffer()
+    private var replay = false
 
     override fun seek(position: Int) {
-
         byteBuf.readerIndex(position)
+        replay = true
+        inputStream.close()
     }
 
     override fun getPosition(): Int {
@@ -20,7 +27,7 @@ class BufferedSeekableInputStream(inputStream: InputStream) : SeekableInputStrea
     }
 
     override fun read(): Int {
-        return if (byteBuf.readerIndex() >= byteBuf.writerIndex()) {
+        return if (!replay) {
             val read = inputStream.read()
             byteBuf.writeByte(read)
             byteBuf.readerIndex(byteBuf.readerIndex() + 1)
@@ -31,7 +38,7 @@ class BufferedSeekableInputStream(inputStream: InputStream) : SeekableInputStrea
     }
 
     override fun read(byteArray: ByteArray, offset: Int, length: Int): Int {
-        if (byteBuf.readerIndex() >= byteBuf.writerIndex()) {
+        if (!replay) {
             val readCount = inputStream.read(byteArray, offset, length)
 
             if (readCount > 0) {
@@ -51,7 +58,7 @@ class BufferedSeekableInputStream(inputStream: InputStream) : SeekableInputStrea
     }
 
     override fun read(byteArray: ByteArray): Int {
-        if (byteBuf.readerIndex() >= byteBuf.writerIndex()) {
+        if (!replay) {
             val readCount = inputStream.read(byteArray)
 
             if (readCount > 0) {

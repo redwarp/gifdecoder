@@ -4,13 +4,16 @@ import app.redwarp.gif.decoder.descriptors.Dimension
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import app.redwarp.gif.decoder.descriptors.Header
+import app.redwarp.gif.decoder.descriptors.ImageData
 import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
 import app.redwarp.gif.decoder.descriptors.Point
+import app.redwarp.gif.decoder.streams.BufferedReplayInputStream
+import app.redwarp.gif.decoder.streams.RandomAccessFileInputStream
+import app.redwarp.gif.decoder.streams.ReplayInputStream
 import app.redwarp.gif.decoder.utils.readAsciiString
 import app.redwarp.gif.decoder.utils.readByte
 import app.redwarp.gif.decoder.utils.readShortLe
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 
@@ -35,11 +38,11 @@ object Parser {
     fun parse(
         inputStream: InputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
-    ): GifDescriptor = parse(BufferedSeekableInputStream(inputStream), pixelPacking)
+    ): GifDescriptor = parse(BufferedReplayInputStream(inputStream), pixelPacking)
 
     @Throws(InvalidGifException::class)
     fun parse(
-        inputStream: SeekableInputStream,
+        inputStream: ReplayInputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
     ): GifDescriptor {
         inputStream.use { stream ->
@@ -164,7 +167,7 @@ object Parser {
     }
 
     private fun parseLoop(
-        bufferedSource: SeekableInputStream,
+        bufferedSource: ReplayInputStream,
         pixelPacking: PixelPacking
     ): Pair<Int?, List<ImageDescriptor>> {
         var loopCount: Int? = 0
@@ -210,7 +213,7 @@ object Parser {
         return Pair(loopCount, imageDescriptors)
     }
 
-    private fun SeekableInputStream.parseImageDescriptor(
+    private fun ReplayInputStream.parseImageDescriptor(
         graphicControlExtension: GraphicControlExtension?,
         pixelPacking: PixelPacking
     ): ImageDescriptor {
@@ -234,7 +237,7 @@ object Parser {
             null
         }
 
-        val imageData = calcImageData()
+        val imageData = readImageData()
 
         return ImageDescriptor(
             position = position,
@@ -246,7 +249,7 @@ object Parser {
         )
     }
 
-    internal fun SeekableInputStream.calcImageData(): ImageData {
+    private fun ReplayInputStream.readImageData(): ImageData {
         val position = getPosition()
         var length = 1
         skip(1)
@@ -261,23 +264,5 @@ object Parser {
         }
 
         return ImageData(position, length)
-    }
-
-    internal fun SeekableInputStream.readImageData(): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        byteArrayOutputStream.write(readByte().toInt())
-
-        while (true) {
-            val blockSize = readByte().toUByte().toInt()
-            byteArrayOutputStream.write(blockSize)
-            if (blockSize == 0) {
-                break
-            }
-            repeat(blockSize) {
-                byteArrayOutputStream.write(read())
-            }
-        }
-
-        return byteArrayOutputStream.toByteArray()
     }
 }

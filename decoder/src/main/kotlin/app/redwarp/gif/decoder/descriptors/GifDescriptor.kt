@@ -1,6 +1,6 @@
 package app.redwarp.gif.decoder.descriptors
 
-import net.redwarp.gif.decoder.streams.SeekableInputStream
+import app.redwarp.gif.decoder.streams.ReplayInputStream
 
 class GifDescriptor(
     val header: Header,
@@ -8,5 +8,5 @@ class GifDescriptor(
     val globalColorTable: IntArray?,
     val loopCount: Int?,
     val imageDescriptors: List<ImageDescriptor>,
-    val data: SeekableInputStream
+    val data: ReplayInputStream
 )

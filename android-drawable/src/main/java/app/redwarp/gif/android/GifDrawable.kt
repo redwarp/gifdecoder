@@ -12,6 +12,11 @@ import android.graphics.Shader.TileMode
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
+import app.redwarp.gif.decoder.Gif
+import app.redwarp.gif.decoder.LoopCount
+import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.PixelPacking
+import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,11 +24,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import app.redwarp.gif.decoder.Gif
-import app.redwarp.gif.decoder.LoopCount
-import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.PixelPacking
-import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import java.io.File
 import java.io.InputStream
 
@@ -286,7 +286,13 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         fun from(inputStream: InputStream): GifDrawable =
             GifDrawable(Parser.parse(inputStream, PixelPacking.ARGB))
 
-        fun from(file: File): GifDrawable = GifDrawable(Parser.parse(file, PixelPacking.ARGB))
+        fun from(file: File, loadInMemory: Boolean = false): GifDrawable {
+            return if (loadInMemory) {
+                GifDrawable(Parser.parse(file.inputStream(), PixelPacking.ARGB))
+            } else {
+                GifDrawable(Parser.parse(file, PixelPacking.ARGB))
+            }
+        }
     }
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {

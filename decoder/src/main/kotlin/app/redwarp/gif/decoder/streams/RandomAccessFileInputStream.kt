@@ -1,9 +1,9 @@
-package net.redwarp.gif.decoder.streams
+package app.redwarp.gif.decoder.streams
 
 import java.io.File
 import java.io.RandomAccessFile
 
-class RandomAccessFileInputStream(val file: File) : SeekableInputStream() {
+class RandomAccessFileInputStream(private val file: File) : ReplayInputStream() {
     private var _randomAccessFile: RandomAccessFile? = null
     private val randomAccessFile: RandomAccessFile
         get() {
