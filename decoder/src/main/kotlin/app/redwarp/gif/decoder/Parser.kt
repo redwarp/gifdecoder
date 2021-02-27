@@ -255,7 +255,7 @@ object Parser {
         )
     }
 
-    private fun ReplayInputStream.readImageData(): ImageData {
+    fun ReplayInputStream.readImageData(): ImageData {
         val position = getPosition()
         var length = 1
         skip(1)

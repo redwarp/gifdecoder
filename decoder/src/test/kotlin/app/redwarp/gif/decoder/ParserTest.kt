@@ -1,6 +1,6 @@
 package app.redwarp.gif.decoder
 
-import org.junit.jupiter.api.Assertions.assertArrayEquals
+import app.redwarp.gif.decoder.streams.BufferedReplayInputStream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -16,11 +16,12 @@ class ParserTest {
             1, 2, 3,
             0 // Terminator
         )
-        val bufferedSource = data.inputStream()
+        val bufferedSource = BufferedReplayInputStream(data.inputStream())
 
         with(Parser) {
-            val copied = bufferedSource.readImageData()
-            assertArrayEquals(data, copied)
+            val imageData = bufferedSource.readImageData()
+            assertEquals(0, imageData.position)
+            assertEquals(12, imageData.length)
         }
     }
 

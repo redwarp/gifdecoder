@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.0] (2021-02-27)
+
+- Introduce an API to decode files directly via a random access file instead of loading everthing from an InputStream.
+
 ## [0.3.0] (2021-02-26)
 
 - Change package name to app.redwarp.gif (because I don't own the domain redwarp.net).
