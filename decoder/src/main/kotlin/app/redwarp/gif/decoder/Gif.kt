@@ -31,6 +31,7 @@ class Gif(
         if (backgroundColor != TRANSPARENT_COLOR) fill(backgroundColor)
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
+    private val rawScratch = ByteArray(gifDescriptor.imageDescriptors.maxOf { it.imageData.length })
     private var previousPixels: IntArray? = null
 
     private val lzwDecoder: LzwDecoder = LzwDecoder()
@@ -103,12 +104,14 @@ class Gif(
     }
 
     fun getCurrentFrame(inPixels: IntArray) {
-        if (lastRenderedFrame == frameIndex) {
-            // We are redrawing a previously managed frame
-            framePixels.copyInto(inPixels)
-        } else {
-            getFrame(frameIndex, inPixels)
-            lastRenderedFrame = frameIndex
+        synchronized(gifDescriptor) {
+            if (lastRenderedFrame == frameIndex) {
+                // We are redrawing a previously managed frame
+                framePixels.copyInto(inPixels)
+            } else {
+                getFrame(frameIndex, inPixels)
+                lastRenderedFrame = frameIndex
+            }
         }
     }
 
@@ -122,9 +125,9 @@ class Gif(
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
         val colorTable =
             imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
-                ?: Palettes.createFakeColorMap(
-                    gifDescriptor.logicalScreenDescriptor.colorCount
-                )
+            ?: Palettes.createFakeColorMap(
+                gifDescriptor.logicalScreenDescriptor.colorCount
+            )
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
@@ -135,7 +138,12 @@ class Gif(
             previousPixels = framePixels.clone()
         }
 
-        lzwDecoder.decode(imageData = imageDescriptor.imageData, scratch, framePixels.size)
+        gifDescriptor.data.use { stream ->
+            stream.seek(imageDescriptor.imageData.position)
+            stream.read(rawScratch, 0, imageDescriptor.imageData.length)
+        }
+
+        lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
 
         fillPixels(
             framePixels,

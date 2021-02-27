@@ -5,6 +5,6 @@ class ImageDescriptor(
     val dimension: Dimension,
     val isInterlaced: Boolean,
     val localColorTable: IntArray?,
-    val imageData: ByteArray,
+    val imageData: ImageData,
     val graphicControlExtension: GraphicControlExtension?
 )

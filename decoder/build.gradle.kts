@@ -22,6 +22,8 @@ repositories {
 }
 
 dependencies {
+    implementation("io.netty:netty-buffer:4.1.58.Final")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
 }
 

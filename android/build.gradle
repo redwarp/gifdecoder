@@ -35,6 +35,10 @@ android {
             assets.srcDirs += ["../assets"]
         }
     }
+
+    packagingOptions {
+        exclude("META-INF/io.netty.versions.properties")
+    }
 }
 
 dependencies {

@@ -24,6 +24,7 @@ import app.redwarp.gif.decoder.LoopCount
 import app.redwarp.gif.decoder.Parser
 import app.redwarp.gif.decoder.PixelPacking
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
+import java.io.File
 import java.io.InputStream
 
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
@@ -284,6 +285,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         fun from(inputStream: InputStream): GifDrawable =
             GifDrawable(Parser.parse(inputStream, PixelPacking.ARGB))
+
+        fun from(file: File): GifDrawable = GifDrawable(Parser.parse(file, PixelPacking.ARGB))
     }
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {

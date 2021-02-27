@@ -29,14 +29,20 @@ object Parser {
 
     @Throws(InvalidGifException::class)
     fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): GifDescriptor =
-        parse(file.inputStream(), pixelPacking)
+        parse(RandomAccessFileInputStream(file), pixelPacking)
 
     @Throws(InvalidGifException::class)
     fun parse(
         inputStream: InputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
+    ): GifDescriptor = parse(BufferedSeekableInputStream(inputStream), pixelPacking)
+
+    @Throws(InvalidGifException::class)
+    fun parse(
+        inputStream: SeekableInputStream,
+        pixelPacking: PixelPacking = PixelPacking.ARGB
     ): GifDescriptor {
-        inputStream.buffered(2048).use { stream ->
+        inputStream.use { stream ->
             val header = stream.parseHeader()
             val logicalScreenDescriptor = stream.parseLogicalScreenDescriptor()
 
@@ -54,7 +60,8 @@ object Parser {
                 globalColorTable = globalColorTable,
                 // If only one image, no loop.
                 loopCount = if (imageDescriptors.size <= 1) null else loopCount,
-                imageDescriptors = imageDescriptors
+                imageDescriptors = imageDescriptors,
+                data = stream
             )
         }
     }
@@ -157,7 +164,7 @@ object Parser {
     }
 
     private fun parseLoop(
-        bufferedSource: InputStream,
+        bufferedSource: SeekableInputStream,
         pixelPacking: PixelPacking
     ): Pair<Int?, List<ImageDescriptor>> {
         var loopCount: Int? = 0
@@ -203,7 +210,7 @@ object Parser {
         return Pair(loopCount, imageDescriptors)
     }
 
-    private fun InputStream.parseImageDescriptor(
+    private fun SeekableInputStream.parseImageDescriptor(
         graphicControlExtension: GraphicControlExtension?,
         pixelPacking: PixelPacking
     ): ImageDescriptor {
@@ -227,7 +234,7 @@ object Parser {
             null
         }
 
-        val imageData = readImageData()
+        val imageData = calcImageData()
 
         return ImageDescriptor(
             position = position,
@@ -239,7 +246,24 @@ object Parser {
         )
     }
 
-    internal fun InputStream.readImageData(): ByteArray {
+    internal fun SeekableInputStream.calcImageData(): ImageData {
+        val position = getPosition()
+        var length = 1
+        skip(1)
+        while (true) {
+            val blockSize = readByte().toUByte().toInt()
+            length++
+            if (blockSize == 0) {
+                break
+            }
+            length += blockSize
+            skip(blockSize.toLong())
+        }
+
+        return ImageData(position, length)
+    }
+
+    internal fun SeekableInputStream.readImageData(): ByteArray {
         val byteArrayOutputStream = ByteArrayOutputStream()
         byteArrayOutputStream.write(readByte().toInt())
 
