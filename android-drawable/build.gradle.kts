@@ -110,8 +110,10 @@ publishing {
                 }
                 name.set("Android Gif Drawable")
                 url.set(Publication.Pom.URL)
-                description.set("""An implementation of an Android Drawable providing a simple way 
-                    |to display a gif in an Android app""".trimMargin())
+                description.set(
+                    """An implementation of an Android Drawable providing a simple way 
+                    |to display a gif in an Android app""".trimMargin()
+                )
                 licenses {
                     license {
                         name.set("The Apache License, Version 2.0")
@@ -169,7 +171,6 @@ publishing {
         useInMemoryPgpKeys(signingKey, signingPwd)
         sign(publishing.publications["release"])
     }
-
 }
 
 val String.byProperty: String? get() = findProperty(this) as? String

@@ -6,11 +6,11 @@ import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.redwarp.gif.decoder.Gif
+import app.redwarp.gif.decoder.Parser
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
-import app.redwarp.gif.decoder.Gif
 import net.redwarp.gif.decoder.NativeGif
-import app.redwarp.gif.decoder.Parser
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

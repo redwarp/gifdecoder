@@ -1,4 +1,4 @@
-package net.redwarp.gif
+package app.redwarp.gif
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

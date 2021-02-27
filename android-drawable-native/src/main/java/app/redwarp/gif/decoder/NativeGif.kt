@@ -1,14 +1,11 @@
-package net.redwarp.gif.decoder
+package app.redwarp.gif.decoder
 
-import app.redwarp.gif.decoder.LoopCount
-import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.PixelPacking
 import app.redwarp.gif.decoder.descriptors.Dimension
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
-import net.redwarp.gif.decoder.lzw.NativeLzwDecoder
+import app.redwarp.gif.decoder.lzw.NativeLzwDecoder
 import app.redwarp.gif.decoder.utils.Palettes
 import java.io.File
 import java.io.InputStream
@@ -172,18 +169,18 @@ class NativeGif(
         //     interlaced = imageDescriptor.isInterlaced
         // )
 
-        lzwDecoder.decodeFull(
-            imageData = imageDescriptor.imageData,
-            scratch = scratch,
-            pixels = framePixels, colorTable = colorTable,
-            transparentColorIndex = transparentColorIndex,
-            imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
-            frameWidth = imageDescriptor.dimension.width,
-            frameHeight = imageDescriptor.dimension.height,
-            offsetX = imageDescriptor.position.x,
-            offsetY = imageDescriptor.position.y,
-            interlaced = imageDescriptor.isInterlaced
-        )
+        // lzwDecoder.decodeFull(
+        //     imageData = imageDescriptor.imageData,
+        //     scratch = scratch,
+        //     pixels = framePixels, colorTable = colorTable,
+        //     transparentColorIndex = transparentColorIndex,
+        //     imageWidth = gifDescriptor.logicalScreenDescriptor.dimension.width,
+        //     frameWidth = imageDescriptor.dimension.width,
+        //     frameHeight = imageDescriptor.dimension.height,
+        //     offsetX = imageDescriptor.position.x,
+        //     offsetY = imageDescriptor.position.y,
+        //     interlaced = imageDescriptor.isInterlaced
+        // )
 
         framePixels.copyInto(inPixels)
 

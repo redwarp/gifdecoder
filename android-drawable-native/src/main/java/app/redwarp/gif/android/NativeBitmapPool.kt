@@ -1,4 +1,4 @@
-package net.redwarp.gif.android
+package app.redwarp.gif.android
 
 import android.graphics.Bitmap
 import java.util.LinkedList

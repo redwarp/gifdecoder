@@ -1,4 +1,4 @@
-package net.redwarp.gif.decoder.lzw
+package app.redwarp.gif.decoder.lzw
 
 class NativeLzwDecoder {
 

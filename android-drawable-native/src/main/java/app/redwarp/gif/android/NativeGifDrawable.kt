@@ -1,4 +1,4 @@
-package net.redwarp.gif.android
+package app.redwarp.gif.android
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -10,6 +10,10 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
+import app.redwarp.gif.decoder.LoopCount
+import app.redwarp.gif.decoder.NativeGif
+import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.PixelPacking
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,10 +24,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import app.redwarp.gif.decoder.LoopCount
-import net.redwarp.gif.decoder.NativeGif
-import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.PixelPacking
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.CancellationException
