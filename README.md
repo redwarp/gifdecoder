@@ -6,7 +6,7 @@ This project contains several parts.
 
 ## decoder
 
-[ ![Download](https://api.bintray.com/packages/redwarp/maven/gif-decoder/images/download.svg) ](https://bintray.com/redwarp/maven/gif-decoder/_latestVersion)
+![Maven Central](https://img.shields.io/maven-central/v/app.redwarp.gif/decoder)
 
 A simple jvm library written 100% in kotlin that handles the parsing of the gif format, headers, lzw decoder and so on.
 
@@ -18,7 +18,7 @@ See [decoder](decoder).
 
 ## android-drawable
 
-[ ![Download](https://api.bintray.com/packages/redwarp/maven/gif-android-drawable/images/download.svg) ](https://bintray.com/redwarp/maven/gif-android-drawable/_latestVersion)
+![Maven Central](https://img.shields.io/maven-central/v/app.redwarp.gif/android-drawable)
 
 An implementation of an Android Drawable, using the decoder, as a simple way to display a gif in an
 Android app.
