@@ -283,16 +283,13 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     companion object {
         const val REPEAT_INFINITE = -1
 
+        /**
+         * Creates a GifDrawable from an [InputStream]
+         */
         fun from(inputStream: InputStream): GifDrawable =
             GifDrawable(Parser.parse(inputStream, PixelPacking.ARGB))
 
-        fun from(file: File, loadInMemory: Boolean = false): GifDrawable {
-            return if (loadInMemory) {
-                GifDrawable(Parser.parse(file.inputStream(), PixelPacking.ARGB))
-            } else {
-                GifDrawable(Parser.parse(file, PixelPacking.ARGB))
-            }
-        }
+        fun from(file: File): GifDrawable = GifDrawable(Parser.parse(file, PixelPacking.ARGB))
     }
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {

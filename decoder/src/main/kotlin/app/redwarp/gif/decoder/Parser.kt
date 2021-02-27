@@ -30,10 +30,16 @@ private const val ANIMEXTS = "ANIMEXTS1.0"
  */
 object Parser {
 
+    /**
+     * Parse a gif file, accessing it through a [java.io.RandomAccessFile]
+     */
     @Throws(InvalidGifException::class)
     fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): GifDescriptor =
         parse(RandomAccessFileInputStream(file), pixelPacking)
 
+    /**
+     * Parse gif content from an [InputStream], keeping the whole content in memory.
+     */
     @Throws(InvalidGifException::class)
     fun parse(
         inputStream: InputStream,
