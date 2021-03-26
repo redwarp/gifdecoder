@@ -1,7 +1,5 @@
 package app.redwarp.gif.decoder
 
-import app.redwarp.gif.decoder.InvalidGifException
-import app.redwarp.gif.decoder.Parser
 import app.redwarp.gif.decoder.descriptors.Header
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -13,7 +11,7 @@ class GifParserTest {
     @Test
     fun inputColorGif_gif89aHeader_returnCorrectHeader() {
         val gifFile = File("../assets/sample-2colors-89a.gif")
-        val gifDescriptor = Parser.parse(gifFile)
+        val gifDescriptor = Parser.parse(gifFile).unwrap()
 
         Assertions.assertEquals(Header.GIF89a, gifDescriptor.header)
     }

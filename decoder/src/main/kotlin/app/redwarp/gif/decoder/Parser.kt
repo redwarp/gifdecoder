@@ -33,45 +33,48 @@ object Parser {
     /**
      * Parse a gif file, accessing it through a [java.io.RandomAccessFile]
      */
-    @Throws(InvalidGifException::class)
-    fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): GifDescriptor =
+    fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): Result<GifDescriptor> =
         parse(RandomAccessFileInputStream(file), pixelPacking)
 
     /**
      * Parse gif content from an [InputStream], keeping the whole content in memory.
      */
-    @Throws(InvalidGifException::class)
     fun parse(
         inputStream: InputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
-    ): GifDescriptor = parse(BufferedReplayInputStream(inputStream), pixelPacking)
+    ): Result<GifDescriptor> = parse(BufferedReplayInputStream(inputStream), pixelPacking)
 
-    @Throws(InvalidGifException::class)
     fun parse(
         inputStream: ReplayInputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
-    ): GifDescriptor {
-        inputStream.use { stream ->
-            val header = stream.parseHeader()
-            val logicalScreenDescriptor = stream.parseLogicalScreenDescriptor()
+    ): Result<GifDescriptor> {
+        return try {
+            inputStream.use { stream ->
+                val header = stream.parseHeader()
+                val logicalScreenDescriptor = stream.parseLogicalScreenDescriptor()
 
-            val globalColorTable: IntArray? = if (logicalScreenDescriptor.hasGlobalColorTable) {
-                stream.parseColorTable(logicalScreenDescriptor.colorCount, pixelPacking)
-            } else {
-                null
+                val globalColorTable: IntArray? = if (logicalScreenDescriptor.hasGlobalColorTable) {
+                    stream.parseColorTable(logicalScreenDescriptor.colorCount, pixelPacking)
+                } else {
+                    null
+                }
+
+                val (loopCount, imageDescriptors) = parseLoop(stream, pixelPacking)
+
+                Result.Success(
+                    GifDescriptor(
+                        header = header,
+                        logicalScreenDescriptor = logicalScreenDescriptor,
+                        globalColorTable = globalColorTable,
+                        // If only one image, no loop.
+                        loopCount = if (imageDescriptors.size <= 1) null else loopCount,
+                        imageDescriptors = imageDescriptors,
+                        data = stream
+                    )
+                )
             }
-
-            val (loopCount, imageDescriptors) = parseLoop(stream, pixelPacking)
-
-            return GifDescriptor(
-                header = header,
-                logicalScreenDescriptor = logicalScreenDescriptor,
-                globalColorTable = globalColorTable,
-                // If only one image, no loop.
-                loopCount = if (imageDescriptors.size <= 1) null else loopCount,
-                imageDescriptors = imageDescriptors,
-                data = stream
-            )
+        } catch (exception: Exception) {
+            Result.Error(exception.localizedMessage)
         }
     }
 

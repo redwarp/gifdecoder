@@ -7,6 +7,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.android.GifDrawable
+import app.redwarp.gif.decoder.Result
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         drawables.clear()
 
         val imageView1 = findViewById<ImageView>(R.id.imageView1)
-        val drawable = GifDrawable.from(assets.open("full_colour.gif"))
+        val drawable = GifDrawable.from(assets.open("full_colour.gif")).unwrap()
         drawable.setRepeatCount(GifDrawable.REPEAT_INFINITE)
         drawables.add(drawable)
         imageView1.setImageDrawable(drawable)
@@ -34,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val imageView2 = findViewById<ImageView>(R.id.imageView2)
-        val drawable2 = GifDrawable.from(assets.open("derpy_cat.gif"))
+        val drawable2 = GifDrawable.from(assets.open("derpy_cat.gif")).unwrap()
         imageView2.setImageDrawable(drawable2)
         drawables.add(drawable2)
         drawable2.start()
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         val imageView3 = findViewById<ImageView>(R.id.imageView3)
         val glassesFile = assets.open("glasses-aspect_ratio.gif").toFile(this, "glasses.gif")
-        val drawable3 = GifDrawable.from(glassesFile)
+        val drawable3 = GifDrawable.from(glassesFile).unwrap()
         imageView3.setImageDrawable(drawable3)
         drawables.add(drawable3)
         drawable3.start()
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val imageView4 = findViewById<ImageView>(R.id.imageView4)
-        val drawable4 = GifDrawable.from(assets.open("domo-interlaced.gif"))
+        val drawable4 = GifDrawable.from(assets.open("domo-interlaced.gif")).unwrap()
         imageView4.setImageDrawable(drawable4)
         drawables.add(drawable4)
         drawable4.start()
@@ -87,6 +88,14 @@ class MainActivity : AppCompatActivity() {
             } else {
                 drawable5.start()
             }
+        }
+    }
+
+    private fun <T> Result<T>.unwrap(): T {
+        when (this) {
+            is Result.Success -> return value
+            is Result.Error -> throw Exception(reason)
+            else -> throw Exception() // Why is it needed here?
         }
     }
 }

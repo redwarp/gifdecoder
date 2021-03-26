@@ -16,6 +16,7 @@ import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.LoopCount
 import app.redwarp.gif.decoder.Parser
 import app.redwarp.gif.decoder.PixelPacking
+import app.redwarp.gif.decoder.Result
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -44,13 +45,15 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private val gifHeight = state.gif.dimension.height
 
     private val pixels = IntArray(state.gif.dimension.size)
-    private var bitmap: Bitmap = getCurrentFrame()
+    private var bitmap: Bitmap? = getCurrentFrame()
 
     private val bitmapPaint = Paint().apply {
         isAntiAlias = false
         isFilterBitmap = false
-        isDither = bitmap.config == Bitmap.Config.RGB_565
-        shader = BitmapShader(bitmap, TileMode.CLAMP, TileMode.CLAMP)
+        isDither = bitmap?.config == Bitmap.Config.RGB_565
+        bitmap?.let {
+            shader = BitmapShader(it, TileMode.CLAMP, TileMode.CLAMP)
+        }
     }
     private val matrix = Matrix()
 
@@ -236,6 +239,11 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             }
 
             val nextFrame = getCurrentFrame()
+            if (nextFrame == null) {
+                postAnimationEnd()
+                isRunning = false
+                return@loop
+            }
             val nextShader = BitmapShader(nextFrame, TileMode.CLAMP, TileMode.CLAMP)
 
             val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
@@ -249,7 +257,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 val oldBitmap = bitmap
                 bitmap = nextFrame
                 bitmapPaint.shader = nextShader
-                bitmapPaint.isDither = bitmap.config == Bitmap.Config.RGB_565
+                bitmapPaint.isDither = nextFrame.config == Bitmap.Config.RGB_565
 
                 bitmapCache.release(oldBitmap)
 
@@ -265,8 +273,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         }
     }
 
-    private fun getCurrentFrame(): Bitmap {
-        state.gif.getCurrentFrame(pixels)
+    private fun getCurrentFrame(): Bitmap? {
+        if (!state.gif.getCurrentFrame(pixels)) return null
 
         val transparent = pixels.any { it == 0 }
 
@@ -286,10 +294,11 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         /**
          * Creates a GifDrawable from an [InputStream]
          */
-        fun from(inputStream: InputStream): GifDrawable =
-            GifDrawable(Parser.parse(inputStream, PixelPacking.ARGB))
+        fun from(inputStream: InputStream): Result<GifDrawable> =
+            Parser.parse(inputStream, PixelPacking.ARGB).map(::GifDrawable)
 
-        fun from(file: File): GifDrawable = GifDrawable(Parser.parse(file, PixelPacking.ARGB))
+        fun from(file: File): Result<GifDrawable> =
+            Parser.parse(file, PixelPacking.ARGB).map(::GifDrawable)
     }
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {
