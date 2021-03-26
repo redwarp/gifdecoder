@@ -4,7 +4,7 @@ plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
-    id("com.github.ben-manes.versions") version "0.36.0"
+    id("com.github.ben-manes.versions") version Versions.VERSIONS
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
     id("signing")
@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.netty:netty-buffer:4.1.58.Final")
+    implementation("io.netty:netty-buffer:${Versions.NETTY_BUFFER}")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.0")
 }
