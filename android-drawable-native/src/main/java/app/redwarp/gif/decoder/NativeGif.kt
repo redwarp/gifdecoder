@@ -7,6 +7,7 @@ import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
 import app.redwarp.gif.decoder.lzw.NativeLzwDecoder
 import app.redwarp.gif.decoder.utils.Palettes
+import app.redwarp.gif.unwrap
 import java.io.File
 import java.io.InputStream
 
@@ -16,12 +17,12 @@ class NativeGif(
     private val gifDescriptor: GifDescriptor,
 ) {
     constructor(inputStream: InputStream, pixelPacking: PixelPacking = PixelPacking.ARGB) :
-        this(Parser.parse(inputStream, pixelPacking))
+        this(Parser.parse(inputStream, pixelPacking).unwrap())
 
     constructor(
         file: File,
         pixelPacking: PixelPacking = PixelPacking.ARGB
-    ) : this(Parser.parse(file, pixelPacking))
+    ) : this(Parser.parse(file, pixelPacking).unwrap())
 
     private var lastRenderedFrame: Int = -1
     private var frameIndex = 0

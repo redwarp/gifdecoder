@@ -14,6 +14,7 @@ import app.redwarp.gif.decoder.LoopCount
 import app.redwarp.gif.decoder.NativeGif
 import app.redwarp.gif.decoder.Parser
 import app.redwarp.gif.decoder.PixelPacking
+import app.redwarp.gif.unwrap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +32,8 @@ import java.util.concurrent.CancellationException
 class NativeGifDrawable(inputStream: InputStream) : Drawable(), Animatable2Compat {
     constructor(file: File) : this(file.inputStream())
 
-    private val gifDescriptor = Parser.parse(inputStream, PixelPacking.ARGB)
+    // should not use unwrap, but I don't care about this class for now.
+    private val gifDescriptor = Parser.parse(inputStream, PixelPacking.ARGB).unwrap()
     private val gif = NativeGif(gifDescriptor)
 
     private val bitmapCache = NativeBitmapPool()
