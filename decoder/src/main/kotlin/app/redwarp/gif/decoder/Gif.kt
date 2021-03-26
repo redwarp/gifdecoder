@@ -15,14 +15,6 @@ private const val TRANSPARENT_COLOR = 0x0
 class Gif(
     private val gifDescriptor: GifDescriptor
 ) {
-    constructor(inputStream: InputStream, pixelPacking: PixelPacking = PixelPacking.ARGB) :
-        this(Parser.parse(inputStream, pixelPacking))
-
-    constructor(
-        file: File,
-        pixelPacking: PixelPacking = PixelPacking.ARGB
-    ) : this(Parser.parse(file, pixelPacking))
-
     private var lastRenderedFrame: Int = -1
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
@@ -103,31 +95,43 @@ class Gif(
         }
     }
 
-    fun getCurrentFrame(inPixels: IntArray) {
+    /**
+     * Write the current frame in the int array.
+     * @param inPixels The buffer where the pixel will be written
+     * @return true if a frame was successfully written.
+     */
+    fun getCurrentFrame(inPixels: IntArray): Boolean {
         synchronized(gifDescriptor) {
-            if (lastRenderedFrame == frameIndex) {
+            return if (lastRenderedFrame == frameIndex) {
                 // We are redrawing a previously managed frame
                 framePixels.copyInto(inPixels)
+                true
             } else {
-                getFrame(frameIndex, inPixels)
-                lastRenderedFrame = frameIndex
+                val didRender = getFrame(frameIndex, inPixels)
+                if (didRender) {
+                    lastRenderedFrame = frameIndex
+                }
+                didRender
             }
         }
     }
 
-    fun getFrame(index: Int): IntArray {
+    fun getFrame(index: Int): IntArray? {
         val pixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
-        getFrame(index, pixels)
-        return pixels
+        return if (getFrame(index, pixels)) {
+            pixels
+        } else {
+            null
+        }
     }
 
-    fun getFrame(index: Int, inPixels: IntArray) {
+    fun getFrame(index: Int, inPixels: IntArray): Boolean {
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
         val colorTable =
             imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
-            ?: Palettes.createFakeColorMap(
-                gifDescriptor.logicalScreenDescriptor.colorCount
-            )
+                ?: Palettes.createFakeColorMap(
+                    gifDescriptor.logicalScreenDescriptor.colorCount
+                )
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
@@ -138,39 +142,44 @@ class Gif(
             previousPixels = framePixels.clone()
         }
 
-        gifDescriptor.data.use { stream ->
-            stream.seek(imageDescriptor.imageData.position)
-            stream.read(rawScratch, 0, imageDescriptor.imageData.length)
-        }
-
-        lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
-
-        fillPixels(
-            framePixels,
-            scratch,
-            colorTable,
-            gifDescriptor.logicalScreenDescriptor,
-            imageDescriptor
-        )
-
-        framePixels.copyInto(inPixels)
-
-        when (disposal) {
-            GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
-                previousPixels?.copyInto(framePixels)
+        try {
+            gifDescriptor.data.use { stream ->
+                stream.seek(imageDescriptor.imageData.position)
+                stream.read(rawScratch, 0, imageDescriptor.imageData.length)
             }
-            GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
-            GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
-            GraphicControlExtension.Disposal.RESTORE_TO_BACKGROUND -> {
-                // Restore the section drawn for this frame to the background color.
-                val (frame_width, frame_height) = imageDescriptor.dimension
-                val (offset_x, offset_y) = imageDescriptor.position
 
-                for (line in 0 until frame_height) {
-                    val startIndex = (line + offset_y) * dimension.width + offset_x
-                    framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
+            lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
+
+            fillPixels(
+                framePixels,
+                scratch,
+                colorTable,
+                gifDescriptor.logicalScreenDescriptor,
+                imageDescriptor
+            )
+
+            framePixels.copyInto(inPixels)
+
+            when (disposal) {
+                GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
+                    previousPixels?.copyInto(framePixels)
+                }
+                GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
+                GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
+                GraphicControlExtension.Disposal.RESTORE_TO_BACKGROUND -> {
+                    // Restore the section drawn for this frame to the background color.
+                    val (frame_width, frame_height) = imageDescriptor.dimension
+                    val (offset_x, offset_y) = imageDescriptor.position
+
+                    for (line in 0 until frame_height) {
+                        val startIndex = (line + offset_y) * dimension.width + offset_x
+                        framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
+                    }
                 }
             }
+            return true
+        } catch (exception: Exception) {
+            return false
         }
     }
 
@@ -277,5 +286,17 @@ class Gif(
                 }
             }
         }
+    }
+
+    companion object {
+        fun from(
+            file: File,
+            pixelPacking: PixelPacking = PixelPacking.ARGB
+        ): Result<Gif> = Parser.parse(file, pixelPacking).map(::Gif)
+
+        fun from(
+            inputStream: InputStream,
+            pixelPacking: PixelPacking = PixelPacking.ARGB
+        ): Result<Gif> = Parser.parse(inputStream, pixelPacking).map(::Gif)
     }
 }

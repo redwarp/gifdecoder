@@ -1,7 +1,5 @@
 package app.redwarp.gif.decoder
 
-import app.redwarp.gif.decoder.Gif
-import app.redwarp.gif.decoder.Parser
 import app.redwarp.gif.decoder.descriptors.Header
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -13,7 +11,7 @@ class Gif87A2ColorTest {
     @Test
     fun inputGif_gif87aHeader_returnCorrectHeader() {
         val gifFile = File("../assets/sample-2colors-87a.gif")
-        val gifDescriptor = Parser.parse(gifFile)
+        val gifDescriptor = Parser.parse(gifFile).unwrap()
 
         assertEquals(Header.GIF87a, gifDescriptor.header)
     }
@@ -21,16 +19,19 @@ class Gif87A2ColorTest {
     @Test
     fun readColorMap_2colors_returnsColorsAsWhiteAndDark() {
         val gifFile = File("../assets/sample-2colors-87a.gif")
-        val gifDescriptor = Parser.parse(gifFile)
+        val gifDescriptor = Parser.parse(gifFile).unwrap()
 
-        assertArrayEquals(intArrayOf(0xff111111.toInt(), 0xffffffff.toInt()), gifDescriptor.globalColorTable)
+        assertArrayEquals(
+            intArrayOf(0xff111111.toInt(), 0xffffffff.toInt()),
+            gifDescriptor.globalColorTable
+        )
     }
 
     @Test
     fun parseAll() {
         val gifFile = File("../assets/sample-2colors-87a.gif")
 
-        val gifDescriptor = Parser.parse(gifFile)
+        val gifDescriptor = Parser.parse(gifFile).unwrap()
         val gif = Gif(gifDescriptor)
 
         val destinationDimension = gif.dimension
