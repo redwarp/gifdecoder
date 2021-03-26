@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.0] (2021-03-26)
+
+- Breaking: parser and Gif now avoid Exceptions, in favor of Result<>.
+- Bump a few libs and kotlin.
+
 ## [0.4.0] (2021-02-27)
 
 - Introduce an API to decode files directly via a random access file instead of loading everthing from an InputStream.

@@ -3,7 +3,6 @@ package app.redwarp.gif.decoder
 import app.redwarp.gif.decoder.descriptors.Header
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import java.io.File
 
 class GifParserTest {
@@ -17,11 +16,9 @@ class GifParserTest {
     }
 
     @Test
-    fun inputColorGif_gifCorruptedHeader_throwsException() {
+    fun inputColorGif_gifCorruptedHeader_returnsError() {
         val gifFile = File("../assets/sample-corrupted.gif")
 
-        assertThrows<InvalidGifException> {
-            Parser.parse(gifFile)
-        }
+        Assertions.assertTrue(Parser.parse(gifFile) is Result.Error)
     }
 }
