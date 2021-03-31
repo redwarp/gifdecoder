@@ -1,7 +1,7 @@
 object Publication {
     const val GROUP = "app.redwarp.gif"
-    const val VERSION_CODE = 8
-    const val VERSION_NAME = "0.5.0"
+    const val VERSION_CODE = 9
+    const val VERSION_NAME = "0.5.1"
 
     object Pom {
         const val URL = "https://github.com/redwarp/gifdecoder"
