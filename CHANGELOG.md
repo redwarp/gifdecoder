@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.5.1]
+
+- Get rid of netty, replaced by a naive homebrew solution.
+
 ## [0.5.0] (2021-03-26)
 
 - Breaking: parser and Gif now avoid Exceptions, in favor of Result<>.
