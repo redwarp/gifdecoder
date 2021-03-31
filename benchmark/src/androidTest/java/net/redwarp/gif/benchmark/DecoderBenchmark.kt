@@ -8,9 +8,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.unwrap
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
-import net.redwarp.gif.decoder.NativeGif
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -26,14 +26,12 @@ class DecoderBenchmark {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private lateinit var gif: Gif
-    private lateinit var nativeGif: NativeGif
 
     @Before
     fun setup() {
         val inputStream = context.assets.open(GIF_FILE)
-        val gifDescriptor = Parser.parse(inputStream)
+        val gifDescriptor = Parser.parse(inputStream).unwrap()
         gif = Gif(gifDescriptor)
-        nativeGif = NativeGif(gifDescriptor)
     }
 
     @Test
@@ -46,15 +44,6 @@ class DecoderBenchmark {
     }
 
     @Test
-    fun getFrame_native() {
-        val pixels = IntArray(gif.dimension.size)
-
-        benchmarkRule.measureRepeated {
-            nativeGif.getFrame(0, pixels)
-        }
-    }
-
-    @Test
     fun getFrame_withFinalBitmap_kotlin() {
         val pixels = IntArray(gif.dimension.size)
         val (width, height) = gif.dimension
@@ -62,18 +51,6 @@ class DecoderBenchmark {
 
         benchmarkRule.measureRepeated {
             gif.getFrame(0, pixels)
-            bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
-        }
-    }
-
-    @Test
-    fun getFrame_withFinalBitmap_native() {
-        val pixels = IntArray(gif.dimension.size)
-        val (width, height) = gif.dimension
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-        benchmarkRule.measureRepeated {
-            nativeGif.getFrame(0, pixels)
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         }
     }

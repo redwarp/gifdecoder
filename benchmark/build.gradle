@@ -49,7 +49,6 @@ android {
 
 dependencies {
     implementation project(":android-drawable")
-    implementation project(":android-drawable-native")
     implementation "androidx.annotation:annotation:1.2.0"
     androidTestImplementation 'androidx.test:runner:1.3.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

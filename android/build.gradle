@@ -35,19 +35,15 @@ android {
             assets.srcDirs += ["../assets"]
         }
     }
-
-    packagingOptions {
-        exclude("META-INF/io.netty.versions.properties")
-    }
 }
 
 dependencies {
     implementation project(":android-drawable")
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3'
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
 
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 

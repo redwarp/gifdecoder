@@ -30,4 +30,4 @@ dependencyResolutionManagement {
 }
 
 includeBuild("decoder")
-include(":android-drawable", ":android-drawable-native", ":android", ":benchmark")
+include(":android-drawable", ":android", ":benchmark")

@@ -6,5 +6,4 @@ object Versions {
     const val KTLINT = "0.41.0"
     const val KTLINT_GRADLE = "10.0.0"
     const val VERSIONS = "0.36.0"
-    const val NETTY_BUFFER = "4.1.58.Final"
 }

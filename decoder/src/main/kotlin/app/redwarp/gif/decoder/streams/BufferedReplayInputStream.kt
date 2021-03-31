@@ -1,39 +1,52 @@
 package app.redwarp.gif.decoder.streams
 
-import io.netty.buffer.ByteBuf
-import io.netty.buffer.Unpooled
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 /**
  * A super naive implementation of a replay input stream: if we call the seek method even once,
  * then we will stop reading the original stream, and only use the in memory data.
- *
- * Check https://netty.io/4.0/api/io/netty/buffer/Unpooled.html#buffer-int-
  */
-
-class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() {
+internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() {
     private val inputStream = inputStream.buffered()
-    private val byteBuf: ByteBuf = Unpooled.buffer()
+    private val outputStream = ByteArrayOutputStream()
+    private var position = 0
+    private var totalCount = 0
     private var replay = false
 
+    private var _loadedData: ByteArray? = null
+    private val loadedData: ByteArray
+        get() {
+            return _loadedData ?: outputStream.toByteArray().also(this::_loadedData::set)
+        }
+
     override fun seek(position: Int) {
-        byteBuf.readerIndex(position)
         replay = true
+        if (_loadedData == null) {
+            _loadedData = outputStream.toByteArray()
+            outputStream.close()
+        }
+        this.position = position
         inputStream.close()
     }
 
     override fun getPosition(): Int {
-        return byteBuf.readerIndex()
+        return if (!replay) outputStream.size()
+        else {
+            position
+        }
     }
 
     override fun read(): Int {
         return if (!replay) {
             val read = inputStream.read()
-            byteBuf.writeByte(read)
-            byteBuf.readerIndex(byteBuf.readerIndex() + 1)
+            outputStream.write(read)
+            totalCount++
             read
         } else {
-            byteBuf.readByte().toInt() and 0xFF
+            (loadedData[position].toInt() and 0xFF).also {
+                position += 1
+            }
         }
     }
 
@@ -42,16 +55,22 @@ class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() 
             val readCount = inputStream.read(byteArray, offset, length)
 
             if (readCount > 0) {
-                byteBuf.writeBytes(byteArray, offset, readCount)
+                outputStream.write(byteArray, offset, readCount)
             }
-            byteBuf.readerIndex(byteBuf.readerIndex() + readCount)
+            totalCount += readCount
 
             return readCount
         } else {
             val readCount =
-                if (length > byteBuf.readableBytes()) byteBuf.readableBytes() else length
+                if (length > readableBytes()) readableBytes() else length
 
-            byteBuf.readBytes(byteArray, offset, readCount)
+            loadedData.copyInto(
+                destination = byteArray,
+                destinationOffset = 0,
+                startIndex = position + offset,
+                endIndex = position + offset + readCount
+            )
+            position += readCount
 
             return readCount
         }
@@ -62,16 +81,23 @@ class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() 
             val readCount = inputStream.read(byteArray)
 
             if (readCount > 0) {
-                byteBuf.writeBytes(byteArray)
+                outputStream.write(byteArray, 0, readCount)
             }
-            byteBuf.readerIndex(byteBuf.readerIndex() + readCount)
+            totalCount += readCount
 
             return readCount
         } else {
             val readCount =
-                if (byteArray.size > byteBuf.readableBytes()) byteBuf.readableBytes() else byteArray.size
+                if (byteArray.size > readableBytes()) readableBytes() else byteArray.size
 
-            byteBuf.readBytes(byteArray)
+            loadedData.copyInto(
+                destination = byteArray,
+                destinationOffset = 0,
+                startIndex = position,
+                endIndex = position + readCount
+            )
+
+            position += readCount
 
             return readCount
         }
@@ -79,5 +105,14 @@ class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() 
 
     override fun close() {
         inputStream.close()
+    }
+
+    private fun readableBytes(): Int {
+        val myByteArray = _loadedData
+        return if (myByteArray == null) {
+            0
+        } else {
+            myByteArray.size - position
+        }
     }
 }
