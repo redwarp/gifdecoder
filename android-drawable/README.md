@@ -1,15 +1,15 @@
 # android-drawable
 
-[ ![Download](https://api.bintray.com/packages/redwarp/maven/gif-android-drawable/images/download.svg) ](https://bintray.com/redwarp/maven/gif-android-drawable/_latestVersion)
+![Maven Central](https://img.shields.io/maven-central/v/app.redwarp.gif/android-drawable)
 
 An implementation of an Android Drawable, using the decoder, as a simple way to display a gif in an
 Android app.
 
 ## Setup
 
-`android-drawable` is available on `jcenter()`
+`android-drawable` is available on `mavenCentral()`
 
-Add it to your dependencies with `implementation "net.redwarp.gif:android-drawable:x.y.z"`
+Add it to your dependencies with `implementation "app.redwarp.gif:android-drawable:x.y.z"`
 
 In code, create a GifDrawable from any InputStream.
 GifDrawable implements `Animatable2Compat`, a user needs to call `start()` to start the animation.

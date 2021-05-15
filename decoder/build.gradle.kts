@@ -10,6 +10,11 @@ plugins {
     id("signing")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 base {
     archivesBaseName = "decoder"
     group = Publication.GROUP
@@ -18,7 +23,6 @@ base {
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 dependencies {

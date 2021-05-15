@@ -152,7 +152,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         if (!isRunning) return // Already stopped.
 
         isRunning = false
-        // loopJob?.cancel()
         postAnimationEnd()
     }
 
