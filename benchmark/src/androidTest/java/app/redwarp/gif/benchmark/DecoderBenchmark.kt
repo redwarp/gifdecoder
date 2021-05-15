@@ -1,4 +1,18 @@
-package net.redwarp.gif.benchmark
+/* Copyright 2020 Benoit Vermont
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package app.redwarp.gif.benchmark
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -8,7 +22,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.unwrap
+import app.redwarp.gif.decoder.Result
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
 import org.junit.Before
@@ -65,5 +79,12 @@ class DecoderBenchmark {
         benchmarkRule.measureRepeated {
             standardGifDecoder.nextFrame
         }
+    }
+}
+
+private fun <T> Result<T>.unwrap(): T {
+    when (this) {
+        is Result.Success -> return value
+        is Result.Error -> throw Exception(reason)
     }
 }

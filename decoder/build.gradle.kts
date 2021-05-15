@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("com.github.ben-manes.versions") version Versions.VERSIONS
+    id("com.diffplug.spotless") version "5.12.4"
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
     id("signing")
@@ -143,3 +144,13 @@ tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
 }
 
 val String.byProperty: String? get() = findProperty(this) as? String
+
+spotless {
+    kotlin {
+        target(project.fileTree(project.projectDir) {
+            include("**/app/redwarp/gif/decoder/**/*.kt")
+        })
+
+        licenseHeaderFile("${project.rootDir}/../license_header.txt")
+    }
+}
