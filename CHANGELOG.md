@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.0]
+
+- Update kotlin to 1.5.0
+- Update AGP to 4.2.1
+
 ## [0.5.1]
 
 - Get rid of netty, replaced by a naive homebrew solution.
