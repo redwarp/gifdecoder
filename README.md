@@ -28,10 +28,3 @@ Android app.
 `implementation "app.redwarp.gif:android-drawable:x.y.z"`
 
 See [android-drawable](android-drawable).
-
-### android-drawable-native
-
-Currently broken, an alternative to the android drawable that uses a bit of rust code for some critical sections.
-More like an experiment, to see if we can be more efficient and use less battery.
-
-See [android-drawable-native](android-drawable-native) and [giflzwdecoder](giflzwdecoder).
