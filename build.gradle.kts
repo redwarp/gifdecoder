@@ -21,9 +21,11 @@ subprojects {
 
     configure<com.diffplug.gradle.spotless.SpotlessExtension> {
         kotlin {
-            target(project.fileTree(project.projectDir) {
-                include("**/app/redwarp/gif/**/*.kt")
-            })
+            target(
+                project.fileTree(project.projectDir) {
+                    include("**/app/redwarp/gif/**/*.kt")
+                }
+            )
 
             licenseHeaderFile("${project.rootDir}/license_header.txt")
         }

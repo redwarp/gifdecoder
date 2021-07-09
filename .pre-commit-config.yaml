@@ -11,6 +11,8 @@ repos:
     hooks:
       - id: pretty-format-kotlin
         args: [--autofix]
+        types: [file]  # override `types: [json]`
+        files: \.(kt|kts)$
   - repo: https://github.com/redwarp/optimize-png-hooks
     rev: v1.0.0
     hooks:
