@@ -12,14 +12,9 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-base {
-    archivesBaseName = "decoder"
-    group = Publication.GROUP
-    version = Publication.VERSION_NAME
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }
 
 repositories {
@@ -84,6 +79,10 @@ publishing {
         register<MavenPublication>("release") {
             from(components["java"])
 
+            artifactId = "decoder"
+            group = Publication.GROUP
+            version = Publication.VERSION_NAME
+
             artifact(tasks.getByName("javadocJar"))
             artifact(tasks.getByName("sourceJar"))
 
@@ -124,10 +123,14 @@ publishing {
     val signingKey = "SIGNING_KEY".byProperty
     val signingPwd = "SIGNING_PASSWORD".byProperty
 
-    signing {
-        @Suppress("UnstableApiUsage")
-        useInMemoryPgpKeys(signingKey, signingPwd)
-        sign(publishing.publications["release"])
+    if (signingKey.isNullOrBlank() || signingPwd.isNullOrBlank()) {
+        logger.info("Signing Disable as the PGP key was not found")
+    } else {
+        logger.info("GPG Key found - Signing enabled")
+        signing {
+            useInMemoryPgpKeys(signingKey, signingPwd)
+            sign(publishing.publications["release"])
+        }
     }
 }
 
@@ -147,9 +150,13 @@ val String.byProperty: String? get() = findProperty(this) as? String
 
 spotless {
     kotlin {
-        target(project.fileTree(project.projectDir) {
-            include("**/app/redwarp/gif/decoder/**/*.kt")
-        })
+        target(
+            project.fileTree(
+                project.projectDir
+            ) {
+                include("**/app/redwarp/gif/decoder/**/*.kt")
+            }
+        )
 
         licenseHeaderFile("${project.rootDir}/../license_header.txt")
     }

@@ -7,12 +7,6 @@ plugins {
     id("signing")
 }
 
-base {
-    group = Publication.GROUP
-    archivesBaseName = "android-drawable"
-    version = Publication.VERSION_NAME
-}
-
 repositories {
     google()
     mavenCentral()
@@ -93,8 +87,8 @@ publishing {
 
     publications {
         register<MavenPublication>("release") {
-            groupId = Publication.GROUP
             artifactId = "android-drawable"
+            groupId = Publication.GROUP
             version = Publication.VERSION_NAME
 
             afterEvaluate {
@@ -165,10 +159,15 @@ publishing {
     val signingKey = "SIGNING_KEY".byProperty
     val signingPwd = "SIGNING_PASSWORD".byProperty
 
-    signing {
-        @Suppress("UnstableApiUsage")
-        useInMemoryPgpKeys(signingKey, signingPwd)
-        sign(publishing.publications["release"])
+    if (signingKey.isNullOrBlank() || signingPwd.isNullOrBlank()) {
+        logger.info("Signing Disable as the PGP key was not found")
+    } else {
+        logger.info("GPG Key found - Signing enabled")
+        signing {
+            @Suppress("UnstableApiUsage")
+            useInMemoryPgpKeys(signingKey, signingPwd)
+            sign(publishing.publications["release"])
+        }
     }
 }
 
