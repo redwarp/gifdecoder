@@ -35,6 +35,12 @@ tasks.register("clean", Delete::class.java) {
     delete(rootProject.buildDir)
 }
 
+buildscript {
+    dependencies {
+        classpath("com.android.tools.build:gradle:4.2.2")
+    }
+}
+
 tasks.register("testLibraries") {
     description = "Run tests on both libraries"
 

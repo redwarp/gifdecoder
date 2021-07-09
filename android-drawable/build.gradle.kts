@@ -50,14 +50,14 @@ android {
 }
 
 dependencies {
-    api("app.redwarp.gif:decoder:${Publication.VERSION_NAME}")
-    implementation("androidx.appcompat:appcompat:1.2.0")
+    api("app.redwarp.gif:decoder:0.6.0")
+    implementation("androidx.appcompat:appcompat:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.COROUTINES}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}")
 
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.2")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.3")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
 }
 
 task("sourceJar", Jar::class) {
