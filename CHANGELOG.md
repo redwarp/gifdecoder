@@ -1,4 +1,10 @@
 # Changelog
+## [0.6.1]
+
+- Upgrade gradle wrapper to 7.1.1
+- Bump libraries, including AGP and kotlin
+- Add a few comments there and there
+- Change package of utility classes
 
 ## [0.6.0]
 
