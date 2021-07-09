@@ -5,7 +5,7 @@ plugins {
     kotlin("android") version Versions.KOTLIN apply false
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("com.github.ben-manes.versions") version Versions.VERSIONS apply false
-    id("com.diffplug.spotless") version "5.12.4" apply false
+    id("com.diffplug.spotless") version Versions.SPOTLESS apply false
 }
 
 subprojects {
@@ -37,7 +37,7 @@ tasks.register("clean", Delete::class.java) {
 
 buildscript {
     dependencies {
-        classpath("com.android.tools.build:gradle:4.2.2")
+        classpath("com.android.tools.build:gradle:${Versions.AGP}")
     }
 }
 

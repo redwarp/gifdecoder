@@ -19,6 +19,8 @@ import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
+import app.redwarp.gif.decoder.descriptors.params.LoopCount
+import app.redwarp.gif.decoder.descriptors.params.PixelPacking
 import app.redwarp.gif.decoder.lzw.LzwDecoder
 import app.redwarp.gif.decoder.utils.Palettes
 import java.io.File
@@ -26,6 +28,10 @@ import java.io.InputStream
 
 private const val TRANSPARENT_COLOR = 0x0
 
+/**
+ * Representation of the gif, with methods to decode frames.
+ * This class's methods are not thread safe.
+ */
 class Gif(
     private val gifDescriptor: GifDescriptor
 ) {

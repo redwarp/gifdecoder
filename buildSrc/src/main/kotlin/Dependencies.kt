@@ -6,5 +6,6 @@ object Versions {
     const val KOTLIN = "1.5.20"
     const val KTLINT = "0.41.0"
     const val KTLINT_GRADLE = "10.0.0"
+    const val SPOTLESS = "5.14.1"
     const val VERSIONS = "0.36.0"
 }

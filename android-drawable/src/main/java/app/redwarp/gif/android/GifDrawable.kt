@@ -27,11 +27,11 @@ import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.decoder.Gif
-import app.redwarp.gif.decoder.LoopCount
 import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.PixelPacking
 import app.redwarp.gif.decoder.Result
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
+import app.redwarp.gif.decoder.descriptors.params.LoopCount
+import app.redwarp.gif.decoder.descriptors.params.PixelPacking
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

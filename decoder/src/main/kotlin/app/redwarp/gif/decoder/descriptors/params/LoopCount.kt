@@ -12,19 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package app.redwarp.gif.decoder
+package app.redwarp.gif.decoder.descriptors.params
 
-/**
- * What type of pixel packing should be used when decoding the color tables.
- */
-enum class PixelPacking {
-    /**
-     * Standard alpha red green and blue.
-     */
-    ARGB,
-
-    /**
-     * Alpha, blue, green and red. Useful for Android Bitmap, as they use this packing internally for ARGB_8888 format.
-     */
-    ABGR
+sealed interface LoopCount {
+    object NoLoop : LoopCount
+    object Infinite : LoopCount
+    data class Fixed(val count: Int) : LoopCount
 }

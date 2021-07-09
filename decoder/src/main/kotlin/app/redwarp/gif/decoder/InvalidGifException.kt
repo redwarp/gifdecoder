@@ -14,4 +14,7 @@
  */
 package app.redwarp.gif.decoder
 
+/**
+ * Exception raised when a gif cannot be properly decoded.
+ */
 class InvalidGifException(message: String) : Exception(message)

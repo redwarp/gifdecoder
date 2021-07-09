@@ -22,6 +22,7 @@ import app.redwarp.gif.decoder.descriptors.ImageData
 import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
 import app.redwarp.gif.decoder.descriptors.Point
+import app.redwarp.gif.decoder.descriptors.params.PixelPacking
 import app.redwarp.gif.decoder.streams.BufferedReplayInputStream
 import app.redwarp.gif.decoder.streams.RandomAccessFileInputStream
 import app.redwarp.gif.decoder.streams.ReplayInputStream
@@ -52,12 +53,16 @@ object Parser {
 
     /**
      * Parse gif content from an [InputStream], keeping the whole content in memory.
+     * Wraps the [InputStream] in a [BufferedReplayInputStream].
      */
     fun parse(
         inputStream: InputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
     ): Result<GifDescriptor> = parse(BufferedReplayInputStream(inputStream), pixelPacking)
 
+    /**
+     * Parse gif content from a [ReplayInputStream], keeping the whole content in memory.
+     */
     fun parse(
         inputStream: ReplayInputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB

@@ -20,7 +20,13 @@ import java.io.InputStream
  * An [InputStream] that can be "replayed" by seeking a position.
  */
 abstract class ReplayInputStream : InputStream() {
+    /**
+     * Set the read position in the stream.
+     */
     abstract fun seek(position: Int)
 
+    /**
+     * Get the current read position of the stream.
+     */
     abstract fun getPosition(): Int
 }

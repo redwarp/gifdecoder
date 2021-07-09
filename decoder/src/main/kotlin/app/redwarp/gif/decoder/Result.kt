@@ -24,4 +24,11 @@ sealed interface Result<T> {
             is Error -> Error(reason)
         }
     }
+
+    fun unwrap(): T {
+        when (this) {
+            is Success -> return value
+            is Error -> throw Exception(reason)
+        }
+    }
 }

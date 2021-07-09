@@ -21,7 +21,6 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.android.GifDrawable
-import app.redwarp.gif.decoder.Result
 
 class MainActivity : AppCompatActivity() {
 
@@ -102,14 +101,6 @@ class MainActivity : AppCompatActivity() {
             } else {
                 drawable5.start()
             }
-        }
-    }
-
-    private fun <T> Result<T>.unwrap(): T {
-        when (this) {
-            is Result.Success -> return value
-            is Result.Error -> throw Exception(reason)
-            else -> throw Exception() // Why is it needed here?
         }
     }
 }

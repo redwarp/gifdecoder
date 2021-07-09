@@ -21,7 +21,6 @@ class LzwDecoder {
     private val suffix by lazy { ByteArray(MAX_STACK_SIZE) }
     private val pixelStack by lazy { ByteArray(MAX_STACK_SIZE + 1) }
 
-    @Synchronized
     fun decode(imageData: ByteArray, destination: ByteArray, pixelCount: Int) {
         val prefix = prefix
         val suffix = suffix

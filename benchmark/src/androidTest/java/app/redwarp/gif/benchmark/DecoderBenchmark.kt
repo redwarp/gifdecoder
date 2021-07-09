@@ -22,7 +22,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.Result
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
 import org.junit.Before
@@ -79,12 +78,5 @@ class DecoderBenchmark {
         benchmarkRule.measureRepeated {
             standardGifDecoder.nextFrame
         }
-    }
-}
-
-private fun <T> Result<T>.unwrap(): T {
-    when (this) {
-        is Result.Success -> return value
-        is Result.Error -> throw Exception(reason)
     }
 }
