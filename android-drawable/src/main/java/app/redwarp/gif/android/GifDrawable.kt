@@ -93,6 +93,9 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         setBounds(0, 0, intrinsicWidth, intrinsicHeight)
     }
 
+    /**
+     * @since 0.7.0
+     */
     var loopCount: LoopCount
         get() = state.loopCount ?: state.gif.loopCount
         set(value) {
