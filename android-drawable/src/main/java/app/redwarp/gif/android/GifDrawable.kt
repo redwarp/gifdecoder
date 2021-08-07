@@ -36,6 +36,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,8 +66,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
     private val lock = Object()
-
-    private var didRefresh = false
+    private val didRender = Channel<Unit>(capacity = 1)
 
     @Volatile
     private var isRunning: Boolean = false
@@ -157,7 +157,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 bitmapPaint
             )
             canvas.restoreToCount(checkpoint)
-            didRefresh = true
+            didRender.trySend(Unit)
         }
 
         if (isRunning && loopJob?.isActive != true) {
@@ -307,13 +307,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 bitmapPaint.isDither = nextFrame.config == Bitmap.Config.RGB_565
 
                 bitmapCache.release(oldBitmap)
-
-                if (!didRefresh) {
-                    return@loop
-                } else {
-                    didRefresh = false
-                }
             }
+            didRender.receive()
             withContext(Dispatchers.Main) {
                 invalidateSelf()
             }
