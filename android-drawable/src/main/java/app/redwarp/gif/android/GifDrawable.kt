@@ -77,6 +77,13 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         setBounds(0, 0, intrinsicWidth, intrinsicHeight)
     }
 
+    var loopCount: LoopCount
+        get() = state.loopCount ?: state.gif.loopCount
+        set(value) {
+            state.loopCount = value
+        }
+
+    @Deprecated("Use the loopCount property")
     fun setRepeatCount(repeatCount: Int) {
         state.loopCount = when {
             repeatCount == REPEAT_INFINITE -> {
@@ -89,6 +96,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         }
     }
 
+    @Deprecated("Use the loopCount property")
     fun getRepeatCount(): Int {
         return when (val loopCount = state.loopCount ?: state.gif.loopCount) {
             LoopCount.Infinite -> REPEAT_INFINITE
@@ -220,8 +228,11 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private fun shouldAnimate(): Boolean {
         if (!state.gif.isAnimated) return false
 
-        val repeatCount = getRepeatCount()
-        return repeatCount != 0 || state.loopIteration < repeatCount
+        return when (val repeatCount = loopCount) {
+            is LoopCount.NoLoop -> false
+            is LoopCount.Fixed -> state.loopIteration < repeatCount.count
+            is LoopCount.Infinite -> true
+        }
     }
 
     private suspend fun animationLoop() = withContext(Dispatchers.IO) loop@{

@@ -21,6 +21,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.android.GifDrawable
+import app.redwarp.gif.decoder.descriptors.params.LoopCount
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,7 +36,7 @@ class MainActivity : AppCompatActivity() {
 
         val imageView1 = findViewById<ImageView>(R.id.imageView1)
         val drawable = GifDrawable.from(assets.open("full_colour.gif")).unwrap()
-        drawable.setRepeatCount(GifDrawable.REPEAT_INFINITE)
+        drawable.loopCount = LoopCount.Infinite
         drawables.add(drawable)
         imageView1.setImageDrawable(drawable)
         drawable.start()
@@ -89,7 +90,7 @@ class MainActivity : AppCompatActivity() {
 
         val surfaceView = findViewById<SurfaceView>(R.id.surfaceView)
         val drawable5 = drawable3.constantState.newDrawable() as GifDrawable
-        drawable5.setRepeatCount(GifDrawable.REPEAT_INFINITE)
+        drawable5.loopCount = LoopCount.Infinite
         val wrapper = GifWrapperDrawable(drawable5)
         wrapper.setBackgroundColor(Color.WHITE)
         surfaceDrawableRenderer = SurfaceDrawableRenderer(surfaceView.holder, wrapper)
