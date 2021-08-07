@@ -24,7 +24,7 @@ import java.io.InputStream
  */
 internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() {
     private val inputStream = inputStream.buffered()
-    private val outputStream = ByteArrayOutputStream()
+    private var outputStream: ByteArrayOutputStream? = ByteArrayOutputStream()
     private var position = 0
     private var totalCount = 0
     private var replay = false
@@ -32,21 +32,23 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
     private var _loadedData: ByteArray? = null
     private val loadedData: ByteArray
         get() {
-            return _loadedData ?: outputStream.toByteArray().also(this::_loadedData::set)
+            return _loadedData ?: requireNotNull(outputStream).toByteArray()
+                .also(this::_loadedData::set)
         }
 
     override fun seek(position: Int) {
         replay = true
         if (_loadedData == null) {
-            _loadedData = outputStream.toByteArray()
-            outputStream.close()
+            _loadedData = requireNotNull(outputStream).toByteArray()
+            outputStream?.close()
+            outputStream = null
             inputStream.close()
         }
         this.position = position
     }
 
     override fun getPosition(): Int {
-        return if (!replay) outputStream.size()
+        return if (!replay) requireNotNull(outputStream).size()
         else {
             position
         }
@@ -55,7 +57,7 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
     override fun read(): Int {
         return if (!replay) {
             val read = inputStream.read()
-            outputStream.write(read)
+            outputStream?.write(read)
             totalCount++
             read
         } else {
@@ -70,7 +72,7 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
             val readCount = inputStream.read(byteArray, offset, length)
 
             if (readCount > 0) {
-                outputStream.write(byteArray, offset, readCount)
+                outputStream?.write(byteArray, offset, readCount)
             }
             totalCount += readCount
 
@@ -96,7 +98,7 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
             val readCount = inputStream.read(byteArray)
 
             if (readCount > 0) {
-                outputStream.write(byteArray, 0, readCount)
+                outputStream?.write(byteArray, 0, readCount)
             }
             totalCount += readCount
 
