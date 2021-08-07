@@ -13,15 +13,13 @@ repositories {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdk = 30
 
     defaultConfig {
-        minSdkVersion(21)
-        targetSdkVersion(30)
-        versionCode(Publication.VERSION_CODE)
-        versionName(Publication.VERSION_NAME)
+        minSdk = 21
+        targetSdk = 30
 
-        testInstrumentationRunner("androidx.test.runner.AndroidJUnitRunner")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -44,8 +42,8 @@ android {
 }
 
 dependencies {
-    api("app.redwarp.gif:decoder:0.6.0")
-    implementation("androidx.appcompat:appcompat:1.3.0")
+    api("app.redwarp.gif:decoder:${Publication.VERSION_NAME}")
+    implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.COROUTINES}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}")
 
