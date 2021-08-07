@@ -42,6 +42,22 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 
+/**
+ * A drawable that can be used to display a static or animated GIF.
+ *
+ * Usage:
+ * ```kotlin
+ * val inputStream:InputStream = (...)
+ *
+ * val gifDrawable = GifDrawable.from(inputStream)
+ * ```
+ *
+ * By default, the drawable will respect the loop count of the decoded GIF.
+ * You can force your loop count by doing
+ * ```kotlin
+ * gifDrawable.loopCount = LoopCount.INFINITE
+ * ```
+ */
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
     private val state = GifDrawableState(gifDescriptor)
 
@@ -85,7 +101,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     @Deprecated("Use the loopCount property")
     fun setRepeatCount(repeatCount: Int) {
-        state.loopCount = when {
+        loopCount = when {
             repeatCount == REPEAT_INFINITE -> {
                 LoopCount.Infinite
             }
@@ -98,7 +114,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     @Deprecated("Use the loopCount property")
     fun getRepeatCount(): Int {
-        return when (val loopCount = state.loopCount ?: state.gif.loopCount) {
+        return when (val loopCount = loopCount) {
             LoopCount.Infinite -> REPEAT_INFINITE
             LoopCount.NoLoop -> 0
             is LoopCount.Fixed -> loopCount.count
