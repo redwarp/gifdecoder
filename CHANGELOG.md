@@ -1,4 +1,11 @@
 # Changelog
+## [0.7.0]
+
+- Update documentation
+- Minor refactor (Point becomes Position)
+- Upgrade Android Gradle Plugin to 7.0.0, and dependencies in general
+- Deprecate setRepeatCount and getRepeatCount in the GifDrawable.
+
 ## [0.6.1]
 
 - Upgrade gradle wrapper to 7.1.1
