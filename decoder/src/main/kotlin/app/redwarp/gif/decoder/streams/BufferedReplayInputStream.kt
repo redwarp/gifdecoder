@@ -40,9 +40,9 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
         if (_loadedData == null) {
             _loadedData = outputStream.toByteArray()
             outputStream.close()
+            inputStream.close()
         }
         this.position = position
-        inputStream.close()
     }
 
     override fun getPosition(): Int {
@@ -123,11 +123,8 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
     }
 
     private fun readableBytes(): Int {
-        val myByteArray = _loadedData
-        return if (myByteArray == null) {
-            0
-        } else {
-            myByteArray.size - position
-        }
+        return _loadedData?.let {
+            it.size - position
+        } ?: 0
     }
 }

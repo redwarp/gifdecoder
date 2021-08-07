@@ -44,7 +44,7 @@ class Gif(
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private val rawScratch = ByteArray(gifDescriptor.imageDescriptors.maxOf { it.imageData.length })
-    private var previousPixels: IntArray? = null
+    private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
 
     private val lzwDecoder: LzwDecoder = LzwDecoder()
 
@@ -159,7 +159,7 @@ class Gif(
             ?: GraphicControlExtension.Disposal.NOT_SPECIFIED
 
         if (disposal == GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS) {
-            previousPixels = framePixels.clone()
+            framePixels.copyInto(previousPixels)
         }
 
         try {
@@ -182,7 +182,7 @@ class Gif(
 
             when (disposal) {
                 GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
-                    previousPixels?.copyInto(framePixels)
+                    previousPixels.copyInto(framePixels)
                 }
                 GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
                 GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
