@@ -1,23 +1,28 @@
 # Changelog
 
+## [0.7.1] (2021-08-07)
+
+- Memory optimization (free data from memory early).
+- Get rid of the useless BitmapShader in the GifDrawable.
+
 ## [0.7.0] (2021-08-07)
 
-- Update documentation
-- Minor refactor (Point becomes Position)
-- Upgrade Android Gradle Plugin to 7.0.0, and dependencies in general
+- Update documentation.
+- Minor refactor (Point becomes Position).
+- Upgrade Android Gradle Plugin to 7.0.0, and dependencies in general.
 - Deprecate setRepeatCount and getRepeatCount in the GifDrawable.
 
 ## [0.6.1] (2021-07-09)
 
-- Upgrade gradle wrapper to 7.1.1
-- Bump libraries, including AGP and kotlin
-- Add a few comments there and there
-- Change package of utility classes
+- Upgrade gradle wrapper to 7.1.1.
+- Bump libraries, including AGP and kotlin.
+- Add a few comments there and there.
+- Change package of utility classes.
 
 ## [0.6.0] (2021-05-15)
 
-- Update kotlin to 1.5.0
-- Update AGP to 4.2.1
+- Update kotlin to 1.5.0.
+- Update AGP to 4.2.1.
 
 ## [0.5.1] (2021-03-31)
 
