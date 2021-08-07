@@ -163,6 +163,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         if (isRunning && loopJob?.isActive != true) {
             loopJob = coroutineScope.launch {
                 animationLoop()
+            }.apply {
+                invokeOnCompletion {
+                    loopJob = null
+                }
             }
         }
     }
@@ -191,7 +195,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     override fun stop() {
         if (!isRunning) return // Already stopped.
-
+        loopJob?.cancel()
         isRunning = false
         postAnimationEnd()
     }
