@@ -14,4 +14,9 @@
  */
 package app.redwarp.gif.decoder.descriptors
 
+/**
+ * A marker to save the position and length of an image data block inside the input stream.
+ * It will be used later when decoding the lzw data to directly point at the proper position in
+ * the stream.
+ */
 data class ImageData(val position: Int, val length: Int)

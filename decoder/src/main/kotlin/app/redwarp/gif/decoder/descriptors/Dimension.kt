@@ -14,6 +14,9 @@
  */
 package app.redwarp.gif.decoder.descriptors
 
+/**
+ * Representation of the dimension of a gif or a frame.
+ */
 data class Dimension(val width: Int, val height: Int) {
     constructor(width: Short, height: Short) : this(width.toInt(), height.toInt())
 

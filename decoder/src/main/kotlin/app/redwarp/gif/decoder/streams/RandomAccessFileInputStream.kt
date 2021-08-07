@@ -17,6 +17,12 @@ package app.redwarp.gif.decoder.streams
 import java.io.File
 import java.io.RandomAccessFile
 
+/**
+ * A [ReplayInputStream] implementation wrapping a [RandomAccessFile]: replaying the stream will
+ * actually set the [RandomAccessFile]'s pointer back in the file.
+ * Choosing this class instead of the [BufferedReplayInputStream] is better for huge GIFs,
+ * as the data will not be loaded in memory, but kept on disk.
+ */
 internal class RandomAccessFileInputStream(private val file: File) : ReplayInputStream() {
     private var _randomAccessFile: RandomAccessFile? = null
     private val randomAccessFile: RandomAccessFile

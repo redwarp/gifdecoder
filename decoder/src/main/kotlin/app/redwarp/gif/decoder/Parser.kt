@@ -21,7 +21,7 @@ import app.redwarp.gif.decoder.descriptors.Header
 import app.redwarp.gif.decoder.descriptors.ImageData
 import app.redwarp.gif.decoder.descriptors.ImageDescriptor
 import app.redwarp.gif.decoder.descriptors.LogicalScreenDescriptor
-import app.redwarp.gif.decoder.descriptors.Point
+import app.redwarp.gif.decoder.descriptors.Position
 import app.redwarp.gif.decoder.descriptors.params.PixelPacking
 import app.redwarp.gif.decoder.streams.BufferedReplayInputStream
 import app.redwarp.gif.decoder.streams.RandomAccessFileInputStream
@@ -245,7 +245,7 @@ object Parser {
         graphicControlExtension: GraphicControlExtension?,
         pixelPacking: PixelPacking
     ): ImageDescriptor {
-        val position = Point(readShortLe(), readShortLe())
+        val position = Position(readShortLe(), readShortLe())
         val dimension = Dimension(readShortLe(), readShortLe())
 
         val packedFields = readByte().toUByte()

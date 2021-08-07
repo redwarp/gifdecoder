@@ -38,8 +38,8 @@ class Gif(
     private var lastRenderedFrame: Int = -1
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
-        // Fill the frame with the background color, unless that is transparent, because a new int array
-        // is already initialized to zero.
+        // Fill the frame with the background color, unless that is transparent,
+        // as a new int array is already initialized to zero.
         if (backgroundColor != TRANSPARENT_COLOR) fill(backgroundColor)
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)

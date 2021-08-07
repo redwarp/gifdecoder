@@ -14,6 +14,9 @@
  */
 package app.redwarp.gif.decoder.descriptors
 
-data class Point(val x: Int, val y: Int) {
+/**
+ * X and Y coord, needed as frames can be offset.
+ */
+data class Position(val x: Int, val y: Int) {
     constructor(x: Short, y: Short) : this(x.toInt(), y.toInt())
 }

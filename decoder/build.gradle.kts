@@ -55,6 +55,14 @@ task("javadocJar", Jar::class) {
     from("$buildDir/dokka/javadoc")
 }
 
+tasks.dokkaHtml.configure {
+    dokkaSourceSets {
+        configureEach {
+            includes.from("dokka/module.md")
+        }
+    }
+}
+
 publishing {
     repositories {
         maven {

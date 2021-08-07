@@ -20,6 +20,7 @@ import java.io.InputStream
 /**
  * A super naive implementation of a replay input stream: if we call the seek method even once,
  * then we will stop reading the original stream, and only use the in memory data.
+ * Load and keep the whole [InputStream] in memory, should be avoided for huge GIFs.
  */
 internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() {
     private val inputStream = inputStream.buffered()

@@ -24,7 +24,8 @@ enum class PixelPacking {
     ARGB,
 
     /**
-     * Alpha, blue, green and red. Useful for Android Bitmap, as they use this packing internally for ARGB_8888 format.
+     * Alpha, blue, green and red. Useful for Android Bitmap, as they use this packing internally
+     * for ARGB_8888 format.
      */
     ABGR
 }

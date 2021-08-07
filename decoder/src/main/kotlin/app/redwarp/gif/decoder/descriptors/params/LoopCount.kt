@@ -14,8 +14,23 @@
  */
 package app.redwarp.gif.decoder.descriptors.params
 
+/**
+ * Representation of the gif loop rules.
+ */
 sealed interface LoopCount {
+    /**
+     * Play only once
+     */
     object NoLoop : LoopCount
+
+    /**
+     * Play forever
+     */
     object Infinite : LoopCount
+
+    /**
+     * Play a set amount of time.
+     * @param count how many time the gif should loop.
+     */
     data class Fixed(val count: Int) : LoopCount
 }

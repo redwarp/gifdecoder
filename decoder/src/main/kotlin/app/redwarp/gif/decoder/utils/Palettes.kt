@@ -14,34 +14,50 @@
  */
 package app.redwarp.gif.decoder.utils
 
+/**
+ * Fallback palettes used when a GIF has neither global nor local color tables.
+ */
 object Palettes {
-    private val Apple2 = intArrayOf(
-        0xff000000.toInt(),
-        0xff6c2940.toInt(),
-        0xff403578.toInt(),
-        0xffd93cf0.toInt(),
-        0xff135740.toInt(),
-        0xff808080.toInt(),
-        0xff2697f0.toInt(),
-        0xffbfb4f8.toInt(),
-        0xff404b07.toInt(),
-        0xffd9680f.toInt(),
-        0xff808080.toInt(),
-        0xffeca8bf.toInt(),
-        0xff26c30f.toInt(),
-        0xffbfca87.toInt(),
-        0xff93d6bf.toInt(),
-        0xffffffff.toInt()
-    )
+    /**
+     * The 16 color table used on the Apple II computer.
+     * See [Apple II graphics](https://en.wikipedia.org/wiki/Apple_II_graphics)
+     */
+    private val apple2 by lazy {
+        intArrayOf(
+            0xff000000.toInt(),
+            0xff6c2940.toInt(),
+            0xff403578.toInt(),
+            0xffd93cf0.toInt(),
+            0xff135740.toInt(),
+            0xff808080.toInt(),
+            0xff2697f0.toInt(),
+            0xffbfb4f8.toInt(),
+            0xff404b07.toInt(),
+            0xffd9680f.toInt(),
+            0xff808080.toInt(),
+            0xffeca8bf.toInt(),
+            0xff26c30f.toInt(),
+            0xffbfca87.toInt(),
+            0xff93d6bf.toInt(),
+            0xffffffff.toInt()
+        )
+    }
+
+    /**
+     * A black and white palette, for 2 colored GIFs.
+     */
+    private val blackAndWhite by lazy {
+        intArrayOf(0xff000000.toInt(), 0xffffffff.toInt())
+    }
 
     fun createFakeColorMap(size: Int): IntArray {
         return if (size == 2) {
-            intArrayOf(0xff000000.toInt(), 0xffffffff.toInt())
+            blackAndWhite
         } else {
             val colors = IntArray(size)
             for (index in 0 until size) {
-                val equivalentIndex = ((index * Apple2.size) / size).coerceIn(0, Apple2.size - 1)
-                colors[index] = Apple2[equivalentIndex]
+                val equivalentIndex = ((index * apple2.size) / size).coerceIn(0, apple2.size - 1)
+                colors[index] = apple2[equivalentIndex]
             }
             colors
         }

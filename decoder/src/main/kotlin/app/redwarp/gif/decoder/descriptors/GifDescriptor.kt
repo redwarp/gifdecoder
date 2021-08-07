@@ -16,6 +16,10 @@ package app.redwarp.gif.decoder.descriptors
 
 import app.redwarp.gif.decoder.streams.ReplayInputStream
 
+/**
+ * Describe the gif after parsing it once: contains header, global color tables,
+ * the image descriptors for each frames, as well as a reference to the full input stream.
+ */
 class GifDescriptor(
     val header: Header,
     val logicalScreenDescriptor: LogicalScreenDescriptor,

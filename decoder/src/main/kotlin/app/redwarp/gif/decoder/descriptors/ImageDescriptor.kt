@@ -15,7 +15,7 @@
 package app.redwarp.gif.decoder.descriptors
 
 class ImageDescriptor(
-    val position: Point,
+    val position: Position,
     val dimension: Dimension,
     val isInterlaced: Boolean,
     val localColorTable: IntArray?,

@@ -14,6 +14,12 @@
  */
 package app.redwarp.gif.decoder.descriptors
 
+/**
+ * There are two standard of GIF, with GIF89a being a super set of GIF87a.
+ * The library is not super strict about it: It is quite frequent to find GIFs labeled as GIF87a
+ * using features only available to GIF89a.
+ * Sad but...
+ */
 enum class Header {
     GIF87a, GIF89a
 }

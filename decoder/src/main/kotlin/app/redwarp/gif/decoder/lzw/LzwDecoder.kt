@@ -16,10 +16,13 @@ package app.redwarp.gif.decoder.lzw
 
 private const val MAX_STACK_SIZE = 4096
 
-class LzwDecoder {
-    private val prefix by lazy { ShortArray(MAX_STACK_SIZE) }
-    private val suffix by lazy { ByteArray(MAX_STACK_SIZE) }
-    private val pixelStack by lazy { ByteArray(MAX_STACK_SIZE + 1) }
+/**
+ * A lzw decode tailored for the GIFs specificities.
+ */
+internal class LzwDecoder {
+    private val prefix = ShortArray(MAX_STACK_SIZE)
+    private val suffix = ByteArray(MAX_STACK_SIZE)
+    private val pixelStack = ByteArray(MAX_STACK_SIZE + 1)
 
     fun decode(imageData: ByteArray, destination: ByteArray, pixelCount: Int) {
         val prefix = prefix

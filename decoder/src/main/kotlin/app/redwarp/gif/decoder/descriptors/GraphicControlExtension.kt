@@ -19,10 +19,28 @@ data class GraphicControlExtension(
     val delayTime: UShort,
     val transparentColorIndex: Byte?
 ) {
+    /**
+     * Disposal method of the frame, A.K.A. what to do after a frame has been rendered.
+     */
     enum class Disposal {
+        /**
+         * Not specified.
+         */
         NOT_SPECIFIED,
-        DO_NOT_DISPOSE, // Keep the previous frame in place.
-        RESTORE_TO_BACKGROUND, // After the image is shown, restore the whole canvas to the background color.
-        RESTORE_TO_PREVIOUS // After these pixels are shown, restore the canvas to the previous image.
+
+        /**
+         * Keep the frame in place. Future frames will be drawn on top.
+         */
+        DO_NOT_DISPOSE,
+
+        /**
+         * After the frame is shown, restore the whole canvas to the background color.
+         */
+        RESTORE_TO_BACKGROUND,
+
+        /**
+         * After the frame is shown, restore the canvas to the previous frame.
+         */
+        RESTORE_TO_PREVIOUS
     }
 }
