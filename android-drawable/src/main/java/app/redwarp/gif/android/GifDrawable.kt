@@ -15,14 +15,12 @@
 package app.redwarp.gif.android
 
 import android.graphics.Bitmap
-import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.RectF
-import android.graphics.Shader.TileMode
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -81,9 +79,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         isAntiAlias = false
         isFilterBitmap = false
         isDither = bitmap?.config == Bitmap.Config.RGB_565
-        bitmap?.let {
-            shader = BitmapShader(it, TileMode.CLAMP, TileMode.CLAMP)
-        }
     }
     private val matrix = Matrix()
 
@@ -149,13 +144,9 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         synchronized(lock) {
             val checkpoint = canvas.save()
             canvas.concat(matrix)
-            canvas.drawRect(
-                0f,
-                0f,
-                gifWidth.toFloat(),
-                gifHeight.toFloat(),
-                bitmapPaint
-            )
+            bitmap?.let {
+                canvas.drawBitmap(it, 0f, 0f, bitmapPaint)
+            }
             canvas.restoreToCount(checkpoint)
             didRender.trySend(Unit)
         }
@@ -291,7 +282,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 isRunning = false
                 return@loop
             }
-            val nextShader = BitmapShader(nextFrame, TileMode.CLAMP, TileMode.CLAMP)
+            nextFrame.prepareToDraw()
 
             val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
             val delay: Long = (frameDelay - elapsedTime).coerceIn(0L, frameDelay)
@@ -300,15 +291,14 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
             startTime = SystemClock.elapsedRealtime()
 
+            didRender.receive()
             synchronized(lock) {
                 val oldBitmap = bitmap
                 bitmap = nextFrame
-                bitmapPaint.shader = nextShader
                 bitmapPaint.isDither = nextFrame.config == Bitmap.Config.RGB_565
 
                 bitmapCache.release(oldBitmap)
             }
-            didRender.receive()
             withContext(Dispatchers.Main) {
                 invalidateSelf()
             }
