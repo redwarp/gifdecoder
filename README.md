@@ -28,3 +28,17 @@ Android app.
 `implementation "app.redwarp.gif:android-drawable:x.y.z"`
 
 See [android-drawable](android-drawable).
+
+## License
+
+The decoder and android-drawable library are both under an **Apache 2.0 License**.
+
+You might notice a few classes in the project copyrighted to *Google*: they are the OG decoder copied from the [bumptech/glide library](https://github.com/bumptech/glide), and are included in the project to do benchmarking and compare performance between the java implementation and the kotlin one.
+
+They are not actually included in the two deliverables, `decoder` and `android-drawable`.
+
+The `bitmap.h` in the giflzwdecoder folder is copyrighted to the *Android Open Source Project*, but is also not included in the deliverables: it's part of a currently failed attempt at making a native implementation of the decoder.
+
+Android ndk + rust is not trivial, and that attempt is currently on hold.
+
+Even though my first attempt at it kind of worked, it was naive and did come with a set of issues so I dropped it. I might get back to it in the future.

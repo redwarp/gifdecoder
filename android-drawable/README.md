@@ -24,6 +24,12 @@ drawable.start()
 imageView.setImageDrawable(drawable)
 ```
 
+## Dependencies
+
+This library depends on:
+- Coroutines, the `kotlinx-coroutines-core` and `kotlinx-coroutines-android` artifacts. They are used to do the threading of the decoding loop.
+- AppCompat, as the `GifDrawable` implements [Animatable2Compat](https://developer.android.com/reference/kotlin/androidx/vectordrawable/graphics/drawable/Animatable2Compat).
+
 ## Alternatives
 
 If you target Android 28, [AnimatedImageDrawable](https://developer.android.com/reference/android/graphics/drawable/AnimatedImageDrawable) is good and efficient.
