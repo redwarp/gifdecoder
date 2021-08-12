@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.2] (2021-08-12)
+
+- Fix a signed error in Dimension and Position: they were short instead of unsigned short, causing issues for giant gifs.
+
 ## [0.7.1] (2021-08-07)
 
 - Memory optimization (free data from memory early).
