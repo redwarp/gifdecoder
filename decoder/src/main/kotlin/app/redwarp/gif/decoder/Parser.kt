@@ -29,6 +29,8 @@ import app.redwarp.gif.decoder.streams.ReplayInputStream
 import app.redwarp.gif.decoder.utils.readAsciiString
 import app.redwarp.gif.decoder.utils.readByte
 import app.redwarp.gif.decoder.utils.readShortLe
+import app.redwarp.gif.decoder.utils.readUByte
+import app.redwarp.gif.decoder.utils.readUShortLe
 import java.io.File
 import java.io.InputStream
 
@@ -107,15 +109,15 @@ object Parser {
     }
 
     private fun InputStream.parseLogicalScreenDescriptor(): LogicalScreenDescriptor {
-        val dimension = Dimension(readShortLe(), readShortLe())
-        val packedFields = readByte().toUByte()
+        val dimension = Dimension(readUShortLe(), readUShortLe())
+        val packedFields = readUByte()
         val hasGlobalColorTableMask: UByte = 0b1000_0000u
         val hasGlobalColorTable =
             (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
         val sizeOfGlobalColorTableMask: UByte = 0b0000_0111u
-        val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields).toInt()
+        val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields)
 
-        val backgroundColorIndex = readByte()
+        val backgroundColorIndex = readUByte()
 
         return LogicalScreenDescriptor(
             dimension = dimension,
@@ -245,10 +247,10 @@ object Parser {
         graphicControlExtension: GraphicControlExtension?,
         pixelPacking: PixelPacking
     ): ImageDescriptor {
-        val position = Position(readShortLe(), readShortLe())
-        val dimension = Dimension(readShortLe(), readShortLe())
+        val position = Position(readUShortLe(), readUShortLe())
+        val dimension = Dimension(readUShortLe(), readUShortLe())
 
-        val packedFields = readByte().toUByte()
+        val packedFields = readUByte()
 
         val colorTableFlagMask: UByte = 0b1000_0000u
         val usesLocalColorTable = (packedFields and colorTableFlagMask) == colorTableFlagMask
@@ -282,7 +284,7 @@ object Parser {
         var length = 1
         skip(1)
         while (true) {
-            val blockSize = readByte().toUByte().toInt()
+            val blockSize = readUByte().toInt()
             length++
             if (blockSize == 0) {
                 break

@@ -21,13 +21,13 @@ package app.redwarp.gif.decoder.descriptors
 data class LogicalScreenDescriptor(
     val dimension: Dimension,
     val hasGlobalColorTable: Boolean,
-    val sizeOfGlobalColorTable: Int,
-    val backgroundColorIndex: Byte?,
+    val sizeOfGlobalColorTable: UByte,
+    val backgroundColorIndex: UByte?,
     val pixelAspectRatio: Byte
 ) {
 
     val colorCount: Int
         get() {
-            return 1.shl(sizeOfGlobalColorTable + 1)
+            return 1.shl(sizeOfGlobalColorTable.toInt() + 1)
         }
 }

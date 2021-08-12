@@ -20,7 +20,11 @@ internal fun InputStream.readShortLe(): Short {
     return (read() or (read() shl 8)).toShort()
 }
 
+internal fun InputStream.readUShortLe(): UShort = readShortLe().toUShort()
+
 internal fun InputStream.readByte(): Byte = read().toByte()
+
+internal fun InputStream.readUByte(): UByte = read().toUByte()
 
 internal fun InputStream.readAsciiString(byteCount: Int): String {
     val buffer = StringBuilder()
