@@ -318,5 +318,7 @@ class Gif(
             inputStream: InputStream,
             pixelPacking: PixelPacking = PixelPacking.ARGB
         ): Result<Gif> = Parser.parse(inputStream, pixelPacking).map(::Gif)
+
+        fun from(gif: Gif): Gif = Gif(gif.gifDescriptor)
     }
 }
