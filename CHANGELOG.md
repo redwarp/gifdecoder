@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.3] (2021-09-21)
+
+- Add a helper method to create a shallow copy of a Gif sharing GifDescriptors.
+
 ## [0.7.2] (2021-08-12)
 
 - Fix a signed error in Dimension and Position: they were short instead of unsigned short, causing issues for giant gifs.
