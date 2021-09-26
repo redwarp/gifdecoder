@@ -14,13 +14,7 @@
  */
 package app.redwarp.gif.android
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.ColorFilter
-import android.graphics.Matrix
-import android.graphics.Paint
-import android.graphics.PixelFormat
-import android.graphics.RectF
+import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
@@ -30,14 +24,8 @@ import app.redwarp.gif.decoder.Result
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.params.LoopCount
 import app.redwarp.gif.decoder.descriptors.params.PixelPacking
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 
@@ -74,6 +62,11 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     private val pixels = IntArray(state.gif.dimension.size)
     private var bitmap: Bitmap? = getCurrentFrame()
+        set(value) {
+            synchronized(lock) {
+                field = value
+            }
+        }
 
     private val bitmapPaint = Paint().apply {
         isAntiAlias = false
