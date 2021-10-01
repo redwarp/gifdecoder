@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.0] (2021-10-01)
+
+- Breaking: `advance()` now decodes the frame. It used to be done by the `getFrame` methods.
+  With this change, `getFrames` will either simply copy the internal buffer, or called `advance` if needed.
+- Breaking: `decoder.Result` class has been replaced by the `kotlin.Result` class, now stable.
+  Several function in the Gif class that would return nullable now return `kotlin.Result` instead.
+- Bump kotlin to 1.5.31, AGP to 7.0.2
+- Target SDK 31
+
 ## [0.7.3] (2021-09-21)
 
 - Add a helper method to create a shallow copy of a Gif sharing GifDescriptors.
