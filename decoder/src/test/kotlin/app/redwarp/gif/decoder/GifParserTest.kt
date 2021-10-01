@@ -24,7 +24,7 @@ class GifParserTest {
     @Test
     fun inputColorGif_gif89aHeader_returnCorrectHeader() {
         val gifFile = File("../assets/sample-2colors-89a.gif")
-        val gifDescriptor = Parser.parse(gifFile).unwrap()
+        val gifDescriptor = Parser.parse(gifFile).getOrThrow()
 
         Assertions.assertEquals(Header.GIF89a, gifDescriptor.header)
     }
@@ -33,6 +33,6 @@ class GifParserTest {
     fun inputColorGif_gifCorruptedHeader_returnsError() {
         val gifFile = File("../assets/sample-corrupted.gif")
 
-        Assertions.assertTrue(Parser.parse(gifFile) is Result.Error)
+        Assertions.assertTrue(Parser.parse(gifFile).isFailure)
     }
 }

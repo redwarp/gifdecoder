@@ -29,7 +29,7 @@ class RandomAccessGifTest {
         val tempFile = File.createTempFile("test", "gif")
         gifFile.copyTo(tempFile, true)
 
-        val gif = Gif.from(tempFile).unwrap()
+        val gif = Gif.from(tempFile).getOrThrow()
 
         val intArray = IntArray(gif.dimension.size)
 
@@ -46,7 +46,7 @@ class RandomAccessGifTest {
         val tempFile = File.createTempFile("test", "gif")
         gifFile.copyTo(tempFile, true)
 
-        val gif = Gif.from(tempFile).unwrap()
+        val gif = Gif.from(tempFile).getOrThrow()
 
         assertNotNull(gif.getFrame(0))
 
