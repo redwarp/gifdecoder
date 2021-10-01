@@ -117,6 +117,20 @@ class GifTest {
     }
 
     @Test
+    fun getFrame_lastFrameDirectly_properlyRenders() {
+
+        val gifDescriptor = Parser.parse(File("../assets/domo-interlaced.gif")).unwrap()
+        val gif = Gif(gifDescriptor)
+        val dimension = gif.dimension
+        val pixels = IntArray(dimension.size)
+
+        gif.getFrame(2, pixels)
+        val expectedPixels = loadExpectedPixels(File("../assets/frames/domo_2.png"))
+
+        assertArrayEquals(expectedPixels, pixels)
+    }
+
+    @Test
     fun getFrameDelay_animatedWithZeroDelaySpecified_returns0() {
         val gif = Gif.from(File("../assets/butterfly.gif")).unwrap()
 
