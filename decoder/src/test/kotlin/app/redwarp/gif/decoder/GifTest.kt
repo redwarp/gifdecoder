@@ -104,6 +104,19 @@ class GifTest {
     }
 
     @Test
+    fun getFrame_nonAnimatedGif_properlyRenders() {
+        val gifDescriptor = Parser.parse(File("../assets/sunflower.gif")).unwrap()
+        val gif = Gif(gifDescriptor)
+        val dimension = gif.dimension
+        val pixels = IntArray(dimension.size)
+
+        gif.getFrame(0, pixels)
+        val expectedPixels = loadExpectedPixels(File("../assets/frames/sunflower_0.png"))
+
+        assertArrayEquals(expectedPixels, pixels)
+    }
+
+    @Test
     fun getFrameDelay_animatedWithZeroDelaySpecified_returns0() {
         val gif = Gif.from(File("../assets/butterfly.gif")).unwrap()
 
@@ -131,6 +144,64 @@ class GifTest {
         val aspectRatio = gif.aspectRatio
 
         assertTrue { aspectRatio > 3.0 && aspectRatio < 3.2 }
+    }
+
+    @Test
+    fun advance_2times_currentIndexChanged() {
+        val gif = Gif.from(File("../assets/domo.gif")).unwrap()
+
+        assertEquals(0, gif.currentIndex)
+
+        repeat(2) {
+            gif.advance()
+        }
+
+        assertEquals(2, gif.currentIndex)
+    }
+
+    @Test
+    fun advance_enoughToLoop_currentIndexChanged() {
+        val gif = Gif.from(File("../assets/domo.gif")).unwrap()
+
+        assertEquals(0, gif.currentIndex)
+
+        repeat(3) {
+            gif.advance()
+        }
+
+        assertEquals(0, gif.currentIndex)
+    }
+
+    @Test
+    fun getCurrentFrame_multipleCalls_sameResult() {
+        val gif = Gif.from(File("../assets/domo.gif")).unwrap()
+
+        gif.advance()
+
+        val firstCall = IntArray(gif.dimension.size)
+        val secondCall = IntArray(gif.dimension.size)
+        gif.getCurrentFrame(firstCall)
+        gif.getCurrentFrame(secondCall)
+
+        assertArrayEquals(firstCall, secondCall)
+    }
+
+    @Test
+    fun previousIndex_current0_returnLastIndex() {
+        val gif = Gif.from(File("../assets/domo.gif")).unwrap()
+
+        with(gif) {
+            assertEquals(2, 0.previousIndex)
+        }
+    }
+
+    @Test
+    fun previousIndex_current1_returns0() {
+        val gif = Gif.from(File("../assets/domo.gif")).unwrap()
+
+        with(gif) {
+            assertEquals(0, 1.previousIndex)
+        }
     }
 
     private fun loadExpectedPixels(file: File): IntArray {
