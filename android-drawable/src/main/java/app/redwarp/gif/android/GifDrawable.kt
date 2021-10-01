@@ -101,29 +101,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             state.loopCount = value
         }
 
-    @Deprecated("Use the loopCount property")
-    fun setRepeatCount(repeatCount: Int) {
-        loopCount = when {
-            repeatCount == REPEAT_INFINITE -> {
-                LoopCount.Infinite
-            }
-            repeatCount > 0 -> {
-                LoopCount.Fixed(repeatCount)
-            }
-            else -> LoopCount.NoLoop
-        }
-    }
-
-    @Deprecated("Use the loopCount property")
-    fun getRepeatCount(): Int {
-        return when (val loopCount = loopCount) {
-            LoopCount.Infinite -> REPEAT_INFINITE
-            LoopCount.NoLoop -> 0
-            is LoopCount.Fixed -> loopCount.count
-            else -> 0
-        }
-    }
-
     fun backgroundColor(): Int {
         return state.gif.backgroundColor
     }
@@ -325,7 +302,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     companion object {
-        const val REPEAT_INFINITE = -1
 
         /**
          * Creates a GifDrawable from an [InputStream]
