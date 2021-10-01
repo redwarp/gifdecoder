@@ -201,6 +201,30 @@ class GifTest {
     }
 
     @Test
+    fun getFrame_indexToHigh_returnsFailure() {
+        val gif = Gif.from(File("../assets/domo.gif")).getOrThrow()
+
+        val result = gif.getFrame(10)
+        assertTrue(result.isFailure)
+        assertEquals(
+            "Index should be between 0 and 2, was 10",
+            result.exceptionOrNull()?.localizedMessage
+        )
+    }
+
+    @Test
+    fun getFrame_indexToLow_returnsFailure() {
+        val gif = Gif.from(File("../assets/domo.gif")).getOrThrow()
+
+        val result = gif.getFrame(-1)
+        assertTrue(result.isFailure)
+        assertEquals(
+            "Index should be between 0 and 2, was -1",
+            result.exceptionOrNull()?.localizedMessage
+        )
+    }
+
+    @Test
     fun previousIndex_current0_returnLastIndex() {
         val gif = Gif.from(File("../assets/domo.gif")).getOrThrow()
 
@@ -216,6 +240,20 @@ class GifTest {
         with(gif) {
             assertEquals(0, 1.previousIndex)
         }
+    }
+
+    @Test
+    fun gifFrom_opensPng_returnsFailure() {
+        val result = Gif.from(File("../assets/frames/domo_2.png"))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun gifFrom_opensNonExistentFile_returnsFailure() {
+        val result = Gif.from(File("../assets/some_file.txt"))
+
+        assertTrue(result.isFailure)
     }
 
     private fun loadExpectedPixels(file: File): IntArray {
