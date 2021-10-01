@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         drawables.clear()
 
         val imageView1 = findViewById<ImageView>(R.id.imageView1)
-        val drawable = GifDrawable.from(assets.open("full_colour.gif")).unwrap()
+        val drawable = GifDrawable.from(assets.open("full_colour.gif")).getOrThrow()
         drawable.loopCount = LoopCount.Infinite
         drawables.add(drawable)
         imageView1.setImageDrawable(drawable)
@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val imageView2 = findViewById<ImageView>(R.id.imageView2)
-        val drawable2 = GifDrawable.from(assets.open("derpy_cat.gif")).unwrap()
+        val drawable2 = GifDrawable.from(assets.open("derpy_cat.gif")).getOrThrow()
         imageView2.setImageDrawable(drawable2)
         drawables.add(drawable2)
         drawable2.start()
@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         val imageView3 = findViewById<ImageView>(R.id.imageView3)
         val glassesFile = assets.open("glasses-aspect_ratio.gif").toFile(this, "glasses.gif")
-        val drawable3 = GifDrawable.from(glassesFile).unwrap()
+        val drawable3 = GifDrawable.from(glassesFile).getOrThrow()
         imageView3.setImageDrawable(drawable3)
         drawables.add(drawable3)
         drawable3.start()
@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val imageView4 = findViewById<ImageView>(R.id.imageView4)
-        val drawable4 = GifDrawable.from(assets.open("domo-interlaced.gif")).unwrap()
+        val drawable4 = GifDrawable.from(assets.open("domo-interlaced.gif")).getOrThrow()
         imageView4.setImageDrawable(drawable4)
         drawables.add(drawable4)
         drawable4.start()

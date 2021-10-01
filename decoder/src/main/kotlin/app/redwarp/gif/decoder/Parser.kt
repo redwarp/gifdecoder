@@ -69,7 +69,7 @@ object Parser {
         inputStream: ReplayInputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
     ): Result<GifDescriptor> {
-        return try {
+        return runCatching {
             inputStream.use { stream ->
                 val header = stream.parseHeader()
                 val logicalScreenDescriptor = stream.parseLogicalScreenDescriptor()
@@ -82,20 +82,16 @@ object Parser {
 
                 val (loopCount, imageDescriptors) = parseLoop(stream, pixelPacking)
 
-                Result.Success(
-                    GifDescriptor(
-                        header = header,
-                        logicalScreenDescriptor = logicalScreenDescriptor,
-                        globalColorTable = globalColorTable,
-                        // If only one image, no loop.
-                        loopCount = if (imageDescriptors.size <= 1) null else loopCount,
-                        imageDescriptors = imageDescriptors,
-                        data = stream
-                    )
+                GifDescriptor(
+                    header = header,
+                    logicalScreenDescriptor = logicalScreenDescriptor,
+                    globalColorTable = globalColorTable,
+                    // If only one image, no loop.
+                    loopCount = if (imageDescriptors.size <= 1) null else loopCount,
+                    imageDescriptors = imageDescriptors,
+                    data = stream
                 )
             }
-        } catch (exception: Exception) {
-            Result.Error(exception.localizedMessage)
         }
     }
 

@@ -25,7 +25,7 @@ class Gif87A2ColorTest {
     @Test
     fun inputGif_gif87aHeader_returnCorrectHeader() {
         val gifFile = File("../assets/sample-2colors-87a.gif")
-        val gifDescriptor = Parser.parse(gifFile).unwrap()
+        val gifDescriptor = Parser.parse(gifFile).getOrThrow()
 
         assertEquals(Header.GIF87a, gifDescriptor.header)
     }
@@ -33,7 +33,7 @@ class Gif87A2ColorTest {
     @Test
     fun readColorMap_2colors_returnsColorsAsWhiteAndDark() {
         val gifFile = File("../assets/sample-2colors-87a.gif")
-        val gifDescriptor = Parser.parse(gifFile).unwrap()
+        val gifDescriptor = Parser.parse(gifFile).getOrThrow()
 
         assertArrayEquals(
             intArrayOf(0xff111111.toInt(), 0xffffffff.toInt()),
@@ -45,7 +45,7 @@ class Gif87A2ColorTest {
     fun parseAll() {
         val gifFile = File("../assets/sample-2colors-87a.gif")
 
-        val gifDescriptor = Parser.parse(gifFile).unwrap()
+        val gifDescriptor = Parser.parse(gifFile).getOrThrow()
         val gif = Gif(gifDescriptor)
 
         val destinationDimension = gif.dimension

@@ -24,7 +24,7 @@ class AnimatedGifTest {
     fun parseAnimatedGif_graphicControlAllSet() {
         val gifFile = File("../assets/domo.gif")
 
-        val gifDescriptor: GifDescriptor = Parser.parse(gifFile).unwrap()
+        val gifDescriptor: GifDescriptor = Parser.parse(gifFile).getOrThrow()
         val gif = Gif(gifDescriptor)
 
         Assertions.assertEquals(3, gif.frameCount)

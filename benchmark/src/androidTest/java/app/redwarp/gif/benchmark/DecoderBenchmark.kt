@@ -47,7 +47,7 @@ class DecoderBenchmark {
     @Before
     fun setup() {
         val inputStream = context.assets.open(GIF_FILE)
-        val gifDescriptor = Parser.parse(inputStream).unwrap()
+        val gifDescriptor = Parser.parse(inputStream).getOrThrow()
         gif = Gif(gifDescriptor)
     }
 

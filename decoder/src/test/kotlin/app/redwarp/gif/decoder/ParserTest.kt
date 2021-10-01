@@ -43,7 +43,7 @@ class ParserTest {
     fun parse_properCountOfImageDescriptors() {
         val gifFile = File("../assets/domo.gif")
 
-        val gif = Parser.parse(gifFile).unwrap()
+        val gif = Parser.parse(gifFile).getOrThrow()
 
         assertEquals(3, gif.imageDescriptors.size)
     }

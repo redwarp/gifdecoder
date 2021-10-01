@@ -14,9 +14,6 @@
  */
 package app.redwarp.gif.decoder
 
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -24,34 +21,34 @@ import java.io.File
 class RandomAccessGifTest {
 
     @Test
-    fun fileDeleted_getFrameReturnsFalse() {
+    fun fileDeleted_getFrameWithProvidedIntArray_ReturnsFailure() {
         val gifFile = File("../assets/domo.gif")
         val tempFile = File.createTempFile("test", "gif")
         gifFile.copyTo(tempFile, true)
 
-        val gif = Gif.from(tempFile).unwrap()
+        val gif = Gif.from(tempFile).getOrThrow()
 
         val intArray = IntArray(gif.dimension.size)
 
-        assertTrue(gif.getFrame(0, intArray))
+        assertTrue(gif.getFrame(0, intArray).isSuccess)
 
         tempFile.delete()
 
-        assertFalse(gif.getFrame(1, intArray))
+        assertTrue(gif.getFrame(1, intArray).isFailure)
     }
 
     @Test
-    fun fileDeleted_getFrameReturnsNull() {
+    fun fileDeleted_getFrameReturnsFailure() {
         val gifFile = File("../assets/domo.gif")
         val tempFile = File.createTempFile("test", "gif")
         gifFile.copyTo(tempFile, true)
 
-        val gif = Gif.from(tempFile).unwrap()
+        val gif = Gif.from(tempFile).getOrThrow()
 
-        assertNotNull(gif.getFrame(0))
+        assertTrue(gif.getFrame(0).isSuccess)
 
         tempFile.delete()
 
-        assertNull(gif.getFrame(1))
+        assertTrue(gif.getFrame(1).isFailure)
     }
 }
