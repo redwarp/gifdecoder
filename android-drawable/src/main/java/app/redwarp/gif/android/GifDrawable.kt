@@ -26,7 +26,6 @@ import android.os.SystemClock
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.Result
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.params.LoopCount
 import app.redwarp.gif.decoder.descriptors.params.PixelPacking
@@ -311,7 +310,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     private fun getCurrentFrame(): Bitmap? {
-        if (!state.gif.getCurrentFrame(pixels)) return null
+        if (state.gif.getCurrentFrame(pixels).isFailure) return null
 
         val transparent = pixels.any { it == 0 }
 

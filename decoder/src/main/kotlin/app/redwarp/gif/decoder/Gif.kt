@@ -122,14 +122,17 @@ class Gif(
      * Advance the frame index, decode the new frame, looping back to zero after the last frame
      * has been reached. Does not care about loop count.
      *
-     * @return True if the frame index was advanced and the matching frame properly decoded.
+     * @return Success if the frame index was advanced and the matching frame properly decoded.
      */
-    fun advance(): Boolean {
+    fun advance(): Result<Unit> {
         if (isAnimated) {
             if (previousRenderedFrame == -1) {
                 // Frame 0 was never rendered, let's actually decode it first, as we need the
                 // previous frame to compute the next.
-                if (!decodeFrame(0)) return false
+
+                decodeFrame(0).onFailure {
+                    return Result.failure(it)
+                }
             }
 
             frameIndex = (currentIndex + 1) % frameCount
@@ -137,24 +140,24 @@ class Gif(
             return decodeFrame(frameIndex)
         }
 
-        return true
+        return Result.success(Unit)
     }
 
     /**
      * Write the current frame in the int array.
      *
      * @param inPixels The buffer where the pixels will be written.
-     * @return True if a frame was successfully written.
+     * @return Success(inPixels) if a frame was successfully written.
      */
-    fun getCurrentFrame(inPixels: IntArray): Boolean {
+    fun getCurrentFrame(inPixels: IntArray): Result<IntArray> {
         if (previousRenderedFrame == -1) {
             // Frame 0 was never rendered, let's actually decode it first, as we need the
             // previous frame to compute the next.
-            decodeFrame(0)
+            decodeFrame(0).onFailure { return Result.failure(it) }
         }
 
         framePixels.copyInto(inPixels)
-        return true
+        return Result.success(inPixels)
     }
 
     /**
@@ -163,15 +166,11 @@ class Gif(
      * consistent.
      *
      * @param index The index of the frame to decode and return.
-     * @return An IntArray containing the pixels, or null if there was an error.
+     * @return Success(pixels) containing the pixels.
      */
-    fun getFrame(index: Int): IntArray? {
+    fun getFrame(index: Int): Result<IntArray> {
         val pixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
-        return if (getFrame(index, pixels)) {
-            pixels
-        } else {
-            null
-        }
+        return getFrame(index, pixels)
     }
 
     /**
@@ -181,16 +180,16 @@ class Gif(
      *
      * @param index The index of the frame to decode and return.
      * @param inPixels The buffer where the pixels will be written.
-     * @return True if a frame was successfully written.
+     * @return Success(inPixels) if a frame was successfully written.
      */
-    fun getFrame(index: Int, inPixels: IntArray): Boolean {
-        if (index !in 0 until frameCount) return false
+    fun getFrame(index: Int, inPixels: IntArray): Result<IntArray> {
+        if (index !in 0 until frameCount) return Result.failure(IndexOutOfBoundsException("Index should be between 0 and ${frameCount - 1}, was $index"))
 
         while (currentIndex != index) {
-            if (!advance()) return false
+            advance().onFailure { return Result.failure(it) }
         }
         getCurrentFrame(inPixels)
-        return true
+        return Result.success(inPixels)
     }
 
     /**
@@ -199,8 +198,9 @@ class Gif(
      * otherwise the disposal will produce unexpected results.
      *
      * @param index The index of the frame to decode. Does no check for out of bounds.
+     * @return Success if the frame was properly decoded.
      */
-    private fun decodeFrame(index: Int): Boolean {
+    private fun decodeFrame(index: Int): Result<Unit> {
         // First, apply disposal of last frame.
 
         when (previousDisposal) {
@@ -241,7 +241,7 @@ class Gif(
         }
         previousDisposal = disposal
 
-        return try {
+        return runCatching {
             gifDescriptor.data.use { stream ->
                 stream.seek(imageDescriptor.imageData.position)
                 stream.read(rawScratch, 0, imageDescriptor.imageData.length)
@@ -256,9 +256,6 @@ class Gif(
             )
 
             previousRenderedFrame = index
-            true
-        } catch (exception: Exception) {
-            false
         }
     }
 
