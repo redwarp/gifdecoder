@@ -37,7 +37,7 @@ class RandomAccessGifTest {
 
         tempFile.delete()
 
-        assertFalse(gif.getFrame(0, intArray))
+        assertFalse(gif.getFrame(1, intArray))
     }
 
     @Test
@@ -52,6 +52,6 @@ class RandomAccessGifTest {
 
         tempFile.delete()
 
-        assertNull(gif.getFrame(0))
+        assertNull(gif.getFrame(1))
     }
 }

@@ -35,7 +35,6 @@ private const val TRANSPARENT_COLOR = 0x0
 class Gif(
     private val gifDescriptor: GifDescriptor
 ) {
-    private var lastRenderedFrame: Int = -1
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
         // Fill the frame with the background color, unless that is transparent,
@@ -44,12 +43,16 @@ class Gif(
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private val rawScratch = ByteArray(gifDescriptor.imageDescriptors.maxOf { it.imageData.length })
-    private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
 
     private val lzwDecoder: LzwDecoder = LzwDecoder()
 
     private val isTransparent: Boolean =
         gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }
+
+    private var previousRenderedFrame: Int = -1
+    private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
+    private var previousDisposal: GraphicControlExtension.Disposal =
+        GraphicControlExtension.Disposal.NOT_SPECIFIED
 
     val currentIndex: Int get() = frameIndex
 
@@ -73,10 +76,20 @@ class Gif(
             }
         }
 
+    /**
+     * The dimensions of the GIF, width and height.
+     */
     val dimension: Dimension = gifDescriptor.logicalScreenDescriptor.dimension
 
+    /**
+     * How many frames in the GIF. If more than 1, we have an animated GIF.
+     */
     val frameCount: Int = gifDescriptor.imageDescriptors.size
 
+    /**
+     * For animated gif, the loop count policy: should never loop, should loop forever
+     * or should loop a set amount of time.
+     */
     val loopCount: LoopCount = when (val count = gifDescriptor.loopCount) {
         null -> LoopCount.NoLoop
         0 -> LoopCount.Infinite
@@ -106,36 +119,52 @@ class Gif(
     val isAnimated: Boolean = gifDescriptor.imageDescriptors.size > 1
 
     /**
-     * Advance the frame index, and loop back to zero after the last frame.
-     * Does not care about loop count.
+     * Advance the frame index, decode the new frame, looping back to zero after the last frame
+     * has been reached. Does not care about loop count.
+     *
+     * @return True if the frame index was advanced and the matching frame properly decoded.
      */
-    fun advance() {
+    fun advance(): Boolean {
         if (isAnimated) {
+            if (previousRenderedFrame == -1) {
+                // Frame 0 was never rendered, let's actually decode it first, as we need the
+                // previous frame to compute the next.
+                if (!decodeFrame(0)) return false
+            }
+
             frameIndex = (currentIndex + 1) % frameCount
+
+            return decodeFrame(frameIndex)
         }
+
+        return true
     }
 
     /**
      * Write the current frame in the int array.
-     * @param inPixels The buffer where the pixel will be written
-     * @return true if a frame was successfully written.
+     *
+     * @param inPixels The buffer where the pixels will be written.
+     * @return True if a frame was successfully written.
      */
     fun getCurrentFrame(inPixels: IntArray): Boolean {
-        synchronized(gifDescriptor) {
-            return if (lastRenderedFrame == frameIndex) {
-                // We are redrawing a previously managed frame
-                framePixels.copyInto(inPixels)
-                true
-            } else {
-                val didRender = getFrame(frameIndex, inPixels)
-                if (didRender) {
-                    lastRenderedFrame = frameIndex
-                }
-                didRender
-            }
+        if (previousRenderedFrame == -1) {
+            // Frame 0 was never rendered, let's actually decode it first, as we need the
+            // previous frame to compute the next.
+            decodeFrame(0)
         }
+
+        framePixels.copyInto(inPixels)
+        return true
     }
 
+    /**
+     * Get the frame at set index, returning a int array. It will internally advance the current
+     * frame counter if needed, and draw each needed frame it turn, to make sure the result is
+     * consistent.
+     *
+     * @param index The index of the frame to decode and return.
+     * @return An IntArray containing the pixels, or null if there was an error.
+     */
     fun getFrame(index: Int): IntArray? {
         val pixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
         return if (getFrame(index, pixels)) {
@@ -145,7 +174,55 @@ class Gif(
         }
     }
 
+    /**
+     * Get the frame at set index, writing it in the provided int array. It will internally advance
+     * the current frame counter if needed, and draw each needed frame it turn, to make sure
+     * the result is consistent.
+     *
+     * @param index The index of the frame to decode and return.
+     * @param inPixels The buffer where the pixels will be written.
+     * @return True if a frame was successfully written.
+     */
     fun getFrame(index: Int, inPixels: IntArray): Boolean {
+        if (index !in 0 until frameCount) return false
+
+        while (currentIndex != index) {
+            if (!advance()) return false
+        }
+        getCurrentFrame(inPixels)
+        return true
+    }
+
+    /**
+     * Decodes the frame at set index, making sure first to apply the previous frame
+     * disposal policy. This method should only be called in sequence: frame 0, then 1, 2, ...
+     * otherwise the disposal will produce unexpected results.
+     *
+     * @param index The index of the frame to decode. Does no check for out of bounds.
+     */
+    private fun decodeFrame(index: Int): Boolean {
+        // First, apply disposal of last frame.
+
+        when (previousDisposal) {
+            GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
+                previousPixels.copyInto(framePixels)
+            }
+            GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
+            GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
+            GraphicControlExtension.Disposal.RESTORE_TO_BACKGROUND -> {
+                // Restore the section drawn for this frame to the background color.
+                val imageDescriptor = gifDescriptor.imageDescriptors[index.previousIndex]
+
+                val (frame_width, frame_height) = imageDescriptor.dimension
+                val (offset_x, offset_y) = imageDescriptor.position
+
+                for (line in 0 until frame_height) {
+                    val startIndex = (line + offset_y) * dimension.width + offset_x
+                    framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
+                }
+            }
+        }
+
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
         val colorTable =
             imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
@@ -155,21 +232,21 @@ class Gif(
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
+        // Prepare disposal of this frame
         val disposal = graphicControlExtension?.disposalMethod
             ?: GraphicControlExtension.Disposal.NOT_SPECIFIED
 
         if (disposal == GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS) {
             framePixels.copyInto(previousPixels)
         }
+        previousDisposal = disposal
 
-        try {
+        return try {
             gifDescriptor.data.use { stream ->
                 stream.seek(imageDescriptor.imageData.position)
                 stream.read(rawScratch, 0, imageDescriptor.imageData.length)
             }
-
             lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
-
             fillPixels(
                 framePixels,
                 scratch,
@@ -178,28 +255,10 @@ class Gif(
                 imageDescriptor
             )
 
-            framePixels.copyInto(inPixels)
-
-            when (disposal) {
-                GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
-                    previousPixels.copyInto(framePixels)
-                }
-                GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
-                GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
-                GraphicControlExtension.Disposal.RESTORE_TO_BACKGROUND -> {
-                    // Restore the section drawn for this frame to the background color.
-                    val (frame_width, frame_height) = imageDescriptor.dimension
-                    val (offset_x, offset_y) = imageDescriptor.position
-
-                    for (line in 0 until frame_height) {
-                        val startIndex = (line + offset_y) * dimension.width + offset_x
-                        framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
-                    }
-                }
-            }
-            return true
+            previousRenderedFrame = index
+            true
         } catch (exception: Exception) {
-            return false
+            false
         }
     }
 
@@ -307,6 +366,8 @@ class Gif(
             }
         }
     }
+
+    val Int.previousIndex get() = (this - 1 + frameCount) % frameCount
 
     companion object {
         fun from(

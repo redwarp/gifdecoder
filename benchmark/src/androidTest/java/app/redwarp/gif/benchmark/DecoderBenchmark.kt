@@ -22,12 +22,16 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 
 private const val GIF_FILE = "glasses-aspect_ratio.gif"
 
@@ -52,6 +56,9 @@ class DecoderBenchmark {
         val pixels = IntArray(gif.dimension.size)
 
         benchmarkRule.measureRepeated {
+            runWithTimingDisabled {
+                gif.resetFrame()
+            }
             gif.getFrame(0, pixels)
         }
     }
@@ -63,6 +70,9 @@ class DecoderBenchmark {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
         benchmarkRule.measureRepeated {
+            runWithTimingDisabled {
+                gif.resetFrame()
+            }
             gif.getFrame(0, pixels)
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         }
@@ -78,5 +88,20 @@ class DecoderBenchmark {
         benchmarkRule.measureRepeated {
             standardGifDecoder.nextFrame
         }
+    }
+
+    /**
+     * Reset Gif private properties to force the getFrame method to recalculate the frame 0.
+     */
+    private fun Gif.resetFrame() {
+        val frameIndexProp =
+            Gif::class.declaredMemberProperties.firstOrNull { it.name == "frameIndex" }
+                ?.apply { isAccessible = true } as? KMutableProperty<*>?
+        frameIndexProp?.setter?.call(this, -1)
+
+        val previousDisposalProp =
+            Gif::class.declaredMemberProperties.firstOrNull { it.name == "previousDisposal" }
+                ?.apply { isAccessible = true } as? KMutableProperty<*>?
+        previousDisposalProp?.setter?.call(this, GraphicControlExtension.Disposal.NOT_SPECIFIED)
     }
 }
