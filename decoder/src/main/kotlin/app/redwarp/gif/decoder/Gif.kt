@@ -35,7 +35,6 @@ private const val TRANSPARENT_COLOR = 0x0
 class Gif(
     private val gifDescriptor: GifDescriptor
 ) {
-    private var lastRenderedFrame: Int = -1
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
         // Fill the frame with the background color, unless that is transparent,
@@ -44,12 +43,16 @@ class Gif(
     }
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private val rawScratch = ByteArray(gifDescriptor.imageDescriptors.maxOf { it.imageData.length })
-    private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
 
     private val lzwDecoder: LzwDecoder = LzwDecoder()
 
     private val isTransparent: Boolean =
         gifDescriptor.imageDescriptors.any { it.graphicControlExtension?.transparentColorIndex != null }
+
+    private var previousRenderedFrame: Int = -1
+    private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
+    private var previousDisposal: GraphicControlExtension.Disposal =
+        GraphicControlExtension.Disposal.NOT_SPECIFIED
 
     val currentIndex: Int get() = frameIndex
 
@@ -73,10 +76,20 @@ class Gif(
             }
         }
 
+    /**
+     * The dimensions of the GIF, width and height.
+     */
     val dimension: Dimension = gifDescriptor.logicalScreenDescriptor.dimension
 
+    /**
+     * How many frames in the GIF. If more than 1, we have an animated GIF.
+     */
     val frameCount: Int = gifDescriptor.imageDescriptors.size
 
+    /**
+     * For animated gif, the loop count policy: should never loop, should loop forever
+     * or should loop a set amount of time.
+     */
     val loopCount: LoopCount = when (val count = gifDescriptor.loopCount) {
         null -> LoopCount.NoLoop
         0 -> LoopCount.Infinite
@@ -105,9 +118,6 @@ class Gif(
 
     val isAnimated: Boolean = gifDescriptor.imageDescriptors.size > 1
 
-    var previousDisposal: GraphicControlExtension.Disposal =
-        GraphicControlExtension.Disposal.NOT_SPECIFIED
-
     /**
      * Advance the frame index, decode the new frame, looping back to zero after the last frame
      * has been reached. Does not care about loop count.
@@ -116,7 +126,7 @@ class Gif(
      */
     fun advance(): Boolean {
         if (isAnimated) {
-            if (lastRenderedFrame == -1) {
+            if (previousRenderedFrame == -1) {
                 // Frame 0 was never rendered, let's actually decode it first, as we need the
                 // previous frame to compute the next.
                 if (!decodeFrame(0)) return false
@@ -137,7 +147,7 @@ class Gif(
      * @return True if a frame was successfully written.
      */
     fun getCurrentFrame(inPixels: IntArray): Boolean {
-        if (lastRenderedFrame == -1) {
+        if (previousRenderedFrame == -1) {
             // Frame 0 was never rendered, let's actually decode it first, as we need the
             // previous frame to compute the next.
             decodeFrame(0)
@@ -183,6 +193,13 @@ class Gif(
         return true
     }
 
+    /**
+     * Decodes the frame at set index, making sure first to apply the previous frame
+     * disposal policy. This method should only be called in sequence: frame 0, then 1, 2, ...
+     * otherwise the disposal will produce unexpected results.
+     *
+     * @param index The index of the frame to decode. Does no check for out of bounds.
+     */
     private fun decodeFrame(index: Int): Boolean {
         // First, apply disposal of last frame.
 
@@ -225,30 +242,24 @@ class Gif(
         previousDisposal = disposal
 
         return try {
-            decodeFrame(imageDescriptor, colorTable)
+            gifDescriptor.data.use { stream ->
+                stream.seek(imageDescriptor.imageData.position)
+                stream.read(rawScratch, 0, imageDescriptor.imageData.length)
+            }
+            lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
+            fillPixels(
+                framePixels,
+                scratch,
+                colorTable,
+                gifDescriptor.logicalScreenDescriptor,
+                imageDescriptor
+            )
 
-            lastRenderedFrame = index
+            previousRenderedFrame = index
             true
         } catch (exception: Exception) {
             false
         }
-    }
-
-    private fun decodeFrame(imageDescriptor: ImageDescriptor, colorTable: IntArray) {
-        gifDescriptor.data.use { stream ->
-            stream.seek(imageDescriptor.imageData.position)
-            stream.read(rawScratch, 0, imageDescriptor.imageData.length)
-        }
-
-        lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
-
-        fillPixels(
-            framePixels,
-            scratch,
-            colorTable,
-            gifDescriptor.logicalScreenDescriptor,
-            imageDescriptor
-        )
     }
 
     private fun fillPixels(

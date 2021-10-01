@@ -54,10 +54,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.benchmark:benchmark-junit4:1.0.0'
-
-    // Add your dependencies here. Note that you cannot benchmark code
-    // in an app module this way - you will need to move any code you
-    // want to benchmark to a library module:
-    // https://developer.android.com/studio/projects/android-library#Convert
-
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-reflect:$Versions.KOTLIN"
 }
