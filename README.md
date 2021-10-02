@@ -7,6 +7,7 @@ This project contains several parts.
 ## decoder
 
 ![Maven Central](https://img.shields.io/maven-central/v/app.redwarp.gif/decoder)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fredwarp%2Fgifdecoder.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fredwarp%2Fgifdecoder?ref=badge_shield)
 
 A simple jvm library written 100% in kotlin that handles the parsing of the gif format, headers, lzw decoder and so on.
 
@@ -42,3 +43,6 @@ The `bitmap.h` in the giflzwdecoder folder is copyrighted to the *Android Open S
 Android ndk + rust is not trivial, and that attempt is currently on hold.
 
 Even though my first attempt at it kind of worked, it was naive and did come with a set of issues so I dropped it. I might get back to it in the future.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fredwarp%2Fgifdecoder.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fredwarp%2Fgifdecoder?ref=badge_large)
