@@ -131,6 +131,19 @@ class GifTest {
     }
 
     @Test
+    fun getFrame_frameZeroAfterLoop_properlyRenders() {
+        val gifDescriptor = Parser.parse(File("../assets/domo-no-dispose.gif")).getOrThrow()
+        val gif = Gif(gifDescriptor)
+
+        gif.getFrame(1) // Force to advance
+        val pixels = gif.getFrame(0).getOrThrow()
+
+        val expectedPixels = loadExpectedPixels(File("../assets/frames/domo_0.png"))
+
+        assertArrayEquals(expectedPixels, pixels)
+    }
+
+    @Test
     fun getFrameDelay_animatedWithZeroDelaySpecified_returns0() {
         val gif = Gif.from(File("../assets/butterfly.gif")).getOrThrow()
 

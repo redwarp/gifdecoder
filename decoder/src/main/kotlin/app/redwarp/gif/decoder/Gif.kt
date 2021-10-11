@@ -51,8 +51,7 @@ class Gif(
 
     private var previousRenderedFrame: Int = -1
     private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
-    private var previousDisposal: GraphicControlExtension.Disposal =
-        GraphicControlExtension.Disposal.NOT_SPECIFIED
+    private var previousDisposal: GraphicControlExtension.Disposal? = null
 
     val currentIndex: Int get() = frameIndex
 
@@ -202,6 +201,11 @@ class Gif(
      */
     private fun decodeFrame(index: Int): Result<Unit> {
         // First, apply disposal of last frame.
+        if (index == 0 && previousRenderedFrame != -1) {
+            // Special case, we clear the canvas when we loop back to frame 0.
+            framePixels.fill(backgroundColor)
+            previousDisposal = null
+        }
 
         when (previousDisposal) {
             GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
