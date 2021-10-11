@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.1] (2021-10-11)
+
+- Fix an issue where the decoder would not reset the canvas before restarting the animation loop.
+  Depending on the disposal method of the last frame, it could lead to artifacts.
+
 ## [0.8.0] (2021-10-01)
 
 - Breaking: `advance()` now decodes the frame. It used to be done by the `getFrame` methods.
