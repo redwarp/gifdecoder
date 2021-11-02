@@ -21,7 +21,7 @@ import java.util.TreeMap
 // Reuse the idea from Coil to not use a bitmap that is more than 10 times too big.
 private const val MAX_SIZE_MULTIPLE = 4
 
-internal class BitmapPool private constructor() {
+internal class BitmapPool {
     private val bitmaps = Store()
 
     fun obtain(width: Int, height: Int, config: Bitmap.Config): Bitmap {
@@ -44,7 +44,7 @@ internal class BitmapPool private constructor() {
         }
 
         synchronized(this) {
-            bitmaps.put(bitmap.allocationByteCount, bitmap)
+            bitmaps[bitmap.allocationByteCount] = bitmap
         }
     }
 
@@ -65,9 +65,7 @@ internal class BitmapPool private constructor() {
 
     @Synchronized
     fun flush() {
-        bitmaps.flush {
-            it.recycle()
-        }
+        bitmaps.flush()
     }
 
     protected fun finalize() {
@@ -101,16 +99,16 @@ internal class BitmapPool private constructor() {
             return bitmap
         }
 
-        fun put(key: Int, bitmap: Bitmap) {
+        operator fun set(key: Int, bitmap: Bitmap) {
             bitmaps.getOrPut(key) {
                 mutableListOf()
             }.add(bitmap)
         }
 
-        fun flush(forEach: (Bitmap) -> Unit) {
+        fun flush() {
             for (sizeCategory in bitmaps.values) {
                 for (entry in sizeCategory) {
-                    forEach(entry)
+                    entry.recycle()
                 }
             }
             bitmaps.clear()

@@ -59,7 +59,7 @@ import java.io.InputStream
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
     private val state = GifDrawableState(gifDescriptor)
 
-    private val bitmapCache = BitmapPool.obtain()
+    private val bitmapCache = BitmapPool()
 
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
     private val lock = Object()
