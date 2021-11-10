@@ -36,11 +36,7 @@ class Gif(
     private val gifDescriptor: GifDescriptor
 ) {
     private var frameIndex = 0
-    private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size).apply {
-        // Fill the frame with the background color, unless that is transparent,
-        // as a new int array is already initialized to zero.
-        if (backgroundColor != TRANSPARENT_COLOR) fill(backgroundColor)
-    }
+    private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private val rawScratch = ByteArray(gifDescriptor.imageDescriptors.maxOf { it.imageData.length })
 
@@ -215,7 +211,7 @@ class Gif(
      */
     private fun decodeFrame(index: Int): Result<Unit> {
         // First, apply disposal of last frame.
-        if (index == 0 && previousRenderedFrame != -1) {
+        if (index == 0) {
             // Special case, we clear the canvas when we loop back to frame 0.
             framePixels.fill(backgroundColor)
             previousDisposal = null
