@@ -68,8 +68,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     @Volatile
     private var isRunning: Boolean = false
     private var loopJob: Job? = null
-    private val gifWidth = state.gif.dimension.width
-    private val gifHeight = state.gif.dimension.height
+    private val gifWidth get() = state.gif.dimension.width
+    private val gifHeight get() = state.gif.dimension.height
 
     private val pixels = IntArray(state.gif.dimension.size)
     private var bitmap: Bitmap? = getCurrentFrame()
@@ -97,10 +97,22 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
      */
     var loopCount: LoopCount
         get() = state.loopCount ?: state.gif.loopCount
-        set(value) {
+        set(value) = synchronized(lock) {
             state.loopCount = value
+            state.loopIteration = 0
         }
 
+    /**
+     * @since 0.9.0
+     */
+    val backgroundColor: Int
+        get() = state.gif.backgroundColor
+
+    @Deprecated(
+        "Superseded by the backgroundColor val",
+        ReplaceWith("backgroundColor"),
+        DeprecationLevel.ERROR
+    )
     fun backgroundColor(): Int {
         return state.gif.backgroundColor
     }
@@ -225,7 +237,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         return when (val repeatCount = loopCount) {
             is LoopCount.NoLoop -> false
-            is LoopCount.Fixed -> state.loopIteration < repeatCount.count
+            is LoopCount.Fixed -> synchronized(lock) { state.loopIteration < repeatCount.count }
             is LoopCount.Infinite -> true
         }
     }
@@ -248,7 +260,9 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             state.gif.advance()
             if (state.gif.currentIndex == 0) {
                 // We looped back to the first frame
-                state.loopIteration++
+                synchronized(lock) {
+                    state.loopIteration++
+                }
             }
             // Checking if we are finished looping already
             if (!shouldAnimate()) {

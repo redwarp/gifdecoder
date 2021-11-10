@@ -27,7 +27,7 @@ import android.graphics.drawable.Drawable
 import app.redwarp.gif.android.GifDrawable
 
 class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
-    private var backgroundColor = gifDrawable.backgroundColor()
+    private var backgroundColor = gifDrawable.backgroundColor
     private val paint = Paint().apply {
         color = backgroundColor
         style = Paint.Style.FILL
