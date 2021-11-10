@@ -110,16 +110,14 @@ class Gif(
      * The background color as read from the global color table, default to transparent if not set.
      */
     val backgroundColor: Int =
-        run {
-            // If at last one of the frame is transparent, let's use transparent as the background color.
-            if (isTransparent) {
-                TRANSPARENT_COLOR
-            } else {
-                // First, look for the background color in the global color table if it exists. Default to transparent.
-                gifDescriptor.logicalScreenDescriptor.backgroundColorIndex?.let {
-                    gifDescriptor.globalColorTable?.get(it.toInt() and 0xff)
-                } ?: TRANSPARENT_COLOR
-            }
+        // If at last one of the frame is transparent, let's use transparent as the background color.
+        if (isTransparent) {
+            TRANSPARENT_COLOR
+        } else {
+            // First, look for the background color in the global color table if it exists. Default to transparent.
+            gifDescriptor.logicalScreenDescriptor.backgroundColorIndex?.let {
+                gifDescriptor.globalColorTable?.get(it.toInt() and 0xff)
+            } ?: TRANSPARENT_COLOR
         }
 
     /**
