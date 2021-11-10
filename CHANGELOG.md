@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.0] (2021-11-10)
+
+- Simplify bitmap pool, aka stop pooling. It's not that useful.
+- GifDrawable's backgroundColor is now a val.
+
 ## [0.8.1] (2021-10-11)
 
 - Fix an issue where the decoder would not reset the canvas before restarting the animation loop.
