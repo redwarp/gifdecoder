@@ -53,6 +53,9 @@ class Gif(
     private val previousPixels: IntArray by lazy { IntArray(framePixels.size) }
     private var previousDisposal: GraphicControlExtension.Disposal? = null
 
+    /**
+     * Returns the index of the frame currently decoded in the frame buffer.
+     */
     val currentIndex: Int get() = frameIndex
 
     /**
@@ -95,6 +98,11 @@ class Gif(
         else -> LoopCount.Fixed(count)
     }
 
+    /**
+     * The Pixel Aspect Ratio is defined to be the quotient of the pixel's
+     * width over its height.  The value range in this field allows
+     * specification of the widest pixel of 4:1 to the tallest pixel of 1:4
+     */
     val aspectRatio: Double = run {
         val ratio = gifDescriptor.logicalScreenDescriptor.pixelAspectRatio.toInt() and 0xff
         if (ratio == 0) 1.0 else {
@@ -102,6 +110,9 @@ class Gif(
         }
     }
 
+    /**
+     * The background color as read from the global color table, default to transparent if not set.
+     */
     val backgroundColor: Int =
         run {
             // If at last one of the frame is transparent, let's use transparent as the background color.
@@ -115,6 +126,9 @@ class Gif(
             }
         }
 
+    /**
+     * A gif with more than 1 frame will be animated.
+     */
     val isAnimated: Boolean = gifDescriptor.imageDescriptors.size > 1
 
     /**
@@ -228,11 +242,9 @@ class Gif(
         }
 
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
-        val colorTable =
-            imageDescriptor.localColorTable ?: gifDescriptor.globalColorTable
-                ?: Palettes.createFakeColorMap(
-                    gifDescriptor.logicalScreenDescriptor.colorCount
-                )
+        val colorTable = imageDescriptor.localColorTable
+            ?: gifDescriptor.globalColorTable
+            ?: Palettes.createFakeColorMap(gifDescriptor.logicalScreenDescriptor.colorCount)
 
         val graphicControlExtension = imageDescriptor.graphicControlExtension
 
