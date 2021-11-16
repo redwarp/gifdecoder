@@ -43,7 +43,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.COROUTINES}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0"
 
     implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
 
