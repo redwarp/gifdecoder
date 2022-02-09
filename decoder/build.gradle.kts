@@ -1,10 +1,8 @@
-import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
-    id("com.github.ben-manes.versions") version Versions.VERSIONS
+    id("se.ascp.gradle.gradle-versions-filter") version Versions.VERSIONS
     id("com.diffplug.spotless") version Versions.SPOTLESS
     id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
@@ -22,7 +20,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
 }
 
 sourceSets {
@@ -139,18 +137,6 @@ publishing {
             useInMemoryPgpKeys(signingKey, signingPwd)
             sign(publishing.publications["release"])
         }
-    }
-}
-
-val isNonStable = { version: String ->
-    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
-    val regex = Regex("/^[0-9,.v-]+(-r)?$/")
-    !stableKeyword && !(regex.matches(version))
-}
-
-tasks.named("dependencyUpdates", DependencyUpdatesTask::class.java).configure {
-    rejectVersionIf {
-        isNonStable(candidate.version)
     }
 }
 

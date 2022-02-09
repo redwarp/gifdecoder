@@ -4,14 +4,14 @@ plugins {
     id("androidx.benchmark") version Versions.BENCHMARK apply false
     kotlin("android") version Versions.KOTLIN apply false
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
-    id("com.github.ben-manes.versions") version Versions.VERSIONS apply false
+    id("se.ascp.gradle.gradle-versions-filter") version Versions.VERSIONS apply false
     id("com.diffplug.spotless") version Versions.SPOTLESS apply false
 }
 
 subprojects {
     apply {
         plugin("org.jlleitschuh.gradle.ktlint")
-        plugin("com.github.ben-manes.versions")
+        plugin("se.ascp.gradle.gradle-versions-filter")
         plugin("com.diffplug.spotless")
     }
 

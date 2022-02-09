@@ -43,7 +43,7 @@ android {
 
 dependencies {
     api("app.redwarp.gif:decoder:${Publication.VERSION_NAME}")
-    implementation("androidx.appcompat:appcompat:1.3.1")
+    implementation("androidx.appcompat:appcompat:${Versions.APP_COMPAT}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.COROUTINES}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}")
 
