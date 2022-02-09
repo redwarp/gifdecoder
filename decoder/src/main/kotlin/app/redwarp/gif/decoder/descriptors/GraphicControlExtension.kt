@@ -14,6 +14,9 @@
  */
 package app.redwarp.gif.decoder.descriptors
 
+/**
+ * The Graphic Control Extension contains parameters used when processing a graphic rendering block.
+ */
 data class GraphicControlExtension(
     val disposalMethod: Disposal,
     val delayTime: UShort,

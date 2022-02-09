@@ -15,7 +15,7 @@
 package app.redwarp.gif.decoder.descriptors
 
 /**
- * Part of a GIF's header information: how big the image is,
+ * Part of a GIF header information: how big the image is,
  * is there a global color table available, and so on.
  */
 data class LogicalScreenDescriptor(

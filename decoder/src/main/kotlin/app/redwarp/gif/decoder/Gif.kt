@@ -233,6 +233,7 @@ class Gif(
                     framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
                 }
             }
+            null -> Unit
         }
 
         val imageDescriptor = gifDescriptor.imageDescriptors[index]
