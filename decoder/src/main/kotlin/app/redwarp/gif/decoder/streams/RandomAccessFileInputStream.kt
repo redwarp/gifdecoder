@@ -24,11 +24,11 @@ import java.io.RandomAccessFile
  * as the data will not be loaded in memory, but kept on disk.
  */
 internal class RandomAccessFileInputStream(private val file: File) : ReplayInputStream() {
-    private var _randomAccessFile: RandomAccessFile? = null
+    private var _randomAccessFile: BufferedRandomAccessFile? = null
     private val randomAccessFile: RandomAccessFile
         get() {
             return _randomAccessFile ?: let {
-                RandomAccessFile(file, "r").also { _randomAccessFile = it }
+                BufferedRandomAccessFile(file, "r").also { _randomAccessFile = it }
             }
         }
 

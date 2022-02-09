@@ -54,6 +54,17 @@ class BufferedReplayInputStreamTest {
     }
 
     @Test
+    fun read_singleByte() {
+        val originalData = byteArrayOf(0xff.toByte())
+
+        val bufferedReplayInputStream = BufferedReplayInputStream(originalData.inputStream())
+
+        val read = bufferedReplayInputStream.read()
+
+        assertEquals(255, read)
+    }
+
+    @Test
     fun getPosition_initialRead_getAccuratePosition() {
         val originalData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
 
