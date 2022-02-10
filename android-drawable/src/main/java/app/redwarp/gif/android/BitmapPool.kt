@@ -83,7 +83,12 @@ internal class BitmapPool {
     }
 
     private class Store {
+        companion object {
+            const val RECLAIM_COUNT = 100
+        }
+
         private val bitmaps = TreeMap<Int, MutableList<Bitmap>>()
+        private var setCounter = 0
 
         operator fun get(key: Int): Bitmap? {
             val optimizedKey =
@@ -91,18 +96,22 @@ internal class BitmapPool {
 
             val entries = bitmaps[optimizedKey] ?: return null
 
-            val bitmap = entries.removeLast()
-            if (entries.isEmpty()) {
-                // Cleaning up
-                bitmaps.remove(optimizedKey)
-            }
-            return bitmap
+            if (entries.isEmpty()) return null
+
+            return entries.removeLast()
         }
 
         operator fun set(key: Int, bitmap: Bitmap) {
             bitmaps.getOrPut(key) {
                 mutableListOf()
             }.add(bitmap)
+
+            setCounter++
+            if (setCounter > RECLAIM_COUNT) {
+                setCounter = 0
+
+                consolidate()
+            }
         }
 
         fun flush() {
@@ -112,6 +121,19 @@ internal class BitmapPool {
                 }
             }
             bitmaps.clear()
+        }
+
+        /**
+         * Deletes empty entries, to unclog the bitmaps [TreeMap].
+         */
+        private fun consolidate() {
+            val entries = bitmaps.entries.iterator()
+            while (entries.hasNext()) {
+                val entry = entries.next()
+                if (entry.value.isEmpty()) {
+                    entries.remove()
+                }
+            }
         }
     }
 }
