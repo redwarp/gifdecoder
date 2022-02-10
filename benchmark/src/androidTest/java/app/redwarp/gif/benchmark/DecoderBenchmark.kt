@@ -22,7 +22,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
-import app.redwarp.gif.decoder.descriptors.GraphicControlExtension
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
 import org.junit.Before
@@ -43,6 +42,9 @@ class DecoderBenchmark {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private lateinit var gif: Gif
+    private val frameIndexProp =
+        Gif::class.declaredMemberProperties.firstOrNull { it.name == "frameIndex" }
+            ?.apply { isAccessible = true } as? KMutableProperty<*>?
 
     @Before
     fun setup() {
@@ -94,14 +96,6 @@ class DecoderBenchmark {
      * Reset Gif private properties to force the getFrame method to recalculate the frame 0.
      */
     private fun Gif.resetFrame() {
-        val frameIndexProp =
-            Gif::class.declaredMemberProperties.firstOrNull { it.name == "frameIndex" }
-                ?.apply { isAccessible = true } as? KMutableProperty<*>?
         frameIndexProp?.setter?.call(this, -1)
-
-        val previousDisposalProp =
-            Gif::class.declaredMemberProperties.firstOrNull { it.name == "previousDisposal" }
-                ?.apply { isAccessible = true } as? KMutableProperty<*>?
-        previousDisposalProp?.setter?.call(this, GraphicControlExtension.Disposal.NOT_SPECIFIED)
     }
 }
