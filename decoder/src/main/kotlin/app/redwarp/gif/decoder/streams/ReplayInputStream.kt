@@ -29,4 +29,6 @@ abstract class ReplayInputStream : InputStream() {
      * Get the current read position of the stream.
      */
     abstract fun getPosition(): Int
+
+    abstract fun shallowClone(): ReplayInputStream
 }

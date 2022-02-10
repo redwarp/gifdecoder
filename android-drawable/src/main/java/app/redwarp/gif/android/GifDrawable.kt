@@ -333,7 +333,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         var loopIteration = 0
 
         override fun newDrawable(): Drawable {
-            return GifDrawable(gifDescriptor).also { copiedDrawable ->
+            return GifDrawable(gifDescriptor.shallowClone()).also { copiedDrawable ->
                 copiedDrawable.state.loopCount = loopCount
                 copiedDrawable.state.loopIteration = loopIteration
             }

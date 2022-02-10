@@ -124,6 +124,10 @@ internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInput
         inputStream.close()
     }
 
+    override fun shallowClone(): ReplayInputStream {
+        return this
+    }
+
     private fun readableBytes(): Int {
         return _loadedData?.let {
             it.size - position

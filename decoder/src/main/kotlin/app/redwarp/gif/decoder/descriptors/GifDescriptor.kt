@@ -27,4 +27,19 @@ class GifDescriptor(
     val loopCount: Int?,
     val imageDescriptors: List<ImageDescriptor>,
     val data: ReplayInputStream
-)
+) {
+    fun shallowClone(): GifDescriptor {
+        return GifDescriptor(
+            header = header,
+            logicalScreenDescriptor = logicalScreenDescriptor,
+            globalColorTable = globalColorTable,
+            loopCount = loopCount,
+            imageDescriptors = imageDescriptors,
+            data = data.shallowClone()
+        )
+    }
+
+    protected fun finalize() {
+        data.close()
+    }
+}

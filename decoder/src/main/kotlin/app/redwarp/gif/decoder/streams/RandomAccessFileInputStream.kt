@@ -40,6 +40,10 @@ internal class RandomAccessFileInputStream(private val file: File) : ReplayInput
         return randomAccessFile.filePointer.toInt()
     }
 
+    override fun shallowClone(): ReplayInputStream {
+        return RandomAccessFileInputStream(file)
+    }
+
     override fun read(): Int {
         return randomAccessFile.read()
     }

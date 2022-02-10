@@ -253,10 +253,14 @@ class Gif(
         previousDisposal = disposal
 
         return runCatching {
-            gifDescriptor.data.use { stream ->
-                stream.seek(imageDescriptor.imageData.position)
-                stream.read(rawScratch, 0, imageDescriptor.imageData.length)
+            // A gif descriptor might be shared between several gifs. So just in case, we make sure
+            // that seeking and reading are grouped in a synchronized block to avoid artifacts or
+            // crashes.
+            synchronized(gifDescriptor) {
+                gifDescriptor.data.seek(imageDescriptor.imageData.position)
+                gifDescriptor.data.read(rawScratch, 0, imageDescriptor.imageData.length)
             }
+
             lzwDecoder.decode(imageData = rawScratch, scratch, framePixels.size)
             fillPixels(
                 framePixels,
@@ -378,16 +382,39 @@ class Gif(
     val Int.previousIndex get() = (this - 1 + frameCount) % frameCount
 
     companion object {
+        /**
+         * Open a gif file, using a [java.io.RandomAccessFile] to access the data: The gif wont be
+         * loaded fully in memory. It allows handling crazy big files, as some gifs are actually
+         * several hundred mega byte big, as some users seem to mistake them for movie files.
+         *
+         * @param file The file to open
+         * @param pixelPacking Optional pixel packing, default to ARGB. It will affect the packing
+         * of pixels when calling [Gif.decodeFrame] later.
+         * @return Success if the gif headers where properly decoded.
+         */
         fun from(
             file: File,
             pixelPacking: PixelPacking = PixelPacking.ARGB
         ): Result<Gif> = Parser.parse(file, pixelPacking).map(::Gif)
 
+        /**
+         * Load a gif from an InputStream: The [InputStream] will be fully read and loaded in memory.
+         *
+         * @param inputStream The input stream containing the gif data.
+         * @param pixelPacking Optional pixel packing, default to ARGB. It will affect the packing
+         * of pixels when calling [Gif.decodeFrame] later.
+         * @return Success if the gif headers where properly decoded.
+         */
         fun from(
             inputStream: InputStream,
             pixelPacking: PixelPacking = PixelPacking.ARGB
         ): Result<Gif> = Parser.parse(inputStream, pixelPacking).map(::Gif)
 
-        fun from(gif: Gif): Gif = Gif(gif.gifDescriptor)
+        /**
+         * Creates a new gif from an existing gif.
+         *
+         * @return The new [Gif]
+         */
+        fun from(gif: Gif): Gif = Gif(gif.gifDescriptor.shallowClone())
     }
 }
