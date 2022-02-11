@@ -34,7 +34,7 @@ private const val TRANSPARENT_COLOR = 0x0
  */
 class Gif(
     private val gifDescriptor: GifDescriptor
-) {
+) : AutoCloseable {
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
     private val scratch = ByteArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
@@ -197,6 +197,10 @@ class Gif(
         }
         getCurrentFrame(inPixels)
         return Result.success(inPixels)
+    }
+
+    override fun close() {
+        gifDescriptor.close()
     }
 
     /**

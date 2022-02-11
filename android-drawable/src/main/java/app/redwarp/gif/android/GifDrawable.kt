@@ -67,6 +67,12 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     @Volatile
     private var isRunning: Boolean = false
+        set(value) {
+            field = value
+            if (!value) {
+                state.gif.close()
+            }
+        }
     private var loopJob: Job? = null
     private val gifWidth get() = state.gif.dimension.width
     private val gifHeight get() = state.gif.dimension.height
