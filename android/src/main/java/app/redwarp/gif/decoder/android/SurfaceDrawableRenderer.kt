@@ -20,30 +20,31 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
+import android.view.Surface
 import android.view.SurfaceHolder
 
 /**
  * Simple class do draw a [Drawable] on a [SurfaceHolder]
  */
-class SurfaceDrawableRenderer(private val holder: SurfaceHolder, private val drawable: Drawable) :
+class SurfaceDrawableRenderer(holder: SurfaceHolder, private val drawable: Drawable) :
     SurfaceHolder.Callback,
     Drawable.Callback {
     private var width: Int = 0
     private var height: Int = 0
-    private var isCreated = false
     private val handler: Handler = Handler(Looper.getMainLooper())
-    private val drawRunnable = { drawOnSurface() }
+    private val drawRunnable = Runnable { surface?.let(this::drawOnSurface) }
+    private var surface: Surface? = null
 
     init {
         holder.addCallback(this)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        isCreated = true
-
         drawable.callback = this
-
-        drawOnSurface()
+        holder.surface?.let {
+            surface = it
+            drawOnSurface(it)
+        }
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -52,28 +53,30 @@ class SurfaceDrawableRenderer(private val holder: SurfaceHolder, private val dra
 
         drawable.setBounds(0, 0, width, height)
 
-        drawOnSurface()
+        holder.surface?.let {
+            surface = it
+            drawOnSurface(it)
+        }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         drawable.callback = null
-        isCreated = false
+        surface?.release()
+        surface = null
     }
 
-    private fun drawOnSurface() {
-        if (isCreated) {
-            val canvas =
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    holder.lockHardwareCanvas()
-                } else {
-                    holder.lockCanvas()
-                }
+    private fun drawOnSurface(surface: Surface) {
+        val canvas =
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                surface.lockHardwareCanvas()
+            } else {
+                surface.lockCanvas(null)
+            }
 
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-            draw(canvas)
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+        draw(canvas)
 
-            holder.unlockCanvasAndPost(canvas)
-        }
+        surface.unlockCanvasAndPost(canvas)
     }
 
     private fun draw(canvas: Canvas) {
