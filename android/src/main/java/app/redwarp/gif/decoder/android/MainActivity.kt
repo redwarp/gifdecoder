@@ -15,9 +15,11 @@
 package app.redwarp.gif.decoder.android
 
 import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.SurfaceView
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.android.GifDrawable
@@ -103,5 +105,14 @@ class MainActivity : AppCompatActivity() {
                 drawable5.start()
             }
         }
+        drawable5.registerAnimationCallback(object : Animatable2Compat.AnimationCallback() {
+            override fun onAnimationStart(drawable: Drawable?) {
+                Toast.makeText(this@MainActivity, "Animation started", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onAnimationEnd(drawable: Drawable?) {
+                Toast.makeText(this@MainActivity, "Animation stopped", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }

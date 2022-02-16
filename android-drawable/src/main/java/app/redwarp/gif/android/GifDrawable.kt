@@ -29,16 +29,11 @@ import app.redwarp.gif.decoder.Parser
 import app.redwarp.gif.decoder.descriptors.GifDescriptor
 import app.redwarp.gif.decoder.descriptors.params.LoopCount
 import app.redwarp.gif.decoder.descriptors.params.PixelPacking
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 /**
  * A drawable that can be used to display a static or animated GIF.
@@ -59,31 +54,17 @@ import java.io.InputStream
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
     private val state = GifDrawableState(gifDescriptor)
 
-    private val bitmapCache = BitmapPool()
-
+    private val bitmapCache = BitmapCache()
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
-    private val lock = Object()
-    private val didRender = Channel<Unit>(capacity = 1)
 
     @Volatile
     private var isRunning: Boolean = false
-        set(value) {
-            field = value
-            if (!value) {
-                state.gif.close()
-            }
-        }
-    private var loopJob: Job? = null
+    private var prepareFrameFuture: Future<Bitmap?>? = null
     private val gifWidth get() = state.gif.dimension.width
     private val gifHeight get() = state.gif.dimension.height
 
     private val pixels = IntArray(state.gif.dimension.size)
     private var bitmap: Bitmap? = getCurrentFrame()
-        set(value) {
-            synchronized(lock) {
-                field = value
-            }
-        }
 
     private val bitmapPaint = Paint().apply {
         isAntiAlias = false
@@ -91,8 +72,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         isDither = bitmap?.config == Bitmap.Config.RGB_565
     }
     private val matrix = Matrix()
-
-    private val coroutineScope = CoroutineScope(Dispatchers.Default + CoroutineName("GifDrawable"))
 
     init {
         setBounds(0, 0, intrinsicWidth, intrinsicHeight)
@@ -102,8 +81,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
      * @since 0.7.0
      */
     var loopCount: LoopCount
-        get() = state.loopCount ?: state.gif.loopCount
-        set(value) = synchronized(lock) {
+        get() = synchronized(state) { state.loopCount ?: state.gif.loopCount }
+        set(value) = synchronized(state) {
             state.loopCount = value
             state.loopIteration = 0
         }
@@ -140,24 +119,17 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     override fun draw(canvas: Canvas) {
-        synchronized(lock) {
-            val checkpoint = canvas.save()
-            canvas.concat(matrix)
-            bitmap?.let {
-                canvas.drawBitmap(it, 0f, 0f, bitmapPaint)
-            }
-            canvas.restoreToCount(checkpoint)
-            didRender.trySend(Unit)
-        }
+        swapBitmaps()
 
-        if (isRunning && loopJob?.isActive != true) {
-            loopJob = coroutineScope.launch {
-                animationLoop()
-            }.apply {
-                invokeOnCompletion {
-                    loopJob = null
-                }
-            }
+        val checkpoint = canvas.save()
+        canvas.concat(matrix)
+        bitmap?.let {
+            canvas.drawBitmap(it, 0f, 0f, bitmapPaint)
+        }
+        canvas.restoreToCount(checkpoint)
+
+        if (isRunning && prepareFrameFuture?.isDone != false) {
+            prepareFrameFuture = executor.submit(prepareFrame)
         }
     }
 
@@ -185,9 +157,9 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
     override fun stop() {
         if (!isRunning) return // Already stopped.
-        loopJob?.cancel()
-        isRunning = false
-        postAnimationEnd()
+        endAnimation()
+        prepareFrameFuture?.cancel(false)
+        prepareFrameFuture = null
     }
 
     override fun isRunning(): Boolean = isRunning
@@ -218,23 +190,52 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         )
     }
 
+    private fun swapBitmaps() {
+        prepareFrameFuture?.let { future ->
+            if (!future.isCancelled && future.isDone) {
+                val nextFrame: Bitmap? = future.get()
+                if (nextFrame != null) {
+                    bitmapCache.release(bitmap)
+                    bitmap = nextFrame
+                }
+                prepareFrameFuture = null
+            }
+        }
+    }
+
+    private fun endAnimation() {
+        isRunning = false
+        synchronized(state.gif) {
+            state.gif.close()
+            bitmapCache.flush()
+        }
+        unscheduleSelf(redraw)
+        postAnimationEnd()
+    }
+
     private fun postAnimationStart() {
         if (animationCallbacks.isNotEmpty()) {
-            CoroutineScope(Dispatchers.Main).launch {
-                animationCallbacks.forEach { callback ->
-                    callback.onAnimationStart(this@GifDrawable)
-                }
-            }
+            scheduleSelf(
+                Runnable {
+                    animationCallbacks.forEach { callback ->
+                        callback.onAnimationStart(this@GifDrawable)
+                    }
+                },
+                SystemClock.uptimeMillis()
+            )
         }
     }
 
     private fun postAnimationEnd() {
         if (animationCallbacks.isNotEmpty()) {
-            CoroutineScope(Dispatchers.Main).launch {
-                animationCallbacks.forEach { callback ->
-                    callback.onAnimationEnd(this@GifDrawable)
-                }
-            }
+            scheduleSelf(
+                Runnable {
+                    animationCallbacks.forEach { callback ->
+                        callback.onAnimationEnd(this@GifDrawable)
+                    }
+                },
+                SystemClock.uptimeMillis()
+            )
         }
     }
 
@@ -243,66 +244,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         return when (val repeatCount = loopCount) {
             is LoopCount.NoLoop -> false
-            is LoopCount.Fixed -> synchronized(lock) { state.loopIteration < repeatCount.count }
+            is LoopCount.Fixed -> synchronized(state) { state.loopIteration < repeatCount.count }
             is LoopCount.Infinite -> true
-        }
-    }
-
-    private suspend fun animationLoop() = withContext(Dispatchers.IO) loop@{
-        if (!shouldAnimate()) {
-            postAnimationEnd()
-            isRunning = false
-            return@loop
-        }
-
-        var startTime = SystemClock.elapsedRealtime()
-        while (true) {
-            if (!isRunning) return@loop
-
-            val frameDelay = state.gif.currentDelay.let {
-                // If the frame delay is 0, let's at last have 2 frame before we display it.
-                if (it == 0L) 32L else it
-            }
-            state.gif.advance()
-            if (state.gif.currentIndex == 0) {
-                // We looped back to the first frame
-                synchronized(lock) {
-                    state.loopIteration++
-                }
-            }
-            // Checking if we are finished looping already
-            if (!shouldAnimate()) {
-                postAnimationEnd()
-                isRunning = false
-                return@loop
-            }
-
-            val nextFrame = getCurrentFrame()
-            if (nextFrame == null) {
-                postAnimationEnd()
-                isRunning = false
-                return@loop
-            }
-            nextFrame.prepareToDraw()
-
-            val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
-            val delay: Long = (frameDelay - elapsedTime).coerceIn(0L, frameDelay)
-
-            delay(delay)
-
-            startTime = SystemClock.elapsedRealtime()
-
-            didRender.receive()
-            synchronized(lock) {
-                val oldBitmap = bitmap
-                bitmap = nextFrame
-                bitmapPaint.isDither = nextFrame.config == Bitmap.Config.RGB_565
-
-                bitmapCache.release(oldBitmap)
-            }
-            withContext(Dispatchers.Main) {
-                invalidateSelf()
-            }
         }
     }
 
@@ -321,16 +264,57 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         return nextFrame
     }
 
-    companion object {
+    private val prepareFrame = object : Callable<Bitmap?> {
+        override fun call(): Bitmap? {
+            val startTime = SystemClock.elapsedRealtime()
 
-        /**
-         * Creates a GifDrawable from an [InputStream]
-         */
-        fun from(inputStream: InputStream): Result<GifDrawable> =
-            Parser.parse(inputStream, PixelPacking.ARGB).map(::GifDrawable)
+            val frameDelay = state.gif.currentDelay.let {
+                // If the frame delay is 0, let's at last have 2 frame before we display it.
+                if (it == 0L) 32L else it
+            }
 
-        fun from(file: File): Result<GifDrawable> =
-            Parser.parse(file, PixelPacking.ARGB).map(::GifDrawable)
+            synchronized(state.gif) {
+                state.gif.advance()
+            }
+            if (state.gif.currentIndex == 0) {
+                // We looped back to the first frame
+                synchronized(state) {
+                    state.loopIteration++
+                }
+            }
+            // Checking if we are finished looping already
+            if (!shouldAnimate()) {
+                endAnimation()
+                return null
+            }
+
+            val nextFrame = getCurrentFrame()
+            if (nextFrame == null) {
+                endAnimation()
+                return null
+            }
+            nextFrame.prepareToDraw()
+
+            val elapsedTime: Long = SystemClock.elapsedRealtime() - startTime
+            val delay: Long = (frameDelay - elapsedTime).coerceIn(0L, frameDelay)
+
+            // We might have interrupted the animation at that point.
+            // We let the callable finish to avoid corruption of data,
+            // but it doesn't mean we need to do unnecessary calls.
+            if (isRunning) {
+                scheduleSelf(redraw, SystemClock.uptimeMillis() + delay)
+            } else {
+                synchronized(state.gif) {
+                    state.gif.close()
+                }
+            }
+
+            return nextFrame
+        }
+    }
+
+    private val redraw = Runnable {
+        invalidateSelf()
     }
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {
@@ -340,12 +324,34 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
 
         override fun newDrawable(): Drawable {
             return GifDrawable(gifDescriptor.shallowClone()).also { copiedDrawable ->
-                copiedDrawable.state.loopCount = loopCount
-                copiedDrawable.state.loopIteration = loopIteration
+                synchronized(this) {
+                    copiedDrawable.state.loopCount = loopCount
+                    copiedDrawable.state.loopIteration = loopIteration
+                }
             }
         }
 
         // No need to recreate the drawable for any configurations.
         override fun getChangingConfigurations(): Int = 0
+    }
+
+    companion object {
+        private val executor = Executors.newCachedThreadPool()
+
+        /**
+         * Creates a GifDrawable from an [InputStream].
+         *
+         * @return success if the GifDrawable was created.
+         */
+        fun from(inputStream: InputStream): Result<GifDrawable> =
+            Parser.parse(inputStream, PixelPacking.ARGB).map(::GifDrawable)
+
+        /**
+         * Creates a GifDrawable from a [File].
+         *
+         * @return success if the GifDrawable was created.
+         */
+        fun from(file: File): Result<GifDrawable> =
+            Parser.parse(file, PixelPacking.ARGB).map(::GifDrawable)
     }
 }

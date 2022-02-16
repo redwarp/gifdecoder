@@ -32,6 +32,7 @@ class SurfaceDrawableRenderer(private val holder: SurfaceHolder, private val dra
     private var height: Int = 0
     private var isCreated = false
     private val handler: Handler = Handler(Looper.getMainLooper())
+    private val drawRunnable = { drawOnSurface() }
 
     init {
         holder.addCallback(this)
@@ -80,15 +81,14 @@ class SurfaceDrawableRenderer(private val holder: SurfaceHolder, private val dra
     }
 
     override fun invalidateDrawable(who: Drawable) {
-        drawOnSurface()
+        handler.post(drawRunnable)
     }
 
-    private val drawRunnable = { drawOnSurface() }
     override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {
-        handler.postAtTime(drawRunnable, `when`)
+        handler.postAtTime(what, `when`)
     }
 
     override fun unscheduleDrawable(who: Drawable, what: Runnable) {
-        handler.removeCallbacks(drawRunnable)
+        handler.removeCallbacks(what)
     }
 }

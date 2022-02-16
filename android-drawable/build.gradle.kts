@@ -44,8 +44,6 @@ android {
 dependencies {
     api("app.redwarp.gif:decoder:${Publication.VERSION_NAME}")
     implementation("androidx.appcompat:appcompat:${Versions.APP_COMPAT}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.COROUTINES}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.COROUTINES}")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")

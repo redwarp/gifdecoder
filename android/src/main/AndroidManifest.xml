@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="app.redwarp.gif.decoder.android">
-
     <application
         android:allowBackup="false"
         android:fullBackupContent="false"
@@ -10,6 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GifDecoder">
+        <profileable android:shell="true"/>
         <activity
             android:name="app.redwarp.gif.decoder.android.MainActivity"
             android:exported="true">

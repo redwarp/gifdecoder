@@ -15,13 +15,12 @@
 package app.redwarp.gif.android
 
 import android.graphics.Bitmap
-import java.lang.ref.WeakReference
 import java.util.TreeMap
 
 // Reuse the idea from Coil to not use a bitmap that is more than 10 times too big.
 private const val MAX_SIZE_MULTIPLE = 4
 
-internal class BitmapPool {
+internal class BitmapCache {
     private val bitmaps = Store()
 
     fun obtain(width: Int, height: Int, config: Bitmap.Config): Bitmap {
@@ -70,16 +69,6 @@ internal class BitmapPool {
 
     protected fun finalize() {
         flush()
-    }
-
-    companion object {
-        private var sharedBitmapPool: WeakReference<BitmapPool>? = null
-
-        fun obtain(): BitmapPool {
-            return sharedBitmapPool?.get() ?: BitmapPool().also {
-                sharedBitmapPool = WeakReference(it)
-            }
-        }
     }
 
     private class Store {
