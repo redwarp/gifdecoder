@@ -1,7 +1,13 @@
 # Changelog
 
+## [1.1.0] (2022-02-16)
+
+* Gif now implements AutoClosable.
+* Rewrite GifDrawable in pure android to ditch dependencies to coroutines.
+
 ## [1.0.0] (2022-02-10)
 
+* Arbitrarily decide it's the 1.0.0. Pretty stable I would say.
 * Project updated to kotlin 1.6.0.
 * Project now targets java 11.
 * Opening a Gif from a file will now use a buffered RandomAccessFile, to limit read operations.
