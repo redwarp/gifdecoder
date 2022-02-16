@@ -78,6 +78,9 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     /**
+     * Gets or overrides the normal maximum loop count of the gif.
+     * Doing so will also reset the current loop count to zero.
+     *
      * @since 0.7.0
      */
     var loopCount: LoopCount
@@ -239,13 +242,19 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         }
     }
 
-    private fun shouldAnimate(): Boolean {
+    private fun shouldAnimate(loopIteration: Int): Boolean {
         if (!state.gif.isAnimated) return false
 
         return when (val repeatCount = loopCount) {
             is LoopCount.NoLoop -> false
-            is LoopCount.Fixed -> synchronized(state) { state.loopIteration < repeatCount.count }
+            is LoopCount.Fixed -> synchronized(state) { loopIteration < repeatCount.count }
             is LoopCount.Infinite -> true
+        }
+    }
+
+    private fun shouldAnimate(): Boolean {
+        synchronized(state) {
+            return shouldAnimate(state.loopIteration)
         }
     }
 
@@ -273,6 +282,18 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 if (it == 0L) 32L else it
             }
 
+            // Check what would be the loop count if we advanced the frame counter
+            val iteration = if (state.gif.currentIndex == state.gif.frameCount - 1) {
+                state.loopIteration + 1
+            } else {
+                state.loopIteration
+            }
+            // Checking if we are finished looping already
+            if (!shouldAnimate(iteration)) {
+                endAnimation()
+                return null
+            }
+
             synchronized(state.gif) {
                 state.gif.advance()
             }
@@ -281,11 +302,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
                 synchronized(state) {
                     state.loopIteration++
                 }
-            }
-            // Checking if we are finished looping already
-            if (!shouldAnimate()) {
-                endAnimation()
-                return null
             }
 
             val nextFrame = getCurrentFrame()
