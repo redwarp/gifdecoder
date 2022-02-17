@@ -37,16 +37,16 @@ class MainActivity : AppCompatActivity() {
         drawables.clear()
 
         val imageView1 = findViewById<ImageView>(R.id.imageView1)
-        val drawable = GifDrawable.from(assets.open("full_colour.gif")).getOrThrow()
-        drawable.loopCount = LoopCount.Infinite
-        drawables.add(drawable)
-        imageView1.setImageDrawable(drawable)
-        drawable.start()
+        val drawable1 = GifDrawable.from(assets.open("full_colour.gif")).getOrThrow()
+        drawable1.loopCount = LoopCount.Infinite
+        drawables.add(drawable1)
+        imageView1.setImageDrawable(drawable1)
+        drawable1.start()
         imageView1.setOnClickListener {
-            if (drawable.isRunning) {
-                drawable.stop()
+            if (drawable1.isRunning) {
+                drawable1.stop()
             } else {
-                drawable.start()
+                drawable1.start()
             }
         }
 

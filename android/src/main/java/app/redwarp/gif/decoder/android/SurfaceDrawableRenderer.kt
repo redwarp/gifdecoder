@@ -32,10 +32,11 @@ class SurfaceDrawableRenderer(holder: SurfaceHolder, private val drawable: Drawa
     private var width: Int = 0
     private var height: Int = 0
     private val handler: Handler = Handler(Looper.getMainLooper())
-    private val drawRunnable = Runnable { surface?.let(this::drawOnSurface) }
     private var surface: Surface? = null
 
     init {
+        // The drawable starts invisible, until the surface is created.
+        drawable.setVisible(false, false)
         holder.addCallback(this)
     }
 
@@ -45,6 +46,7 @@ class SurfaceDrawableRenderer(holder: SurfaceHolder, private val drawable: Drawa
             surface = it
             drawOnSurface(it)
         }
+        drawable.setVisible(true, false)
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -61,6 +63,7 @@ class SurfaceDrawableRenderer(holder: SurfaceHolder, private val drawable: Drawa
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         drawable.callback = null
+        drawable.setVisible(false, false)
         surface?.release()
         surface = null
     }
@@ -84,7 +87,7 @@ class SurfaceDrawableRenderer(holder: SurfaceHolder, private val drawable: Drawa
     }
 
     override fun invalidateDrawable(who: Drawable) {
-        handler.post(drawRunnable)
+        surface?.let(this::drawOnSurface)
     }
 
     override fun scheduleDrawable(who: Drawable, what: Runnable, `when`: Long) {

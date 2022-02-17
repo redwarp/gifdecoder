@@ -99,6 +99,10 @@ class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
         )
     }
 
+    override fun setVisible(visible: Boolean, restart: Boolean): Boolean {
+        return gifDrawable.setVisible(visible, restart)
+    }
+
     private fun Rect.toRectF(): RectF =
         RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
 }
