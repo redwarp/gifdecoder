@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.2] (2022-02-16)
+
+* `setVisible` will try to be less smart, and not assume that visibility change is actually reliable.
+
 ## [1.1.1] (2022-02-16)
 
 * Better frame timing for GifDrawawble.
