@@ -165,19 +165,15 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     override fun isRunning(): Boolean = isRunning.get()
 
     override fun setVisible(visible: Boolean, restart: Boolean): Boolean {
-        val changed = super.setVisible(visible, restart)
-        if (changed) {
-            if (visible) {
-                if (isRunning.get()) {
-                    frameTime.set(SystemClock.elapsedRealtime())
-                    update.run()
-                }
-            } else {
-                prepareFrameFuture?.cancel(false)
-                prepareFrameFuture = null
+        if (visible) {
+            if (isRunning.get()) {
+                update.run()
             }
+        } else {
+            prepareFrameFuture?.cancel(false)
+            prepareFrameFuture = null
         }
-        return changed
+        return super.setVisible(visible, restart)
     }
 
     override fun registerAnimationCallback(callback: Animatable2Compat.AnimationCallback) {
