@@ -23,6 +23,7 @@ import android.graphics.PixelFormat
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
+import android.util.Log
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
@@ -34,6 +35,7 @@ import java.io.InputStream
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * A drawable that can be used to display a static or animated GIF.
@@ -57,8 +59,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private val bitmapCache = BitmapCache()
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
 
-    @Volatile
-    private var isRunning: Boolean = false
+    private var isRunning: AtomicBoolean = AtomicBoolean(false)
     private var prepareFrameFuture: Future<Bitmap?>? = null
     private val gifWidth get() = state.gif.dimension.width
     private val gifHeight get() = state.gif.dimension.height
@@ -122,6 +123,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     override fun draw(canvas: Canvas) {
+        Log.d("GifDrawable", "Drawing at ${SystemClock.uptimeMillis()}")
         swapBitmaps()
 
         val checkpoint = canvas.save()
@@ -131,7 +133,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         }
         canvas.restoreToCount(checkpoint)
 
-        if (isRunning && prepareFrameFuture?.isDone != false) {
+        val prepareNextFrame = prepareFrameFuture.let {
+            it == null || it.isDone || it.isCancelled
+        }
+        if (isRunning.get() && prepareNextFrame) {
             prepareFrameFuture = executor.submit(prepareFrame)
         }
     }
@@ -147,25 +152,25 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 
     override fun start() {
-        if (isRunning) return // Already running.
+        if (isRunning.get()) return // Already running.
 
         // No need to animate gifs with single frame, or already finished gifs.
         if (!shouldAnimate()) return
 
-        isRunning = true
+        isRunning.set(true)
         postAnimationStart()
 
         invalidateSelf()
     }
 
     override fun stop() {
-        if (!isRunning) return // Already stopped.
+        if (!isRunning.get()) return // Already stopped.
         endAnimation()
         prepareFrameFuture?.cancel(false)
         prepareFrameFuture = null
     }
 
-    override fun isRunning(): Boolean = isRunning
+    override fun isRunning(): Boolean = isRunning.get()
 
     override fun registerAnimationCallback(callback: Animatable2Compat.AnimationCallback) {
         animationCallbacks.add(callback)
@@ -207,7 +212,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     private fun endAnimation() {
-        isRunning = false
+        isRunning.set(false)
         synchronized(state.gif) {
             state.gif.close()
             bitmapCache.flush()
@@ -219,6 +224,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private fun postAnimationStart() {
         if (animationCallbacks.isNotEmpty()) {
             scheduleSelf(
+                @Suppress("RedundantSamConstructor") // Ktlint is drunk
                 Runnable {
                     animationCallbacks.forEach { callback ->
                         callback.onAnimationStart(this@GifDrawable)
@@ -232,6 +238,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private fun postAnimationEnd() {
         if (animationCallbacks.isNotEmpty()) {
             scheduleSelf(
+                @Suppress("RedundantSamConstructor") // Ktlint is drunk
                 Runnable {
                     animationCallbacks.forEach { callback ->
                         callback.onAnimationEnd(this@GifDrawable)
@@ -317,7 +324,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             // We might have interrupted the animation at that point.
             // We let the callable finish to avoid corruption of data,
             // but it doesn't mean we need to do unnecessary calls.
-            if (isRunning) {
+            if (isRunning.get()) {
                 scheduleSelf(redraw, SystemClock.uptimeMillis() + delay)
             } else {
                 synchronized(state.gif) {
