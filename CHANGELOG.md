@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] (2022-02-16)
+
+* Better frame timing for GifDrawawble.
+* GifDrawable now implements setVisible properly, and the frame preparation future will be properly cancelled.
+
 ## [1.1.0] (2022-02-16)
 
 * Gif now implements AutoClosable.
