@@ -96,7 +96,8 @@ publishing {
                 url.set(Publication.Pom.URL)
                 description.set(
                     """A simple jvm library written 100% in kotlin that handles 
-                    |the parsing of the gif format, headers, lzw decoder and so on.""".trimMargin()
+                    |the parsing of the gif format, headers, lzw decoder and so on.
+                    """.trimMargin()
                 )
                 licenses {
                     license {
