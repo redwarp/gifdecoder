@@ -6,6 +6,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("se.ascp.gradle.gradle-versions-filter") version Versions.VERSIONS apply false
     id("com.diffplug.spotless") version Versions.SPOTLESS apply false
+    id("org.jetbrains.dokka") version Versions.DOKKA apply false
 }
 
 subprojects {
