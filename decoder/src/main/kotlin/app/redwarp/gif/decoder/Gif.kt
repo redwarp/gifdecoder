@@ -60,19 +60,7 @@ class Gif(
      * If the gif is not animated, returns zero.
      * Some animated GIFs have a specified delay of 0L, meaning we should draw the next frame as fast as possible.
      */
-    val currentDelay: Long
-        get() {
-            return if (!isAnimated) {
-                0L
-            } else {
-                val delay =
-                    gifDescriptor.imageDescriptors[frameIndex].graphicControlExtension?.delayTime?.let {
-                        it.toLong() * 10L
-                    }
-
-                delay ?: 0L
-            }
-        }
+    val currentDelay: Long get() = getDelay(frameIndex)
 
     /**
      * The dimensions of the GIF, width and height.
@@ -197,6 +185,26 @@ class Gif(
         }
         getCurrentFrame(inPixels)
         return Result.success(inPixels)
+    }
+
+    /**
+     * Returns the delay time of the specified frame, in millisecond.
+     * This delay represents how long we should show this frame before displaying the next one in the animation.
+     * If the gif is not animated, returns zero.
+     * Some animated GIFs have a specified delay of 0L, meaning we should draw the next frame as fast as possible.
+     * Most web browsers opt to draw a frame every 32 milliseconds if the delay is set to 0L.
+     *
+     * @param index The index of the frame we want the delay for.
+     * @return The delay in milliseconds.
+     */
+    fun getDelay(index: Int): Long {
+        return if (!isAnimated) {
+            0L
+        } else {
+            gifDescriptor.imageDescriptors.getOrNull(index)?.graphicControlExtension?.delayTime?.let {
+                it.toLong() * 10L
+            } ?: 0L
+        }
     }
 
     override fun close() {

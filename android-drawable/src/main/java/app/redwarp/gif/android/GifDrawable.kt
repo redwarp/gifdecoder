@@ -298,7 +298,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
         // Checking if we are finished looping already
         if (shouldAnimate(iteration)) {
-            prepareFrameFuture = executor.submit(prepareNextFrame)
+            prepareFrameFuture = executor.submit(prepareNextFrame())
         } else {
             bitmapCache.flush()
         }
@@ -314,42 +314,42 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
     }
 
-    private val prepareNextFrame: Cancellable<Unit>
-        get() = object : Cancellable<Unit>() {
-            override fun call() {
-                val frameDelay = state.gif.currentDelay.let {
-                    // If the frame delay is 0, let's at last have 2 frame before we display it.
-                    if (it == 0L) 32L else it
-                }
-
-                val index = synchronized(state) {
-                    (state.frameIndex + 1) % state.gif.frameCount
-                }
-
-                val nextFrame = getFrame(index) ?: return
-                nextFrame.prepareToDraw()
-                synchronized(bitmapLock) {
-                    nextBitmap?.let(bitmapCache::release)
-                    nextBitmap = nextFrame
-                    nextIndex = index
-                }
-
-                val optimalTime = frameTime.get() + frameDelay
-                val actualTime = if (optimalTime < SystemClock.uptimeMillis()) {
-                    SystemClock.uptimeMillis()
-                } else {
-                    optimalTime
-                }
-                frameTime.set(actualTime)
-
-                if (isCancelled) return
-
-                // Scheduling next draw and next frame decode.
-                // Queuing message with scheduling should respect the order:
-                // the redraw message should be treated before the update.
-                scheduleSelf(this@GifDrawable, actualTime)
+    private fun prepareNextFrame(): Cancellable<Unit> = object : Cancellable<Unit>() {
+        override fun call() {
+            val currentFrameDelay = state.gif.getDelay(state.frameIndex).let {
+                // If the frame delay is 0, let's at last have 2 frame before we display it.
+                // It's what most web browsers do.
+                if (it == 0L) 32L else it
             }
+
+            val nextIndex = synchronized(state) {
+                (state.frameIndex + 1) % state.gif.frameCount
+            }
+
+            val nextFrame = getFrame(nextIndex) ?: return
+            nextFrame.prepareToDraw()
+            synchronized(bitmapLock) {
+                nextBitmap?.let(bitmapCache::release)
+                nextBitmap = nextFrame
+                this@GifDrawable.nextIndex = nextIndex
+            }
+
+            val optimalTime = frameTime.get() + currentFrameDelay
+            val actualTime = if (optimalTime < SystemClock.uptimeMillis()) {
+                SystemClock.uptimeMillis()
+            } else {
+                optimalTime
+            }
+            frameTime.set(actualTime)
+
+            if (isCancelled) return
+
+            // Scheduling next draw and next frame decode.
+            // Queuing message with scheduling should respect the order:
+            // the redraw message should be treated before the update.
+            scheduleSelf(this@GifDrawable, actualTime)
         }
+    }
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {
         val gif = Gif(gifDescriptor)
