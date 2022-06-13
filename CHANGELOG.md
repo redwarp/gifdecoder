@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0] (2022-06-13)
+
+* Rewrite GifDrawable (again), it will now work properly on Android 12, and Android at large (Yup, was broken).
+* Save current frame index, so that we display proper frame when starting, stopping or pausing the GifDrawable.
+* Bump Android sdk to 32, AGP and dependencies
+* Add `getDelay` method to GIF.
+
 ## [1.1.2] (2022-02-16)
 
 * `setVisible` will try to be less smart, and not assume that visibility change is actually reliable.
