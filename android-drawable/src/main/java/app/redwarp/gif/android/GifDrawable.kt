@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicLong
  * gifDrawable.loopCount = LoopCount.INFINITE
  * ```
  */
-class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat {
+class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat, Runnable {
     private val state = GifDrawableState(gifDescriptor)
     private val bitmapCache = BitmapCache()
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
@@ -71,6 +71,13 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     private var prepareFrameFuture: Future<*>? = null
     private var frameTime: AtomicLong = AtomicLong(0)
     private var bitmap: Bitmap? = getCurrentFrame()
+        set(value) {
+            field.let(bitmapCache::release)
+            field = value
+        }
+    private var nextBitmap: Bitmap? = null
+
+    private val bitmapLock: Any = Any()
 
     init {
         setBounds(0, 0, intrinsicWidth, intrinsicHeight)
@@ -137,43 +144,41 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         bitmapPaint.colorFilter = colorFilter
     }
 
+    @Deprecated("This method is no longer used in graphics optimizations", ReplaceWith(""))
     override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 
     override fun start() {
-        if (isRunning.get()) {
-            return
-        } // Already running.
-
-        // No need to animate gifs with single frame, or already finished gifs.
-        if (!shouldAnimate()) return
+        if (isRunning()) return // Already running
 
         isRunning.set(true)
-        frameTime.set(SystemClock.elapsedRealtime())
-        update.run()
-        postAnimationStart()
+        nextFrame(true)
 
-        invalidateSelf()
+        postAnimationStart()
     }
 
     override fun stop() {
         if (!isRunning.get()) return // Already stopped.
-        endAnimation()
-        prepareFrameFuture?.cancel(false)
-        prepareFrameFuture = null
+
+        isRunning.set(false)
+        cancelNextFrame()
+
+        postAnimationEnd()
     }
 
     override fun isRunning(): Boolean = isRunning.get()
 
     override fun setVisible(visible: Boolean, restart: Boolean): Boolean {
-        if (visible) {
-            if (isRunning.get()) {
-                update.run()
+        val changed = super.setVisible(visible, restart)
+
+        if (changed) {
+            if (visible) {
+                nextFrame(true)
+            } else {
+                cancelNextFrame()
             }
-        } else {
-            prepareFrameFuture?.cancel(false)
-            prepareFrameFuture = null
         }
-        return super.setVisible(visible, restart)
+
+        return changed
     }
 
     override fun registerAnimationCallback(callback: Animatable2Compat.AnimationCallback) {
@@ -202,14 +207,8 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         )
     }
 
-    private fun endAnimation() {
-        isRunning.set(false)
-        synchronized(state.gif) {
-            state.gif.close()
-            bitmapCache.flush()
-        }
-        unscheduleSelf(update)
-        postAnimationEnd()
+    override fun run() {
+        nextFrame(false)
     }
 
     private fun postAnimationStart() {
@@ -241,18 +240,15 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
     }
 
     private fun shouldAnimate(loopIteration: Int): Boolean {
-        if (!state.gif.isAnimated) return false
+        if (!isVisible || !isRunning()) return false
+        synchronized(state) {
+            if (!state.gif.isAnimated) return false
+        }
 
         return when (val repeatCount = loopCount) {
             is LoopCount.NoLoop -> false
             is LoopCount.Fixed -> synchronized(state) { loopIteration < repeatCount.count }
             is LoopCount.Infinite -> true
-        }
-    }
-
-    private fun shouldAnimate(): Boolean {
-        synchronized(state) {
-            return shouldAnimate(state.loopIteration)
         }
     }
 
@@ -271,48 +267,65 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
         return nextFrame
     }
 
-    private val update: Runnable = Runnable {
-        prepareFrameFuture?.cancel(false)
-        prepareFrameFuture = executor.submit(prepareFrame())
+    private fun nextFrame(unschedule: Boolean) {
+        if (unschedule) {
+            unscheduleSelf(this)
+        }
+
+        synchronized(bitmapLock) {
+            if (nextBitmap != null) {
+                bitmap = nextBitmap
+                nextBitmap = null
+            }
+        }
+        invalidateSelf()
+
+        // Check what would be the loop count if we advanced the frame counter
+        val iteration = if (state.gif.currentIndex == state.gif.frameCount - 1) {
+            state.loopIteration + 1
+        } else {
+            state.loopIteration
+        }
+        // Checking if we are finished looping already
+        if (shouldAnimate(iteration)) {
+            prepareFrameFuture = executor.submit(prepareNextFrame)
+        } else {
+            bitmapCache.flush()
+        }
     }
 
-    private fun prepareFrame(): Cancellable<Unit> = object : Cancellable<Unit>() {
-        override fun call() {
-            if (isCancelled) return
+    private fun cancelNextFrame() {
+        prepareFrameFuture?.cancel(false)
+        prepareFrameFuture = null
+        unscheduleSelf(this)
+        synchronized(bitmapLock) {
+            bitmapCache.release(nextBitmap)
+            nextBitmap = null
+        }
+    }
 
+    private val prepareNextFrame: Cancellable<Unit> get() = object : Cancellable<Unit>() {
+        override fun call() {
             val frameDelay = state.gif.currentDelay.let {
                 // If the frame delay is 0, let's at last have 2 frame before we display it.
                 if (it == 0L) 32L else it
             }
 
-            // Check what would be the loop count if we advanced the frame counter
-            val iteration = if (state.gif.currentIndex == state.gif.frameCount - 1) {
-                state.loopIteration + 1
-            } else {
-                state.loopIteration
-            }
-            // Checking if we are finished looping already
-            if (!shouldAnimate(iteration)) {
-                endAnimation()
-                return
-            }
-
-            synchronized(state.gif) {
+            synchronized(state) {
                 state.gif.advance()
-            }
-            if (state.gif.currentIndex == 0) {
-                // We looped back to the first frame
-                synchronized(state) {
+
+                if (state.gif.currentIndex == 0) {
+                    // We looped back to the first frame
                     state.loopIteration++
                 }
             }
 
-            val nextFrame = getCurrentFrame()
-            if (nextFrame == null) {
-                endAnimation()
-                return
-            }
+            val nextFrame = getCurrentFrame() ?: return
             nextFrame.prepareToDraw()
+            synchronized(bitmapLock) {
+                nextBitmap?.let(bitmapCache::release)
+                nextBitmap = nextFrame
+            }
 
             val optimalTime = frameTime.get() + frameDelay
             val actualTime = if (optimalTime < SystemClock.uptimeMillis()) {
@@ -322,40 +335,14 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat 
             }
             frameTime.set(actualTime)
 
-            if (!isVisible || isCancelled) return
-
-            synchronized(redraw) {
-                redraw.nextBitmap = nextFrame
-            }
+            if (isCancelled) return
 
             // Scheduling next draw and next frame decode.
             // Queuing message with scheduling should respect the order:
             // the redraw message should be treated before the update.
-            scheduleSelf(redraw, actualTime)
-            if (isRunning.get()) {
-                scheduleSelf(update, actualTime)
-            } else {
-                synchronized(state.gif) {
-                    state.gif.close()
-                }
-            }
+            scheduleSelf(this@GifDrawable, actualTime)
         }
     }
-
-    inner class Redraw(var nextBitmap: Bitmap?) : Runnable {
-        override fun run() {
-            synchronized(this) {
-                nextBitmap?.let {
-                    bitmapCache.release(this@GifDrawable.bitmap)
-                    this@GifDrawable.bitmap = it
-                }
-                nextBitmap = null
-                invalidateSelf()
-            }
-        }
-    }
-
-    private val redraw = Redraw(null)
 
     private class GifDrawableState(private val gifDescriptor: GifDescriptor) : ConstantState() {
         val gif = Gif(gifDescriptor)
