@@ -131,8 +131,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     override fun draw(canvas: Canvas) {
         val checkpoint = canvas.save()
         canvas.concat(matrix)
-        bitmap?.let {
-            canvas.drawBitmap(it, 0f, 0f, bitmapPaint)
+        synchronized(bitmapLock) {
+            bitmap?.let {
+                canvas.drawBitmap(it, 0f, 0f, bitmapPaint)
+            }
         }
         canvas.restoreToCount(checkpoint)
     }
@@ -275,7 +277,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
 
         synchronized(bitmapLock) {
             nextBitmap?.let { nextBitmap ->
-                bitmapCache.release(bitmap)
                 bitmap = nextBitmap
                 bitmapPaint.isDither = nextBitmap.config == Bitmap.Config.RGB_565
 
