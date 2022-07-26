@@ -274,9 +274,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
 
         synchronized(bitmapLock) {
-            if (nextBitmap != null) {
+            nextBitmap?.let { nextBitmap ->
+                bitmapCache.release(bitmap)
                 bitmap = nextBitmap
-                nextBitmap = null
+                bitmapPaint.isDither = nextBitmap.config == Bitmap.Config.RGB_565
 
                 synchronized(state) {
                     state.frameIndex = nextIndex
@@ -287,6 +288,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
                     }
                 }
             }
+            nextBitmap = null
         }
         invalidateSelf()
 
