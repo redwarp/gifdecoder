@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.1] (2022-07-26)
+
+* Fix concurrency issue with the bitmap field in GifDrawable.
+
 ## [1.3.0] (2022-07-26)
 
 * Fix paint dithering to use 565 for non transparent gifs.
