@@ -1,7 +1,6 @@
 plugins {
     id("java-library")
     id("org.jetbrains.kotlin.jvm") version Versions.KOTLIN
-    id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("se.ascp.gradle.gradle-versions-filter") version Versions.VERSIONS
     id("com.diffplug.spotless") version Versions.SPOTLESS
     id("org.jetbrains.dokka") version Versions.DOKKA

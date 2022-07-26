@@ -3,7 +3,6 @@ plugins {
     id("com.android.library") version Versions.AGP apply false
     id("androidx.benchmark") version Versions.BENCHMARK apply false
     kotlin("android") version Versions.KOTLIN apply false
-    id("org.jlleitschuh.gradle.ktlint") version Versions.KTLINT_GRADLE
     id("se.ascp.gradle.gradle-versions-filter") version Versions.VERSIONS apply false
     id("com.diffplug.spotless") version Versions.SPOTLESS apply false
     id("org.jetbrains.dokka") version Versions.DOKKA apply false
@@ -11,13 +10,8 @@ plugins {
 
 subprojects {
     apply {
-        plugin("org.jlleitschuh.gradle.ktlint")
         plugin("se.ascp.gradle.gradle-versions-filter")
         plugin("com.diffplug.spotless")
-    }
-
-    ktlint {
-        version.set(Versions.KTLINT)
     }
 
     configure<com.diffplug.gradle.spotless.SpotlessExtension> {
