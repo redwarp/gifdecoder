@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] (2022-07-26)
+
+* Fix paint dithering to use 565 for non transparent gifs.
+* Fix recycle of bitmaps, should behave nicer for memory.
+* Target kotlin 1.7.10
+
 ## [1.2.0] (2022-06-13)
 
 * Rewrite GifDrawable (again), it will now work properly on Android 12, and Android at large (Yup, was broken).
