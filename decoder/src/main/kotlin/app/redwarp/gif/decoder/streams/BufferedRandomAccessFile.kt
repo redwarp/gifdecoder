@@ -14,20 +14,15 @@
  */
 package app.redwarp.gif.decoder.streams
 
+import java.io.Closeable
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
 
-/**
- * A kotlin version of the BufferedRandomAccessFile java version from Apache, found here:
- * [BufferedRandomAccessFile](https://github.com/apache/pdfbox/blob/a27ee91/fontbox/src/main/java/org/apache/fontbox/ttf/BufferedRandomAccessFile.java)
- */
 class BufferedRandomAccessFile(
-    file: File,
-    mode: String,
+    private val file: File,
     private val bufferSize: Int = DEFAULT_BUFFER_SIZE
-) :
-    RandomAccessFile(file, mode) {
+) : Closeable {
     private val buffer: ByteArray = ByteArray(bufferSize)
     private var bufferEnd = 0
     private var bufferPosition = 0
@@ -37,8 +32,10 @@ class BufferedRandomAccessFile(
      */
     private var realPosition: Long = 0
 
+    private val leftOverInBuffer get() = bufferEnd - bufferPosition
+
     @Throws(IOException::class)
-    override fun read(): Int {
+    fun read(): Int {
         if (bufferPosition >= bufferEnd && fillBuffer() < 0) {
             return -1
         }
@@ -61,7 +58,22 @@ class BufferedRandomAccessFile(
      */
     @Throws(IOException::class)
     private fun fillBuffer(): Int {
-        val readCount = super.read(buffer, 0, bufferSize)
+        RandomAccessFile(file, "r").use { randomAccess ->
+            randomAccess.seek(realPosition)
+            val readCount = randomAccess.read(buffer, 0, bufferSize)
+            if (readCount >= 0) {
+                realPosition += readCount.toLong()
+                bufferEnd = readCount
+                bufferPosition = 0
+            }
+            return readCount
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun fillBuffer(randomAccessFile: RandomAccessFile): Int {
+        randomAccessFile.seek(realPosition)
+        val readCount = randomAccessFile.read(buffer, 0, bufferSize)
         if (readCount >= 0) {
             realPosition += readCount.toLong()
             bufferEnd = readCount
@@ -70,58 +82,65 @@ class BufferedRandomAccessFile(
         return readCount
     }
 
-    /**
-     * Clears the local buffer.
-     *
-     * @throws IOException If an I/O error occurs.
-     */
     @Throws(IOException::class)
-    private fun invalidate() {
-        bufferEnd = 0
-        bufferPosition = 0
-        realPosition = super.getFilePointer()
-    }
+    fun read(b: ByteArray): Int = read(b, 0, b.size)
 
     @Throws(IOException::class)
-    override fun read(b: ByteArray, off: Int, len: Int): Int {
-        var currentLength = len // length of what is left to read (shrinks)
-        var currentOffset = off // offset where to put read data (grows)
-        var totalRead = 0
-        while (true) {
-            val leftover = bufferEnd - bufferPosition
-            if (currentLength <= leftover) {
-                System.arraycopy(buffer, bufferPosition, b, currentOffset, currentLength)
-                bufferPosition += currentLength
-                return totalRead + currentLength
-            }
-            // currentLength > leftover, we need to read more than what remains in buffer
-            System.arraycopy(buffer, bufferPosition, b, currentOffset, leftover)
-            totalRead += leftover
-            bufferPosition += leftover
-            if (fillBuffer() > 0) {
-                currentOffset += leftover
-                currentLength -= leftover
-            } else {
-                return if (totalRead == 0) {
-                    -1
-                } else totalRead
+    fun read(b: ByteArray, off: Int, len: Int): Int {
+        var leftToRead = len
+        var currentOffset = off
+        var copied = 0
+
+        val writeToBuff = {
+            val toWrite = minOf(leftOverInBuffer, leftToRead)
+            System.arraycopy(buffer, bufferPosition, b, currentOffset, toWrite)
+            copied += toWrite
+            bufferPosition += toWrite
+            currentOffset += toWrite
+            leftToRead -= toWrite
+        }
+
+        writeToBuff()
+        if (leftToRead == 0) {
+            return copied
+        }
+
+        RandomAccessFile(file, "r").use { randomAccessFile ->
+            while (true) {
+                if (fillBuffer(randomAccessFile) > 0) {
+                    writeToBuff()
+
+                    if (leftToRead == 0) {
+                        return copied
+                    }
+                } else {
+                    return copied
+                }
             }
         }
     }
 
-    @Throws(IOException::class)
-    override fun getFilePointer(): Long {
-        return realPosition - bufferEnd + bufferPosition
-    }
+    val filePointer: Long
+        @Throws(IOException::class)
+        get() {
+            return realPosition - bufferEnd + bufferPosition
+        }
 
     @Throws(IOException::class)
-    override fun seek(pos: Long) {
+    fun seek(pos: Long) {
         val n = (realPosition - pos).toInt()
         if (n in 0..bufferEnd) {
             bufferPosition = bufferEnd - n
         } else {
-            super.seek(pos)
-            invalidate()
+            bufferEnd = 0
+            bufferPosition = 0
+            realPosition = pos
         }
+    }
+
+    override fun close() {
+        bufferEnd = 0
+        bufferPosition = 0
+        realPosition = 0
     }
 }

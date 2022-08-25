@@ -23,12 +23,15 @@ import java.io.RandomAccessFile
  * Choosing this class instead of the [BufferedReplayInputStream] is better for huge GIFs,
  * as the data will not be loaded in memory, but kept on disk.
  */
-internal class RandomAccessFileInputStream(private val file: File) : ReplayInputStream() {
+internal class RandomAccessFileInputStream(
+    private val file: File,
+    private val bufferSize: Int = DEFAULT_BUFFER_SIZE
+) : ReplayInputStream() {
     private var _randomAccessFile: BufferedRandomAccessFile? = null
-    private val randomAccessFile: RandomAccessFile
+    private val randomAccessFile: BufferedRandomAccessFile
         get() {
             return _randomAccessFile ?: let {
-                BufferedRandomAccessFile(file, "r").also { _randomAccessFile = it }
+                BufferedRandomAccessFile(file, bufferSize).also { _randomAccessFile = it }
             }
         }
 
@@ -41,7 +44,7 @@ internal class RandomAccessFileInputStream(private val file: File) : ReplayInput
     }
 
     override fun shallowClone(): ReplayInputStream {
-        return RandomAccessFileInputStream(file)
+        return RandomAccessFileInputStream(file, bufferSize)
     }
 
     override fun read(): Int {

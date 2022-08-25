@@ -46,12 +46,13 @@ private const val ANIMEXTS = "ANIMEXTS1.0"
  * Based on https://web.archive.org/web/20160304075538/http://qalle.net/gif89a.php
  */
 object Parser {
+    private const val RANDOM_ACCESS_BUFFER_SIZE = 1024 * 1024
 
     /**
      * Parse a gif file, accessing it through a [java.io.RandomAccessFile]
      */
     fun parse(file: File, pixelPacking: PixelPacking = PixelPacking.ARGB): Result<GifDescriptor> =
-        parse(RandomAccessFileInputStream(file), pixelPacking)
+        parse(RandomAccessFileInputStream(file, RANDOM_ACCESS_BUFFER_SIZE), pixelPacking)
 
     /**
      * Parse gif content from an [InputStream], keeping the whole content in memory.
