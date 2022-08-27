@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "net.redwarp.gif.decoder.android"
         minSdkVersion 21
-        targetSdkVersion 32
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -42,7 +42,7 @@ dependencies {
     implementation project(":android-drawable")
 
     implementation "androidx.appcompat:appcompat:${Versions.APP_COMPAT}"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.0"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1"
 
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
