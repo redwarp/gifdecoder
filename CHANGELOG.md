@@ -1,9 +1,14 @@
 # Changelog
 
+## [1.4.1] (2022-09-16)
+
+* Bump libraries.
+* Fix publication of sources and doc.
+
 ## [1.4.0] (2022-08-27)
 
 * Rewrite the BufferedRandomAccessFile so that the file gets closed between read.
-* android-drawable now targets Android SDK 33
+* android-drawable now targets Android SDK 33.
 
 ## [1.3.1] (2022-07-26)
 
