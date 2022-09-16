@@ -2,7 +2,6 @@
 plugins {
     id("com.android.library")
     kotlin("android")
-    id("org.jetbrains.dokka") version Versions.DOKKA
     id("maven-publish")
     id("signing")
 }
@@ -13,6 +12,7 @@ repositories {
 }
 
 android {
+    namespace = "app.redwarp.gif.android"
     compileSdk = 33
 
     defaultConfig {
@@ -33,11 +33,18 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_11)
-        targetCompatibility(JavaVersion.VERSION_11)
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
     }
 }
 
@@ -48,17 +55,6 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
-}
-
-task("sourceJar", Jar::class) {
-    from(android.sourceSets.getByName("main").java.srcDirs)
-    archiveClassifier.set("sources")
-}
-
-task("javadocJar", Jar::class) {
-    dependsOn("dokkaJavadoc")
-    archiveClassifier.set("javadoc")
-    from("$buildDir/dokka/javadoc")
 }
 
 publishing {
@@ -88,10 +84,8 @@ publishing {
             version = Publication.VERSION_NAME
 
             afterEvaluate {
-                artifact(tasks.getByName("bundleReleaseAar"))
+                from(components["release"])
             }
-            artifact(tasks.getByName("javadocJar"))
-            artifact(tasks.getByName("sourceJar"))
 
             pom {
                 if (!"USE_SNAPSHOT".byProperty.isNullOrBlank()) {
@@ -126,28 +120,6 @@ publishing {
                 issueManagement {
                     system.set("GitHub issues")
                     url.set(Publication.Pom.ISSUE_TRACKER_URL)
-                }
-
-                withXml {
-                    fun groovy.util.Node.addDependency(dependency: Dependency, scope: String) {
-                        appendNode("dependency").apply {
-                            appendNode("groupId", dependency.group)
-                            appendNode("artifactId", dependency.name)
-                            appendNode("version", dependency.version)
-                            appendNode("scope", scope)
-                        }
-                    }
-
-                    asNode().appendNode("dependencies").let { dependencies ->
-                        // List all "api" dependencies as "compile" dependencies
-                        configurations.api.get().allDependencies.forEach {
-                            dependencies.addDependency(it, "compile")
-                        }
-                        // List all "implementation" dependencies as "runtime" dependencies
-                        configurations.implementation.get().allDependencies.forEach {
-                            dependencies.addDependency(it, "runtime")
-                        }
-                    }
                 }
             }
         }

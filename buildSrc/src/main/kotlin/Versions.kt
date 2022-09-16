@@ -1,5 +1,5 @@
 object Versions {
-    const val AGP = "7.2.2"
+    const val AGP = "7.3.0"
     const val APP_COMPAT = "1.5.0"
     const val BENCHMARK = "1.0.0"
     const val DOKKA = "1.7.10"
