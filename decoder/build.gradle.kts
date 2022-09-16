@@ -40,23 +40,15 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-task("sourceJar", Jar::class) {
-    from(sourceSets.getByName("main").java)
-    archiveClassifier.set("sources")
-}
-
-task("javadocJar", Jar::class) {
+val javadocJar = task("javadocJar", Jar::class) {
     dependsOn("dokkaJavadoc")
     archiveClassifier.set("javadoc")
     from("$buildDir/dokka/javadoc")
 }
 
-tasks.dokkaHtml.configure {
-    dokkaSourceSets {
-        configureEach {
-            includes.from("dokka/module.md")
-        }
-    }
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 publishing {
@@ -86,9 +78,6 @@ publishing {
             artifactId = "decoder"
             group = Publication.GROUP
             version = Publication.VERSION_NAME
-
-            artifact(tasks.getByName("javadocJar"))
-            artifact(tasks.getByName("sourceJar"))
 
             pom {
                 name.set("Kotlin Gif Decoder")
