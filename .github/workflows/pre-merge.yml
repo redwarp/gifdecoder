@@ -5,7 +5,7 @@ on:
       - main
   pull_request:
     branches:
-      - '*'
+      - "*"
 
 jobs:
   test:
@@ -13,36 +13,18 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-      - name: Cache Gradle Folders
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches/
-            ~/.gradle/wrapper/
-          key: cache-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            cache-gradle-
+        uses: actions/checkout@v3
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Run all the tests
         run: ./gradlew test
-      - name: Stop Gradle
-        run: ./gradlew --stop
 
   lint:
     runs-on: [ubuntu-latest]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
-      - name: Cache Gradle Folders
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches/
-            ~/.gradle/wrapper/
-          key: cache-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            cache-gradle-
+        uses: actions/checkout@v3
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Run lint
         run: ./gradlew lint
-      - name: Stop Gradle
-        run: ./gradlew --stop
