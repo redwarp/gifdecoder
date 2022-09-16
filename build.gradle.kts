@@ -52,6 +52,13 @@ tasks.register("uploadLibraries") {
     dependsOn(":android-drawable:publishReleasePublicationToNexusRepository")
 }
 
+tasks.register("buildLibrariesLocal") {
+    description = "Build both libraries and publish locally"
+
+    dependsOn(gradle.includedBuild("decoder").task(":publishToMavenLocal"))
+    dependsOn(":android-drawable:publishToMavenLocal")
+}
+
 tasks.register("addLicenseHeader") {
     description = "Make sure the license header is applied to every files"
 
