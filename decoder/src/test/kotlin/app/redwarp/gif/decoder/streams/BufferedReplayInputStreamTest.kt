@@ -14,6 +14,10 @@
  */
 package app.redwarp.gif.decoder.streams
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -89,4 +93,27 @@ class BufferedReplayInputStreamTest {
 
         assertEquals(3, bufferedReplayInputStream.getPosition())
     }
+
+    @Test
+    fun shallowCopy_noIssuesWithConcurrency() =
+        runBlocking {
+            val originalData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+
+            val bufferedReplayInputStream = BufferedReplayInputStream(originalData.inputStream())
+            bufferedReplayInputStream.read(ByteArray(128))
+
+            repeat(10_000) { id ->
+                launch {
+                    val index = id % 4
+                    val copied = bufferedReplayInputStream.shallowClone()
+                    copied.seek(index)
+                    assertEquals(
+                        originalData[index],
+                        withContext(Dispatchers.IO) {
+                            copied.read().toByte()
+                        }
+                    )
+                }
+            }
+        }
 }

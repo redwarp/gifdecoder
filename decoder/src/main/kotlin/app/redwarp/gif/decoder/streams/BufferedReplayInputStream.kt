@@ -22,115 +22,158 @@ import java.io.InputStream
  * then we will stop reading the original stream, and only use the in memory data.
  * Load and keep the whole [InputStream] in memory, should be avoided for huge GIFs.
  */
-internal class BufferedReplayInputStream(inputStream: InputStream) : ReplayInputStream() {
-    private val inputStream = inputStream.buffered()
-    private var outputStream: ByteArrayOutputStream? = ByteArrayOutputStream()
-    private var position = 0
-    private var totalCount = 0
-    private var replay = false
+internal class BufferedReplayInputStream private constructor(
+    inputStream: InputStream?,
+    private var loadedData: ByteArray?,
+    private var state: State
+) : ReplayInputStream() {
+    constructor(inputStream: InputStream) : this(inputStream, null, State())
+    private constructor(loadedData: ByteArray, state: State) : this(null, loadedData, state)
 
-    private var _loadedData: ByteArray? = null
-    private val loadedData: ByteArray
-        get() {
-            return _loadedData ?: requireNotNull(outputStream).toByteArray()
-                .also(this::_loadedData::set)
-        }
+    private var reader: Reader? = inputStream?.let { Reader(it) }
 
     override fun seek(position: Int) {
-        replay = true
-        if (_loadedData == null) {
-            _loadedData = requireNotNull(outputStream).toByteArray()
-            outputStream?.close()
-            outputStream = null
-            inputStream.close()
-        }
-        this.position = position
+        setReplayIfNeeded()
+        this.state.position = position
     }
 
     override fun getPosition(): Int {
-        return if (!replay) requireNotNull(outputStream).size()
-        else {
-            position
-        }
+        return reader?.size() ?: state.position
     }
 
     override fun read(): Int {
-        return if (!replay) {
-            val read = inputStream.read()
-            outputStream?.write(read)
-            totalCount++
-            read
-        } else {
-            (loadedData[position].toInt() and 0xFF).also {
-                position += 1
+        return reader?.read()
+            ?: (requireNotNull(loadedData)[state.position].toInt() and 0xFF).also {
+                state.position += 1
             }
-        }
     }
 
     override fun read(byteArray: ByteArray, offset: Int, length: Int): Int {
-        if (!replay) {
-            val readCount = inputStream.read(byteArray, offset, length)
+        reader.let { reader ->
+            if (reader != null) {
+                return reader.read(byteArray, offset, length)
+            } else {
+                val readCount =
+                    if (length > readableBytes()) readableBytes() else length
 
-            if (readCount > 0) {
-                outputStream?.write(byteArray, offset, readCount)
+                requireNotNull(loadedData).copyInto(
+                    destination = byteArray,
+                    destinationOffset = 0,
+                    startIndex = state.position + offset,
+                    endIndex = state.position + offset + readCount
+                )
+                state.position += readCount
+
+                return readCount
             }
-            totalCount += readCount
-
-            return readCount
-        } else {
-            val readCount =
-                if (length > readableBytes()) readableBytes() else length
-
-            loadedData.copyInto(
-                destination = byteArray,
-                destinationOffset = 0,
-                startIndex = position + offset,
-                endIndex = position + offset + readCount
-            )
-            position += readCount
-
-            return readCount
         }
     }
 
     override fun read(byteArray: ByteArray): Int {
-        if (!replay) {
-            val readCount = inputStream.read(byteArray)
+        reader.let { reader ->
+            if (reader != null) {
+                return reader.read(byteArray)
+            } else {
+                val readCount =
+                    if (byteArray.size > readableBytes()) readableBytes() else byteArray.size
 
-            if (readCount > 0) {
-                outputStream?.write(byteArray, 0, readCount)
+                requireNotNull(loadedData).copyInto(
+                    destination = byteArray,
+                    destinationOffset = 0,
+                    startIndex = state.position,
+                    endIndex = state.position + readCount
+                )
+
+                state.position += readCount
+
+                return readCount
             }
-            totalCount += readCount
-
-            return readCount
-        } else {
-            val readCount =
-                if (byteArray.size > readableBytes()) readableBytes() else byteArray.size
-
-            loadedData.copyInto(
-                destination = byteArray,
-                destinationOffset = 0,
-                startIndex = position,
-                endIndex = position + readCount
-            )
-
-            position += readCount
-
-            return readCount
         }
     }
 
     override fun close() {
-        inputStream.close()
+        reader?.close()
     }
 
     override fun shallowClone(): ReplayInputStream {
-        return this
+        setReplayIfNeeded()
+        return BufferedReplayInputStream(requireNotNull(loadedData), state.copy())
     }
 
     private fun readableBytes(): Int {
-        return _loadedData?.let {
-            it.size - position
+        return loadedData?.let {
+            it.size - state.position
         } ?: 0
+    }
+
+    @Synchronized
+    private fun setReplayIfNeeded() {
+        if (loadedData != null) return
+
+        reader?.let { reader ->
+            reader.readAll()
+            loadedData = reader.toByteArray().also {
+                reader.close()
+                this.reader = null
+            }
+        }
+    }
+
+    private data class State(var position: Int = 0)
+
+    private class Reader(inputStream: InputStream) : AutoCloseable {
+        private val inputStream = inputStream.buffered()
+        private var outputStream: ByteArrayOutputStream = ByteArrayOutputStream()
+        private var totalCount = 0
+
+        fun size(): Int {
+            return outputStream.size()
+        }
+
+        override fun close() {
+            inputStream.close()
+            outputStream.close()
+        }
+
+        fun read(): Int {
+            return inputStream.read().also {
+                outputStream.write(it)
+                totalCount++
+            }
+        }
+
+        fun read(byteArray: ByteArray): Int {
+            val readCount = inputStream.read(byteArray)
+
+            if (readCount > 0) {
+                outputStream.write(byteArray, 0, readCount)
+            }
+            totalCount += readCount
+
+            return readCount
+        }
+
+        fun read(byteArray: ByteArray, offset: Int, length: Int): Int {
+            val readCount = inputStream.read(byteArray, offset, length)
+
+            if (readCount > 0) {
+                outputStream.write(byteArray, offset, readCount)
+            }
+            totalCount += readCount
+
+            return readCount
+        }
+
+        fun readAll(): Int {
+            val bytes = inputStream.readAllBytes()
+
+            outputStream.write(bytes)
+
+            return bytes.size
+        }
+
+        fun toByteArray(): ByteArray {
+            return outputStream.toByteArray()
+        }
     }
 }

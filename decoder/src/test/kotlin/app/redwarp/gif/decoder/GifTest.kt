@@ -15,6 +15,8 @@
 package app.redwarp.gif.decoder
 
 import app.redwarp.gif.decoder.descriptors.Dimension
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -267,6 +269,24 @@ class GifTest {
         val result = Gif.from(File("../assets/some_file.txt"))
 
         assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun gif_shallowCloned_noIssuesWithConcurrency() = runBlocking {
+        val gifDescriptor = Parser.parse(File("../assets/domo-no-dispose.gif")).getOrThrow()
+        val originalGif = Gif(gifDescriptor)
+
+        repeat(1000) { id ->
+            launch {
+                val gif = Gif.from(originalGif)
+                val index = id % gif.frameCount
+                val pixels = IntArray(gif.dimension.size)
+                gif.getFrame(index, pixels)
+                val expectedPixels = loadExpectedPixels(File("../assets/frames/domo_$index.png"))
+
+                assertArrayEquals(expectedPixels, pixels)
+            }
+        }
     }
 
     private fun loadExpectedPixels(file: File): IntArray {
