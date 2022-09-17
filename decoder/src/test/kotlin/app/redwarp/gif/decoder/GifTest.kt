@@ -273,7 +273,7 @@ class GifTest {
 
     @Test
     fun gif_shallowCloned_noIssuesWithConcurrency() = runBlocking {
-        val gifDescriptor = Parser.parse(File("../assets/domo-no-dispose.gif")).getOrThrow()
+        val gifDescriptor = Parser.parse(File("../assets/domo-no-dispose.gif").inputStream()).getOrThrow()
         val originalGif = Gif(gifDescriptor)
 
         repeat(1000) { id ->

@@ -66,7 +66,7 @@ object Parser {
     /**
      * Parse gif content from a [ReplayInputStream], keeping the whole content in memory.
      */
-    fun parse(
+    private fun parse(
         inputStream: ReplayInputStream,
         pixelPacking: PixelPacking = PixelPacking.ARGB
     ): Result<GifDescriptor> {

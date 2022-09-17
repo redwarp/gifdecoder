@@ -33,7 +33,7 @@ internal class BufferedReplayInputStream private constructor(
     private var reader: Reader? = inputStream?.let { Reader(it) }
 
     override fun seek(position: Int) {
-        setReplayIfNeeded()
+        close()
         this.state.position = position
     }
 
@@ -91,23 +91,8 @@ internal class BufferedReplayInputStream private constructor(
         }
     }
 
-    override fun close() {
-        reader?.close()
-    }
-
-    override fun shallowClone(): ReplayInputStream {
-        setReplayIfNeeded()
-        return BufferedReplayInputStream(requireNotNull(loadedData), state.copy())
-    }
-
-    private fun readableBytes(): Int {
-        return loadedData?.let {
-            it.size - state.position
-        } ?: 0
-    }
-
     @Synchronized
-    private fun setReplayIfNeeded() {
+    override fun close() {
         if (loadedData != null) return
 
         reader?.let { reader ->
@@ -117,6 +102,17 @@ internal class BufferedReplayInputStream private constructor(
                 this.reader = null
             }
         }
+    }
+
+    override fun shallowClone(): ReplayInputStream {
+        close()
+        return BufferedReplayInputStream(requireNotNull(loadedData), state.copy())
+    }
+
+    private fun readableBytes(): Int {
+        return loadedData?.let {
+            it.size - state.position
+        } ?: 0
     }
 
     private data class State(var position: Int = 0)
