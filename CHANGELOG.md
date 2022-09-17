@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.2] (2022-09-17)
+
+* Fix concurrency bug in BufferedReplayInputStream.
+
 ## [1.4.1] (2022-09-16)
 
 * Bump libraries.
