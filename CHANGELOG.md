@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.4] (2022-09-18)
+
+* Hot fix: Fix compatibiliy with Android pre-Tiramisu.
+
 ## [1.4.3] (2022-09-17)
 
 * Hot fix: Fix BufferedReplayInputStream trying to read after close.
