@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.3] (2022-09-17)
+
+* Hot fix: Fix BufferedReplayInputStream trying to read after close.
+
 ## [1.4.2] (2022-09-17)
 
 * Fix concurrency bug in BufferedReplayInputStream.
