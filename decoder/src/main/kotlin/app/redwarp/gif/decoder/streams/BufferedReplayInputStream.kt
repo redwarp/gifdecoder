@@ -160,12 +160,8 @@ internal class BufferedReplayInputStream private constructor(
             return readCount
         }
 
-        fun readAll(): Int {
-            val bytes = inputStream.readAllBytes()
-
-            outputStream.write(bytes)
-
-            return bytes.size
+        fun readAll(): Long {
+            return inputStream.copyTo(outputStream)
         }
 
         fun toByteArray(): ByteArray {
