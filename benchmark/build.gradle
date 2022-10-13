@@ -5,6 +5,8 @@ plugins {
 }
 
 android {
+    namespace = "app.redwarp.gif.benchmark"
+
     compileSdkVersion 33
 
     compileOptions {
@@ -27,15 +29,9 @@ android {
     }
 
     testBuildType = "release"
+
     buildTypes {
-        debug {
-            // Since debuggable can"t be modified by gradle for library modules,
-            // it must be done in a manifest - see src/androidTest/AndroidManifest.xml
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "benchmark-proguard-rules.pro"
-        }
         release {
-            isDefault = true
         }
     }
 
@@ -48,10 +44,9 @@ android {
 
 dependencies {
     implementation project(":android-drawable")
-    implementation "androidx.annotation:annotation:1.4.0"
-    androidTestImplementation 'androidx.test:runner:1.4.0'
+    implementation "androidx.annotation:annotation:1.5.0"
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.benchmark:benchmark-junit4:1.1.0'
+    androidTestImplementation "androidx.benchmark:benchmark-junit4:$Versions.BENCHMARK"
     androidTestImplementation "org.jetbrains.kotlin:kotlin-reflect:$Versions.KOTLIN"
 }
