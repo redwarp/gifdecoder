@@ -214,6 +214,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         nextFrame(false)
     }
 
+    override fun mutate(): Drawable {
+        return constantState.newDrawable()
+    }
+
     private fun postAnimationStart() {
         if (animationCallbacks.isNotEmpty()) {
             scheduleSelf(
