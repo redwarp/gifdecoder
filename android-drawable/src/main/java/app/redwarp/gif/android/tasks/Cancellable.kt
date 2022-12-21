@@ -21,5 +21,5 @@ import java.util.concurrent.Callable
  * allowing our callable to be marked as cancelled.
  */
 internal abstract class Cancellable<V> : Callable<V> {
-    var isCancelled: Boolean = false
+    @Volatile var isCancelled: Boolean = false
 }
