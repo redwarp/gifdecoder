@@ -4,6 +4,6 @@ object Versions {
     const val BENCHMARK = "1.1.0"
     const val DOKKA = "1.7.10"
     const val KOTLIN = "1.7.20"
-    const val SPOTLESS = "6.11.0"
+    const val SPOTLESS = "6.20.0"
     const val VERSIONS = "0.1.16"
 }
