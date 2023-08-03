@@ -15,6 +15,7 @@
 package app.redwarp.gif.decoder
 
 import app.redwarp.gif.decoder.streams.BufferedReplayInputStream
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -33,7 +34,7 @@ class ParserTest {
         val bufferedSource = BufferedReplayInputStream(data.inputStream())
 
         with(Parser) {
-            val imageData = bufferedSource.readImageData()
+            val imageData = bufferedSource.readImageData().getOrThrow()
             assertEquals(0, imageData.position)
             assertEquals(12, imageData.length)
         }
@@ -46,5 +47,18 @@ class ParserTest {
         val gif = Parser.parse(gifFile).getOrThrow()
 
         assertEquals(3, gif.imageDescriptors.size)
+    }
+
+    @Test
+    fun parse_withCorruptedImageData_fails() {
+        val gifFile = File("../assets/domo_corrupted.gif")
+
+        val gifDescriptor = Parser.parse(gifFile)
+
+        Assertions.assertTrue(gifDescriptor.isFailure)
+        assertEquals(
+            "Invalid image data block, reached end of file at position 487",
+            gifDescriptor.exceptionOrNull()?.message
+        )
     }
 }

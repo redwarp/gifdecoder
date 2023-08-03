@@ -81,7 +81,7 @@ object Parser {
                     null
                 }
 
-                val (loopCount, imageDescriptors) = parseLoop(stream, pixelPacking)
+                val (loopCount, imageDescriptors) = parseLoop(stream, pixelPacking).getOrThrow()
 
                 GifDescriptor(
                     header = header,
@@ -109,8 +109,7 @@ object Parser {
         val dimension = Dimension(readUShortLe(), readUShortLe())
         val packedFields = readUByte()
         val hasGlobalColorTableMask: UByte = 0b1000_0000u
-        val hasGlobalColorTable =
-            (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
+        val hasGlobalColorTable = (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
         val sizeOfGlobalColorTableMask: UByte = 0b0000_0111u
         val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields)
 
@@ -157,13 +156,12 @@ object Parser {
         val terminator = readByte()
         if (terminator != 0.toByte()) throw InvalidGifException("Terminator not properly set")
 
-        val disposalMethod =
-            if (disposalMethodValue >= GraphicControlExtension.Disposal.values().size) {
-                // Unsupported disposal method, we default to not specified.
-                GraphicControlExtension.Disposal.NOT_SPECIFIED
-            } else {
-                GraphicControlExtension.Disposal.values()[disposalMethodValue]
-            }
+        val disposalMethod = if (disposalMethodValue >= GraphicControlExtension.Disposal.values().size) {
+            // Unsupported disposal method, we default to not specified.
+            GraphicControlExtension.Disposal.NOT_SPECIFIED
+        } else {
+            GraphicControlExtension.Disposal.values()[disposalMethodValue]
+        }
 
         return GraphicControlExtension(
             disposalMethod = disposalMethod,
@@ -196,7 +194,7 @@ object Parser {
     private fun parseLoop(
         bufferedSource: ReplayInputStream,
         pixelPacking: PixelPacking
-    ): Pair<Int?, List<ImageDescriptor>> {
+    ): Result<Pair<Int?, List<ImageDescriptor>>> = runCatching {
         var loopCount: Int? = 0
         var pendingGraphicControl: GraphicControlExtension? = null
         val imageDescriptors: MutableList<ImageDescriptor> = mutableListOf()
@@ -205,15 +203,16 @@ object Parser {
                 IMAGE_DESCRIPTOR_SEPARATOR -> {
                     imageDescriptors.add(
                         bufferedSource.parseImageDescriptor(
-                            pendingGraphicControl,
-                            pixelPacking
-                        )
+                            pendingGraphicControl, pixelPacking
+                        ).getOrThrow()
                     )
                     pendingGraphicControl = null
                 }
+
                 GIF_TERMINATOR -> {
                     break
                 }
+
                 EXTENSION_INTRODUCER -> {
                     when (bufferedSource.readByte()) {
                         APPLICATION_EXTENSION -> {
@@ -226,9 +225,11 @@ object Parser {
                                 bufferedSource.skipSubBlocks()
                             }
                         }
+
                         GRAPHIC_CONTROL_EXTENSION -> {
                             pendingGraphicControl = bufferedSource.parseGraphicControl()
                         }
+
                         else -> {
                             bufferedSource.skipSubBlocks()
                         }
@@ -237,13 +238,13 @@ object Parser {
             }
         }
 
-        return Pair(loopCount, imageDescriptors)
+        Pair(loopCount, imageDescriptors)
     }
 
     private fun ReplayInputStream.parseImageDescriptor(
         graphicControlExtension: GraphicControlExtension?,
         pixelPacking: PixelPacking
-    ): ImageDescriptor {
+    ): Result<ImageDescriptor> = runCatching {
         val position = Position(readUShortLe(), readUShortLe())
         val dimension = Dimension(readUShortLe(), readUShortLe())
 
@@ -266,23 +267,26 @@ object Parser {
 
         val imageData = readImageData()
 
-        return ImageDescriptor(
+        ImageDescriptor(
             position = position,
             dimension = dimension,
             isInterlaced = isInterlaced,
             localColorTable = localColorTable,
-            imageData = imageData,
+            imageData = imageData.getOrThrow(),
             graphicControlExtension = graphicControlExtension
         )
     }
 
-    fun ReplayInputStream.readImageData(): ImageData {
+    fun ReplayInputStream.readImageData(): Result<ImageData> = runCatching {
         val position = getPosition()
         var length = 1
         skip(1)
         while (true) {
-            val blockSize = readUByte().toInt()
+            val blockSize = read()
             length++
+            if (blockSize == -1) {
+                throw InvalidGifException("Invalid image data block, reached end of file at position ${getPosition()}")
+            }
             if (blockSize == 0) {
                 break
             }
@@ -290,6 +294,6 @@ object Parser {
             skip(blockSize.toLong())
         }
 
-        return ImageData(position, length)
+        ImageData(position, length)
     }
 }
