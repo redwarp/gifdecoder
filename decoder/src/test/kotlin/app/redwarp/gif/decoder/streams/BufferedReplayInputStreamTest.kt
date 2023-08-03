@@ -116,4 +116,13 @@ class BufferedReplayInputStreamTest {
                 }
             }
         }
+
+    @Test
+    fun skip_canSkipWithCountBiggerThanTotalSize() {
+        val originalData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+
+        val bufferedReplayInputStream = BufferedReplayInputStream(originalData.inputStream())
+
+        assertEquals(4, bufferedReplayInputStream.skip(5))
+    }
 }

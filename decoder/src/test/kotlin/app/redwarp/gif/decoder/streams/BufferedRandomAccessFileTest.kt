@@ -75,6 +75,19 @@ class BufferedRandomAccessFileTest {
     }
 
     @Test
+    fun read_moreThanLengthOfFile_readLengthOfFile() {
+        val originalData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+        val file = prepareTestFile(originalData)
+        val inputStream = RandomAccessFileInputStream(file = file, bufferSize = 2)
+
+        val readInto = ByteArray(128)
+
+        val read = inputStream.read(readInto, 0, 5)
+
+        assertEquals(4, read)
+    }
+
+    @Test
     fun reads_inTwoBuffers() {
         val originalData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
         val file = prepareTestFile(originalData)
@@ -89,6 +102,15 @@ class BufferedRandomAccessFileTest {
         val joined = readInto1 + readInto2
 
         assertArrayEquals(originalData, joined)
+    }
+
+    @Test
+    fun skip_canSkipWithCountBiggerThanTotalSize() {
+        val originalData = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+        val file = prepareTestFile(originalData)
+        val randomAccess = RandomAccessFileInputStream(file = file, bufferSize = 2)
+
+        assertEquals(4, randomAccess.skip(5))
     }
 
     private fun prepareTestFile(data: ByteArray): File {

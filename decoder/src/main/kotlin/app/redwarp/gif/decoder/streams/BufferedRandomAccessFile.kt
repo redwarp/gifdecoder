@@ -37,10 +37,10 @@ class BufferedRandomAccessFile(
     @Throws(IOException::class)
     fun read(): Int {
         if (bufferPosition >= bufferEnd && fillBuffer() < 0) {
-            return -1
+            return END_OF_FILE
         }
         return if (bufferEnd == 0) {
-            -1
+            END_OF_FILE
         } else {
             val value = buffer[bufferPosition].toInt() and 0xFF
             bufferPosition += 1
@@ -89,20 +89,22 @@ class BufferedRandomAccessFile(
     fun read(b: ByteArray, off: Int, len: Int): Int {
         var leftToRead = len
         var currentOffset = off
-        var copied = 0
+        var copied: Int? = null
 
         val writeToBuff = {
             val toWrite = minOf(leftOverInBuffer, leftToRead)
-            System.arraycopy(buffer, bufferPosition, b, currentOffset, toWrite)
-            copied += toWrite
-            bufferPosition += toWrite
-            currentOffset += toWrite
-            leftToRead -= toWrite
+            if (toWrite > 0) {
+                System.arraycopy(buffer, bufferPosition, b, currentOffset, toWrite)
+                copied = (copied ?: 0) + toWrite
+                bufferPosition += toWrite
+                currentOffset += toWrite
+                leftToRead -= toWrite
+            }
         }
 
         writeToBuff()
         if (leftToRead == 0) {
-            return copied
+            return copied ?: END_OF_FILE
         }
 
         RandomAccessFile(file, "r").use { randomAccessFile ->
@@ -111,10 +113,10 @@ class BufferedRandomAccessFile(
                     writeToBuff()
 
                     if (leftToRead == 0) {
-                        return copied
+                        return copied ?: END_OF_FILE
                     }
                 } else {
-                    return copied
+                    return copied ?: END_OF_FILE
                 }
             }
         }
@@ -142,5 +144,9 @@ class BufferedRandomAccessFile(
         bufferEnd = 0
         bufferPosition = 0
         realPosition = 0
+    }
+
+    private companion object {
+        const val END_OF_FILE = -1
     }
 }
