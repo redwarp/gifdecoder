@@ -70,6 +70,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     private var isRunning: AtomicBoolean = AtomicBoolean(false)
     private var prepareFrameFuture: Future<*>? = null
     private var frameTime: AtomicLong = AtomicLong(0)
+    private val transparencies: Array<Boolean?> = arrayOfNulls(gifDescriptor.imageDescriptors.size)
     private var bitmap: Bitmap? = getFrame(0)
         set(value) {
             field.let(bitmapCache::release)
@@ -259,10 +260,17 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
     }
 
+    private fun isTransparent(index: Int, pixels: IntArray): Boolean =
+        transparencies[index] ?: let {
+            val transparent = pixels.any { it == 0 }
+            transparencies[index] = transparent
+            transparent
+        }
+
     private fun getFrame(index: Int): Bitmap? {
         if (state.gif.getFrame(index, pixels).isFailure) return null
 
-        val transparent = pixels.any { it == 0 }
+        val transparent = isTransparent(index, pixels)
 
         val frame: Bitmap = bitmapCache.obtain(
             width = gifWidth,
