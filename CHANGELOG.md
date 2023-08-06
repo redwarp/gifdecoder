@@ -9,7 +9,7 @@
 ### Drawable
 
 * GifDrawable implements `mutate` properly.
-* Optimization during decoding: transparency of frames is cached.
+* GifDrawable will only use ARGB_8888 bitmaps internally for more accurate colors.
 
 ## [1.4.4] (2022-09-18)
 

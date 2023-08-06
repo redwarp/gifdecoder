@@ -33,6 +33,7 @@ import app.redwarp.gif.decoder.descriptors.params.LoopCount
 import app.redwarp.gif.decoder.descriptors.params.PixelPacking
 import java.io.File
 import java.io.InputStream
+import java.nio.IntBuffer
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -60,10 +61,11 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     private val gifWidth get() = state.gif.dimension.width
     private val gifHeight get() = state.gif.dimension.height
     private val pixels = IntArray(state.gif.dimension.size)
+    private val pixelsBuffer = IntBuffer.wrap(pixels)
     private val bitmapPaint = Paint().apply {
         isAntiAlias = false
         isFilterBitmap = false
-        isDither = bitmap?.config == Bitmap.Config.RGB_565
+        isDither = false
     }
     private val matrix = Matrix()
 
@@ -258,25 +260,17 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
     }
 
-    private fun isTransparent(index: Int, pixels: IntArray): Boolean =
-        transparencies[index] ?: let {
-            val transparent = pixels.any { it == 0 }
-            transparencies[index] = transparent
-            transparent
-        }
-
     private fun getFrame(index: Int): Bitmap? {
         if (state.gif.getFrame(index, pixels).isFailure) return null
-
-        val transparent = isTransparent(index, pixels)
 
         val frame: Bitmap = bitmapCache.obtain(
             width = gifWidth,
             height = gifHeight,
-            config = if (transparent) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565,
+            config = Bitmap.Config.ARGB_8888,
         )
 
-        frame.setPixels(pixels, 0, gifWidth, 0, 0, gifWidth, gifHeight)
+        pixelsBuffer.position(0)
+        frame.copyPixelsFromBuffer(pixelsBuffer)
         return frame
     }
 
@@ -288,7 +282,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         synchronized(bitmapLock) {
             nextBitmap?.let { nextBitmap ->
                 bitmap = nextBitmap
-                bitmapPaint.isDither = nextBitmap.config == Bitmap.Config.RGB_565
 
                 synchronized(state) {
                     state.frameIndex = nextIndex
@@ -393,7 +386,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
          * @return success if the GifDrawable was created.
          */
         fun from(inputStream: InputStream): Result<GifDrawable> =
-            Parser.parse(inputStream, PixelPacking.ARGB).map(::GifDrawable)
+            Parser.parse(inputStream, PixelPacking.ABGR).map(::GifDrawable)
 
         /**
          * Creates a GifDrawable from a [File].
@@ -401,6 +394,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
          * @return success if the GifDrawable was created.
          */
         fun from(file: File): Result<GifDrawable> =
-            Parser.parse(file, PixelPacking.ARGB).map(::GifDrawable)
+            Parser.parse(file, PixelPacking.ABGR).map(::GifDrawable)
     }
 }
