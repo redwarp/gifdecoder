@@ -25,7 +25,7 @@ import java.io.RandomAccessFile
  */
 internal class RandomAccessFileInputStream(
     private val file: File,
-    private val bufferSize: Int = DEFAULT_BUFFER_SIZE
+    private val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : ReplayInputStream() {
     private var _randomAccessFile: BufferedRandomAccessFile? = null
     private val randomAccessFile: BufferedRandomAccessFile

@@ -25,7 +25,7 @@ import java.io.InputStream
 internal class BufferedReplayInputStream private constructor(
     inputStream: InputStream?,
     private var loadedData: ByteArray?,
-    private var state: State
+    private var state: State,
 ) : ReplayInputStream() {
     constructor(inputStream: InputStream) : this(inputStream, null, State())
     private constructor(loadedData: ByteArray, state: State) : this(null, loadedData, state)
@@ -60,7 +60,7 @@ internal class BufferedReplayInputStream private constructor(
                     destination = byteArray,
                     destinationOffset = 0,
                     startIndex = state.position + offset,
-                    endIndex = state.position + offset + readCount
+                    endIndex = state.position + offset + readCount,
                 )
                 state.position += readCount
 
@@ -81,7 +81,7 @@ internal class BufferedReplayInputStream private constructor(
                     destination = byteArray,
                     destinationOffset = 0,
                     startIndex = state.position,
-                    endIndex = state.position + readCount
+                    endIndex = state.position + readCount,
                 )
 
                 state.position += readCount

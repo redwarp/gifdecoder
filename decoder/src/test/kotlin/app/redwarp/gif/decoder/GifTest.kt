@@ -120,7 +120,6 @@ class GifTest {
 
     @Test
     fun getFrame_lastFrameDirectly_properlyRenders() {
-
         val gifDescriptor = Parser.parse(File("../assets/domo-interlaced.gif")).getOrThrow()
         val gif = Gif(gifDescriptor)
         val dimension = gif.dimension
@@ -223,7 +222,7 @@ class GifTest {
         assertTrue(result.isFailure)
         assertEquals(
             "Index should be between 0 and 2, was 10",
-            result.exceptionOrNull()?.localizedMessage
+            result.exceptionOrNull()?.localizedMessage,
         )
     }
 
@@ -235,7 +234,7 @@ class GifTest {
         assertTrue(result.isFailure)
         assertEquals(
             "Index should be between 0 and 2, was -1",
-            result.exceptionOrNull()?.localizedMessage
+            result.exceptionOrNull()?.localizedMessage,
         )
     }
 

@@ -33,7 +33,7 @@ private const val TRANSPARENT_COLOR = 0x0
  * This class's methods are not thread safe.
  */
 class Gif(
-    private val gifDescriptor: GifDescriptor
+    private val gifDescriptor: GifDescriptor,
 ) : AutoCloseable {
     private var frameIndex = 0
     private val framePixels = IntArray(gifDescriptor.logicalScreenDescriptor.dimension.size)
@@ -89,7 +89,9 @@ class Gif(
      */
     val aspectRatio: Double = run {
         val ratio = gifDescriptor.logicalScreenDescriptor.pixelAspectRatio.toInt() and 0xff
-        if (ratio == 0) 1.0 else {
+        if (ratio == 0) {
+            1.0
+        } else {
             (ratio + 15).toDouble() / 64.0
         }
     }
@@ -279,7 +281,7 @@ class Gif(
                 scratch,
                 colorTable,
                 gifDescriptor.logicalScreenDescriptor,
-                imageDescriptor
+                imageDescriptor,
             )
 
             previousRenderedFrame = index
@@ -291,7 +293,7 @@ class Gif(
         colorData: ByteArray,
         colorTable: IntArray,
         logicalScreenDescriptor: LogicalScreenDescriptor,
-        imageDescriptor: ImageDescriptor
+        imageDescriptor: ImageDescriptor,
     ) {
         if (imageDescriptor.isInterlaced) {
             fillPixelsInterlaced(
@@ -299,7 +301,7 @@ class Gif(
                 colorData,
                 colorTable,
                 logicalScreenDescriptor,
-                imageDescriptor
+                imageDescriptor,
             )
         } else {
             fillPixelsSimple(
@@ -307,7 +309,7 @@ class Gif(
                 colorData,
                 colorTable,
                 logicalScreenDescriptor,
-                imageDescriptor
+                imageDescriptor,
             )
         }
     }
@@ -317,7 +319,7 @@ class Gif(
         colorData: ByteArray,
         colorTable: IntArray,
         logicalScreenDescriptor: LogicalScreenDescriptor,
-        imageDescriptor: ImageDescriptor
+        imageDescriptor: ImageDescriptor,
     ) {
         val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
         val frameWidth = imageDescriptor.dimension.width
@@ -342,7 +344,7 @@ class Gif(
         colorData: ByteArray,
         colorTable: IntArray,
         logicalScreenDescriptor: LogicalScreenDescriptor,
-        imageDescriptor: ImageDescriptor
+        imageDescriptor: ImageDescriptor,
     ) {
         val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
         val imageWidth = logicalScreenDescriptor.dimension.width
@@ -406,7 +408,7 @@ class Gif(
          */
         fun from(
             file: File,
-            pixelPacking: PixelPacking = PixelPacking.ARGB
+            pixelPacking: PixelPacking = PixelPacking.ARGB,
         ): Result<Gif> = Parser.parse(file, pixelPacking).map(::Gif)
 
         /**
@@ -419,7 +421,7 @@ class Gif(
          */
         fun from(
             inputStream: InputStream,
-            pixelPacking: PixelPacking = PixelPacking.ARGB
+            pixelPacking: PixelPacking = PixelPacking.ARGB,
         ): Result<Gif> = Parser.parse(inputStream, pixelPacking).map(::Gif)
 
         /**

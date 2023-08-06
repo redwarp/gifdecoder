@@ -107,7 +107,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     @Deprecated(
         "Superseded by the backgroundColor val",
         ReplaceWith("backgroundColor"),
-        DeprecationLevel.ERROR
+        DeprecationLevel.ERROR,
     )
     fun backgroundColor(): Int {
         return state.gif.backgroundColor
@@ -207,7 +207,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         matrix.setRectToRect(
             RectF(0f, 0f, gifWidth.toFloat(), gifHeight.toFloat()),
             RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat()),
-            Matrix.ScaleToFit.FILL
+            Matrix.ScaleToFit.FILL,
         )
     }
 
@@ -222,13 +222,12 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     private fun postAnimationStart() {
         if (animationCallbacks.isNotEmpty()) {
             scheduleSelf(
-                @Suppress("RedundantSamConstructor") // Ktlint is drunk
-                Runnable {
+                {
                     animationCallbacks.forEach { callback ->
                         callback.onAnimationStart(this@GifDrawable)
                     }
                 },
-                SystemClock.uptimeMillis()
+                SystemClock.uptimeMillis(),
             )
         }
     }
@@ -236,13 +235,12 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     private fun postAnimationEnd() {
         if (animationCallbacks.isNotEmpty()) {
             scheduleSelf(
-                @Suppress("RedundantSamConstructor") // Ktlint is drunk
-                Runnable {
+                {
                     animationCallbacks.forEach { callback ->
                         callback.onAnimationEnd(this@GifDrawable)
                     }
                 },
-                SystemClock.uptimeMillis()
+                SystemClock.uptimeMillis(),
             )
         }
     }
@@ -275,7 +273,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         val frame: Bitmap = bitmapCache.obtain(
             width = gifWidth,
             height = gifHeight,
-            config = if (transparent) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
+            config = if (transparent) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565,
         )
 
         frame.setPixels(pixels, 0, gifWidth, 0, 0, gifWidth, gifHeight)

@@ -60,7 +60,7 @@ object Parser {
      */
     fun parse(
         inputStream: InputStream,
-        pixelPacking: PixelPacking = PixelPacking.ARGB
+        pixelPacking: PixelPacking = PixelPacking.ARGB,
     ): Result<GifDescriptor> = parse(BufferedReplayInputStream(inputStream), pixelPacking)
 
     /**
@@ -68,7 +68,7 @@ object Parser {
      */
     private fun parse(
         inputStream: ReplayInputStream,
-        pixelPacking: PixelPacking = PixelPacking.ARGB
+        pixelPacking: PixelPacking = PixelPacking.ARGB,
     ): Result<GifDescriptor> {
         return runCatching {
             inputStream.use { stream ->
@@ -90,7 +90,7 @@ object Parser {
                     // If only one image, no loop.
                     loopCount = if (imageDescriptors.size <= 1) null else loopCount,
                     imageDescriptors = imageDescriptors,
-                    data = stream
+                    data = stream,
                 )
             }
         }
@@ -121,7 +121,7 @@ object Parser {
             sizeOfGlobalColorTable = sizeOfGlobalColorTable,
             // If there is no global color table, the background color index is meaningless.
             backgroundColorIndex = if (hasGlobalColorTable) backgroundColorIndex else null,
-            pixelAspectRatio = readByte()
+            pixelAspectRatio = readByte(),
         )
     }
 
@@ -166,7 +166,7 @@ object Parser {
         return GraphicControlExtension(
             disposalMethod = disposalMethod,
             delayTime = delayTime,
-            transparentColorIndex = if (hasTransparency) transparentColorIndex else null
+            transparentColorIndex = if (hasTransparency) transparentColorIndex else null,
         )
     }
 
@@ -193,7 +193,7 @@ object Parser {
 
     private fun parseLoop(
         bufferedSource: ReplayInputStream,
-        pixelPacking: PixelPacking
+        pixelPacking: PixelPacking,
     ): Result<Pair<Int?, List<ImageDescriptor>>> = runCatching {
         var loopCount: Int? = 0
         var pendingGraphicControl: GraphicControlExtension? = null
@@ -203,8 +203,9 @@ object Parser {
                 IMAGE_DESCRIPTOR_SEPARATOR -> {
                     imageDescriptors.add(
                         bufferedSource.parseImageDescriptor(
-                            pendingGraphicControl, pixelPacking
-                        ).getOrThrow()
+                            pendingGraphicControl,
+                            pixelPacking,
+                        ).getOrThrow(),
                     )
                     pendingGraphicControl = null
                 }
@@ -243,7 +244,7 @@ object Parser {
 
     private fun ReplayInputStream.parseImageDescriptor(
         graphicControlExtension: GraphicControlExtension?,
-        pixelPacking: PixelPacking
+        pixelPacking: PixelPacking,
     ): Result<ImageDescriptor> = runCatching {
         val position = Position(readUShortLe(), readUShortLe())
         val dimension = Dimension(readUShortLe(), readUShortLe())
@@ -273,7 +274,7 @@ object Parser {
             isInterlaced = isInterlaced,
             localColorTable = localColorTable,
             imageData = imageData.getOrThrow(),
-            graphicControlExtension = graphicControlExtension
+            graphicControlExtension = graphicControlExtension,
         )
     }
 

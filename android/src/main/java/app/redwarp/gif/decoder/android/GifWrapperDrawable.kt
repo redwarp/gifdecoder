@@ -95,7 +95,7 @@ class GifWrapperDrawable(private val gifDrawable: GifDrawable) : Drawable() {
         matrix.setRectToRect(
             gifDrawable.bounds.toRectF(),
             bounds.toRectF(),
-            Matrix.ScaleToFit.CENTER
+            Matrix.ScaleToFit.CENTER,
         )
     }
 

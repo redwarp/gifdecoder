@@ -37,7 +37,7 @@ class Gif87A2ColorTest {
 
         assertArrayEquals(
             intArrayOf(0xff111111.toInt(), 0xffffffff.toInt()),
-            gifDescriptor.globalColorTable
+            gifDescriptor.globalColorTable,
         )
     }
 
@@ -70,7 +70,7 @@ class Gif87A2ColorTest {
             0xFFFFFFFF.toInt(),
             0xFFFFFFFF.toInt(),
             0xFFFFFFFF.toInt(),
-            0xFFFFFFFF.toInt()
+            0xFFFFFFFF.toInt(),
         )
         assertArrayEquals(expected, finalPixels)
     }

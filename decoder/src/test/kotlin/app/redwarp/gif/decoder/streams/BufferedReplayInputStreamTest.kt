@@ -53,7 +53,7 @@ class BufferedReplayInputStreamTest {
         assertEquals(2, count)
         assertArrayEquals(
             originalData.sliceArray(2 until originalData.size),
-            readInto.sliceArray(0 until count)
+            readInto.sliceArray(0 until count),
         )
     }
 
@@ -111,7 +111,7 @@ class BufferedReplayInputStreamTest {
                         originalData[index],
                         withContext(Dispatchers.IO) {
                             copied.read().toByte()
-                        }
+                        },
                     )
                 }
             }

@@ -20,7 +20,7 @@ package app.redwarp.gif.decoder.descriptors
 data class GraphicControlExtension(
     val disposalMethod: Disposal,
     val delayTime: UShort,
-    val transparentColorIndex: Byte?
+    val transparentColorIndex: Byte?,
 ) {
     /**
      * Disposal method of the frame, A.K.A. what to do after a frame has been rendered.
@@ -44,6 +44,6 @@ data class GraphicControlExtension(
         /**
          * After the frame is shown, restore the canvas to the previous frame.
          */
-        RESTORE_TO_PREVIOUS
+        RESTORE_TO_PREVIOUS,
     }
 }

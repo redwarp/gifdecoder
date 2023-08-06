@@ -39,7 +39,7 @@ object Palettes {
             0xff26c30f.toInt(),
             0xffbfca87.toInt(),
             0xff93d6bf.toInt(),
-            0xffffffff.toInt()
+            0xffffffff.toInt(),
         )
     }
 

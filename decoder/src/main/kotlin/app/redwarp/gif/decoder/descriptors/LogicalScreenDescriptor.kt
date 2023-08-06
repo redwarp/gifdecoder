@@ -23,7 +23,7 @@ data class LogicalScreenDescriptor(
     val hasGlobalColorTable: Boolean,
     val sizeOfGlobalColorTable: UByte,
     val backgroundColorIndex: UByte?,
-    val pixelAspectRatio: Byte
+    val pixelAspectRatio: Byte,
 ) {
 
     val colorCount: Int

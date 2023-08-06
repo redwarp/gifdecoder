@@ -21,8 +21,11 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 internal class CancellingPoolExecutor : ThreadPoolExecutor(
-    0, Int.MAX_VALUE,
-    60L, TimeUnit.SECONDS, SynchronousQueue()
+    0,
+    Int.MAX_VALUE,
+    60L,
+    TimeUnit.SECONDS,
+    SynchronousQueue(),
 ) {
     override fun <T : Any?> newTaskFor(callable: Callable<T>?): RunnableFuture<T> {
         return if (callable is Cancellable) {

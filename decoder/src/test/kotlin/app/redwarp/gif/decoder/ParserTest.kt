@@ -29,7 +29,7 @@ class ParserTest {
             1, 2, 3, 4, 5,
             3, // Block size
             1, 2, 3,
-            0 // Terminator
+            0, // Terminator
         )
         val bufferedSource = BufferedReplayInputStream(data.inputStream())
 
@@ -58,7 +58,7 @@ class ParserTest {
         Assertions.assertTrue(gifDescriptor.isFailure)
         assertEquals(
             "Invalid image data block, reached end of file at position 487",
-            gifDescriptor.exceptionOrNull()?.message
+            gifDescriptor.exceptionOrNull()?.message,
         )
     }
 }

@@ -21,7 +21,7 @@ import java.io.RandomAccessFile
 
 class BufferedRandomAccessFile(
     private val file: File,
-    private val bufferSize: Int = DEFAULT_BUFFER_SIZE
+    private val bufferSize: Int = DEFAULT_BUFFER_SIZE,
 ) : Closeable {
     private val buffer: ByteArray = ByteArray(bufferSize)
     private var bufferEnd = 0

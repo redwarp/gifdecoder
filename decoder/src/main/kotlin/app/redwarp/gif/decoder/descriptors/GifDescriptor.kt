@@ -26,7 +26,7 @@ class GifDescriptor(
     val globalColorTable: IntArray?,
     val loopCount: Int?,
     val imageDescriptors: List<ImageDescriptor>,
-    val data: ReplayInputStream
+    val data: ReplayInputStream,
 ) : AutoCloseable {
     fun shallowClone(): GifDescriptor {
         return GifDescriptor(
@@ -35,7 +35,7 @@ class GifDescriptor(
             globalColorTable = globalColorTable,
             loopCount = loopCount,
             imageDescriptors = imageDescriptors,
-            data = data.shallowClone()
+            data = data.shallowClone(),
         )
     }
 

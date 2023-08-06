@@ -67,7 +67,7 @@ class GifHeaderParser(data: ByteArray) {
             }
         }
         return header
-    } /* maxFrames */
+    } // maxFrames
 
     /**
      * Determines if the GIF is animated by trying to read in the first 2 frames
@@ -77,7 +77,7 @@ class GifHeaderParser(data: ByteArray) {
         get() {
             readHeader()
             if (!err()) {
-                readContents(2 /* maxFrames */)
+                readContents(2) // maxFrames
             }
             return header.numFrames > 1
         }
@@ -100,7 +100,7 @@ class GifHeaderParser(data: ByteArray) {
                     readBitmap(
                         header.currentFrame ?: run {
                             GifFrame().also(header::currentFrame::set)
-                        }
+                        },
                     )
                 }
                 EXTENSION_INTRODUCER -> {
@@ -359,7 +359,7 @@ class GifHeaderParser(data: ByteArray) {
                     Log.d(
                         TAG,
                         "Error Reading Block n: $n count: $count blockSize: $blockSize",
-                        e
+                        e,
                     )
                 }
                 header.status = GifDecoder.STATUS_FORMAT_ERROR

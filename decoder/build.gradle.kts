@@ -86,7 +86,7 @@ publishing {
                 description.set(
                     """A simple jvm library written 100% in kotlin that handles 
                     |the parsing of the gif format, headers, lzw decoder and so on.
-                    """.trimMargin()
+                    """.trimMargin(),
                 )
                 licenses {
                     license {
@@ -135,10 +135,10 @@ spotless {
     kotlin {
         target(
             project.fileTree(
-                project.projectDir
+                project.projectDir,
             ) {
                 include("**/app/redwarp/gif/decoder/**/*.kt")
-            }
+            },
         )
 
         licenseHeaderFile("${project.rootDir}/../license_header.txt")

@@ -19,7 +19,7 @@ subprojects {
             target(
                 project.fileTree(project.projectDir) {
                     include("**/app/redwarp/gif/**/*.kt")
-                }
+                },
             )
 
             licenseHeaderFile("${project.rootDir}/license_header.txt")

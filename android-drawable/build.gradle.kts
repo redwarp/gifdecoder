@@ -28,7 +28,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -96,7 +96,7 @@ publishing {
                 description.set(
                     """An implementation of an Android Drawable providing a simple way 
                     |to display a gif in an Android app
-                    """.trimMargin()
+                    """.trimMargin(),
                 )
                 licenses {
                     license {
