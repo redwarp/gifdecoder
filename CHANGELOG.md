@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Decoder
+
+* Fix opening a corrupted GIFs could result in an endless loop.
+
+### Drawable
+
+* GifDrawable implements `mutate` properly.
+* Optimization during decoding: transparency of frames is cached.
+
 ## [1.4.4] (2022-09-18)
 
 * Hot fix: Fix compatibiliy with Android pre-Tiramisu.
