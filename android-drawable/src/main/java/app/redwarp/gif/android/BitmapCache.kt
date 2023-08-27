@@ -19,16 +19,17 @@ import java.util.TreeMap
 
 // Reuse the idea from Coil to not use a bitmap that is more than 10 times too big.
 private const val MAX_SIZE_MULTIPLE = 4
+private const val BYTE_PER_PIXEL = 4
 
 internal class BitmapCache {
     private val bitmaps = Store()
 
-    fun obtain(width: Int, height: Int, config: Bitmap.Config): Bitmap {
-        val key = calculateSize(width, height, config)
+    fun obtain(width: Int, height: Int): Bitmap {
+        val key = calculateSize(width, height)
 
         synchronized(this) {
-            return findBitmap(key)?.also { it.reconfigure(width, height, config) }
-                ?: createBitmap(width, height, config)
+            return findBitmap(key)?.also { it.reconfigure(width, height, Bitmap.Config.ARGB_8888) }
+                ?: createBitmap(width, height)
         }
     }
 
@@ -47,20 +48,12 @@ internal class BitmapCache {
         }
     }
 
-    private fun findBitmap(cacheKey: Int): Bitmap? {
-        return bitmaps[cacheKey]
-    }
+    private fun findBitmap(cacheKey: Int): Bitmap? = bitmaps[cacheKey]
 
-    private fun createBitmap(width: Int, height: Int, config: Bitmap.Config): Bitmap {
-        return Bitmap.createBitmap(width, height, config)
-    }
+    private fun createBitmap(width: Int, height: Int): Bitmap =
+        Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
-    private fun calculateSize(width: Int, height: Int, config: Bitmap.Config) =
-        width * height * when (config) {
-            Bitmap.Config.ARGB_8888 -> 4
-            Bitmap.Config.RGB_565 -> 2
-            else -> throw UnsupportedOperationException("Only ARGB_8888 and RGB_565 are supported")
-        }
+    private fun calculateSize(width: Int, height: Int) = width * height * BYTE_PER_PIXEL
 
     @Synchronized
     fun flush() {

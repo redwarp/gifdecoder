@@ -266,7 +266,6 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         val frame: Bitmap = bitmapCache.obtain(
             width = gifWidth,
             height = gifHeight,
-            config = Bitmap.Config.ARGB_8888,
         )
 
         pixelsBuffer.position(0)
