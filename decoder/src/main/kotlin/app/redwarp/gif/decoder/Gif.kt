@@ -27,6 +27,7 @@ import java.io.File
 import java.io.InputStream
 
 private const val TRANSPARENT_COLOR = 0x0
+private const val NO_TRANSPARENT: Int = -1
 
 /**
  * Representation of the gif, with methods to decode frames.
@@ -323,15 +324,18 @@ class Gif(
         logicalScreenDescriptor: LogicalScreenDescriptor,
         imageDescriptor: ImageDescriptor,
     ) {
-        val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
+        val transparentColorIndex: Int =
+            imageDescriptor.graphicControlExtension?.transparentColorIndex?.toInt()
+                ?.let { it and 0xFF }
+                ?: NO_TRANSPARENT
         val frameWidth = imageDescriptor.dimension.width
         val (offsetX, offsetY) = imageDescriptor.position
         val imageWidth = logicalScreenDescriptor.dimension.width
 
         for (index in 0 until imageDescriptor.dimension.size) {
-            val colorIndex = colorData[index]
+            val colorIndex = colorData[index].toInt() and 0xff
             if (colorIndex != transparentColorIndex) {
-                val color = colorTable[colorIndex.toInt() and 0xff]
+                val color = colorTable[colorIndex]
                 val x = index % frameWidth
                 val y = index / frameWidth
                 val pixelIndex = (y + offsetY) * imageWidth + offsetX + x
