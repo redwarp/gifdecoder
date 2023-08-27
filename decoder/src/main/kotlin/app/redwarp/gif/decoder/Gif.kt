@@ -233,20 +233,22 @@ class Gif(
             GraphicControlExtension.Disposal.RESTORE_TO_PREVIOUS -> {
                 previousPixels.copyInto(framePixels)
             }
+
             GraphicControlExtension.Disposal.NOT_SPECIFIED -> Unit // Unspecified, we do nothing.
             GraphicControlExtension.Disposal.DO_NOT_DISPOSE -> Unit // Do not dispose, we do nothing.
             GraphicControlExtension.Disposal.RESTORE_TO_BACKGROUND -> {
                 // Restore the section drawn for this frame to the background color.
                 val imageDescriptor = gifDescriptor.imageDescriptors[index.previousIndex]
 
-                val (frame_width, frame_height) = imageDescriptor.dimension
-                val (offset_x, offset_y) = imageDescriptor.position
+                val (frameWidth, frameHeight) = imageDescriptor.dimension
+                val (offsetX, offsetY) = imageDescriptor.position
 
-                for (line in 0 until frame_height) {
-                    val startIndex = (line + offset_y) * dimension.width + offset_x
-                    framePixels.fill(backgroundColor, startIndex, startIndex + frame_width)
+                for (line in 0 until frameHeight) {
+                    val startIndex = (line + offsetY) * dimension.width + offsetX
+                    framePixels.fill(backgroundColor, startIndex, startIndex + frameWidth)
                 }
             }
+
             null -> Unit
         }
 
@@ -323,7 +325,7 @@ class Gif(
     ) {
         val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
         val frameWidth = imageDescriptor.dimension.width
-        val (offset_x, offset_y) = imageDescriptor.position
+        val (offsetX, offsetY) = imageDescriptor.position
         val imageWidth = logicalScreenDescriptor.dimension.width
 
         for (index in 0 until imageDescriptor.dimension.size) {
@@ -332,8 +334,7 @@ class Gif(
                 val color = colorTable[colorIndex.toInt() and 0xff]
                 val x = index % frameWidth
                 val y = index / frameWidth
-                val pixelIndex =
-                    (y + offset_y) * imageWidth + offset_x + x
+                val pixelIndex = (y + offsetY) * imageWidth + offsetX + x
                 pixels[pixelIndex] = color
             }
         }
@@ -349,7 +350,7 @@ class Gif(
         val transparentColorIndex = imageDescriptor.graphicControlExtension?.transparentColorIndex
         val imageWidth = logicalScreenDescriptor.dimension.width
         val (frameWidth, frameHeight) = imageDescriptor.dimension
-        val (offset_x, offset_y) = imageDescriptor.position
+        val (offsetX, offsetY) = imageDescriptor.position
         var pass = 0
         var stride = 8
         var matchedLine = 0
@@ -358,7 +359,7 @@ class Gif(
         while (pass < 4) {
             while (matchedLine < frameHeight) {
                 val copyFromIndex = lineIndex * frameWidth
-                val copyToIndex = (matchedLine + offset_y) * imageWidth + offset_x
+                val copyToIndex = (matchedLine + offsetY) * imageWidth + offsetX
                 val indexOffset = copyToIndex - copyFromIndex
 
                 for (index in copyFromIndex until copyFromIndex + frameWidth) {
@@ -381,10 +382,12 @@ class Gif(
                     matchedLine = 4
                     stride = 8
                 }
+
                 2 -> {
                     matchedLine = 2
                     stride = 4
                 }
+
                 3 -> {
                     matchedLine = 1
                     stride = 2
