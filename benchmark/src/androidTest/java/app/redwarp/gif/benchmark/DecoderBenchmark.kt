@@ -22,12 +22,14 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.redwarp.gif.decoder.Gif
 import app.redwarp.gif.decoder.Parser
+import app.redwarp.gif.decoder.descriptors.params.PixelPacking
 import com.bumptech.glide.gifdecoder.SimpleBitmapProvider
 import com.bumptech.glide.gifdecoder.StandardGifDecoder
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.nio.IntBuffer
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -89,6 +91,46 @@ class DecoderBenchmark {
 
         benchmarkRule.measureRepeated {
             standardGifDecoder.nextFrame
+        }
+    }
+
+    @Test
+    fun createBitmap_packingArgb_usingSetPixel() {
+        val inputStream = context.assets.open(GIF_FILE)
+        val gifDescriptor = Parser.parse(inputStream, PixelPacking.ARGB).getOrThrow()
+        val gif = Gif(gifDescriptor)
+
+        val pixels = IntArray(gif.dimension.size)
+        val (width, height) = gif.dimension
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+        benchmarkRule.measureRepeated {
+            runWithTimingDisabled {
+                gif.resetFrame()
+                gif.getFrame(0, pixels)
+            }
+            bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+        }
+    }
+
+    @Test
+    fun createBitmap_packingAbgr_usingCopyPixelsFromBuffer() {
+        val inputStream = context.assets.open(GIF_FILE)
+        val gifDescriptor = Parser.parse(inputStream, PixelPacking.ABGR).getOrThrow()
+        val gif = Gif(gifDescriptor)
+
+        val pixels = IntArray(gif.dimension.size)
+        val pixelBuffer = IntBuffer.wrap(pixels)
+        val (width, height) = gif.dimension
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+        benchmarkRule.measureRepeated {
+            runWithTimingDisabled {
+                gif.resetFrame()
+                gif.getFrame(0, pixels)
+            }
+            pixelBuffer.position(0)
+            bitmap.copyPixelsFromBuffer(pixelBuffer)
         }
     }
 
