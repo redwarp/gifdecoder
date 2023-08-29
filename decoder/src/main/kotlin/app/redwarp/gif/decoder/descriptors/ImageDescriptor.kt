@@ -14,6 +14,8 @@
  */
 package app.redwarp.gif.decoder.descriptors
 
+private const val NO_TRANSPARENT: Int = -1
+
 class ImageDescriptor(
     val position: Position,
     val dimension: Dimension,
@@ -21,4 +23,8 @@ class ImageDescriptor(
     val localColorTable: IntArray?,
     val imageData: ImageData,
     val graphicControlExtension: GraphicControlExtension?,
-)
+) {
+    val transparentColorIndex: Int = graphicControlExtension?.transparentColorIndex?.toInt()
+        ?.let { it and 0xFF }
+        ?: NO_TRANSPARENT
+}
