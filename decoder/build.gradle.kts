@@ -27,6 +27,7 @@ repositories {
 dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+    testImplementation("com.madgag:animated-gif-lib:1.4")
 }
 
 sourceSets {
