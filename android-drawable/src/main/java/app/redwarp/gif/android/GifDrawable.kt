@@ -341,7 +341,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
             }
             frameTime.set(actualTime)
 
-            if (isCancelled) return
+            if (isCancelled.get()) return
 
             // Scheduling next draw and next frame decode.
             // Queuing message with scheduling should respect the order:

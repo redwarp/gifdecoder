@@ -15,11 +15,12 @@
 package app.redwarp.gif.android.tasks
 
 import java.util.concurrent.Callable
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Inspired by [https://codeahoy.com/java/Cancel-Tasks-In-Executors-Threads],
  * allowing our callable to be marked as cancelled.
  */
 internal abstract class Cancellable<V> : Callable<V> {
-    @Volatile var isCancelled: Boolean = false
+    val isCancelled: AtomicBoolean = AtomicBoolean(false)
 }

@@ -19,7 +19,7 @@ import java.util.concurrent.FutureTask
 internal class CancellableFutureTask<V>(private val callable: Cancellable<V>) :
     FutureTask<V>(callable) {
     override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
-        callable.isCancelled = true
+        callable.isCancelled.set(true)
         return super.cancel(mayInterruptIfRunning)
     }
 }
