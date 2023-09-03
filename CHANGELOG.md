@@ -1,15 +1,23 @@
 # Changelog
 
-## [Unreleased]
+## [1.5.0] (2023-09-03)
+
+### Project
+
+* Update Kotlin to 1.8.20.
 
 ### Decoder
 
 * Fix opening a corrupted GIFs could result in an endless loop.
+* Minor decoding optimization.
 
 ### Drawable
 
 * GifDrawable implements `mutate` properly.
 * GifDrawable will only use ARGB_8888 bitmaps internally for more accurate colors.
+* Reduce memory usage of GifDrawable.
+* Speed optimization.
+* Update AGP to 8.1.1
 
 ## [1.4.4] (2022-09-18)
 
