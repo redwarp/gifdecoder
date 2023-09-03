@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat, Runnable {
     private val bitmapLock: Any = Any()
+    private val decodeLock: Any = Any()
 
     private val state = GifDrawableState(gifDescriptor)
     private val animationCallbacks = mutableListOf<Animatable2Compat.AnimationCallback>()
@@ -73,8 +74,10 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
     private var isRunning: AtomicBoolean = AtomicBoolean(false)
     private var prepareFrameFuture: Future<*>? = null
     private var frameTime: AtomicLong = AtomicLong(0)
-    private var bitmap: Bitmap = initBitmap().decodeFrame(0)
-    private var nextBitmap: Bitmap = initBitmap()
+    private var bitmap: Bitmap = initBitmap().also { bitmap ->
+        decodeFrame(0)
+        bitmap.swapContent()
+    }
     private val needSwap = AtomicBoolean(false)
     private var nextIndex: Int = 0
 
@@ -255,26 +258,19 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
     }
 
-    private fun Bitmap.decodeFrame(index: Int): Bitmap {
-        if (state.gif.getFrame(index, pixels).isFailure) return this
+    private fun decodeFrame(index: Int): Unit = synchronized(decodeLock) {
+        state.gif.getFrame(index, pixels)
+    }
 
-        pixelsBuffer.position(0)
-        synchronized(bitmapLock) {
+    private fun Bitmap.swapContent() = synchronized(bitmapLock) {
+        synchronized(decodeLock) {
+            pixelsBuffer.position(0)
             copyPixelsFromBuffer(pixelsBuffer)
         }
-        return this
     }
 
     private fun initBitmap(): Bitmap =
         Bitmap.createBitmap(gifWidth, gifHeight, Bitmap.Config.ARGB_8888)
-
-    private fun swapBitmap() {
-        synchronized(bitmapLock) {
-            val oldBitmap = bitmap
-            bitmap = nextBitmap
-            nextBitmap = oldBitmap
-        }
-    }
 
     private fun nextFrame(unschedule: Boolean) {
         if (unschedule) {
@@ -282,7 +278,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
         }
 
         if (needSwap.getAndSet(false)) {
-            swapBitmap()
+            bitmap.swapContent()
 
             synchronized(state) {
                 state.frameIndex = nextIndex
@@ -330,7 +326,7 @@ class GifDrawable(gifDescriptor: GifDescriptor) : Drawable(), Animatable2Compat,
             val nextIndex = synchronized(state) {
                 (state.frameIndex + 1) % state.gif.frameCount
             }
-            nextBitmap.decodeFrame(nextIndex).prepareToDraw()
+            decodeFrame(nextIndex)
 
             synchronized(bitmapLock) {
                 needSwap.set(true)
