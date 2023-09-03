@@ -107,9 +107,14 @@ object Parser {
 
     private fun InputStream.parseLogicalScreenDescriptor(): LogicalScreenDescriptor {
         val dimension = Dimension(readUShortLe(), readUShortLe())
+        if (!dimension.isSupported) {
+            throw GifTooLargeException(dimension)
+        }
+
         val packedFields = readUByte()
         val hasGlobalColorTableMask: UByte = 0b1000_0000u
-        val hasGlobalColorTable = (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
+        val hasGlobalColorTable =
+            (hasGlobalColorTableMask and packedFields) == hasGlobalColorTableMask
         val sizeOfGlobalColorTableMask: UByte = 0b0000_0111u
         val sizeOfGlobalColorTable = (sizeOfGlobalColorTableMask and packedFields)
 
@@ -156,12 +161,13 @@ object Parser {
         val terminator = readByte()
         if (terminator != 0.toByte()) throw InvalidGifException("Terminator not properly set")
 
-        val disposalMethod = if (disposalMethodValue >= GraphicControlExtension.Disposal.values().size) {
-            // Unsupported disposal method, we default to not specified.
-            GraphicControlExtension.Disposal.NOT_SPECIFIED
-        } else {
-            GraphicControlExtension.Disposal.values()[disposalMethodValue]
-        }
+        val disposalMethod =
+            if (disposalMethodValue >= GraphicControlExtension.Disposal.values().size) {
+                // Unsupported disposal method, we default to not specified.
+                GraphicControlExtension.Disposal.NOT_SPECIFIED
+            } else {
+                GraphicControlExtension.Disposal.values()[disposalMethodValue]
+            }
 
         return GraphicControlExtension(
             disposalMethod = disposalMethod,

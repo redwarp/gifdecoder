@@ -133,7 +133,7 @@ class GifTest {
 
     @Test
     fun getFrame_frameZeroAfterLoop_properlyRenders() {
-        val gifDescriptor = Parser.parse(File("../assets/domo-no-dispose.gif")).getOrThrow()
+        val gifDescriptor = Parser.parse(File("../assets/domo-no_dispose.gif")).getOrThrow()
         val gif = Gif(gifDescriptor)
 
         gif.getFrame(1) // Force to advance
@@ -272,7 +272,8 @@ class GifTest {
 
     @Test
     fun gif_shallowCloned_noIssuesWithConcurrency() = runBlocking {
-        val gifDescriptor = Parser.parse(File("../assets/domo-no-dispose.gif").inputStream()).getOrThrow()
+        val gifDescriptor =
+            Parser.parse(File("../assets/domo-no_dispose.gif").inputStream()).getOrThrow()
         val originalGif = Gif(gifDescriptor)
 
         repeat(1000) { id ->
@@ -286,6 +287,13 @@ class GifTest {
                 assertArrayEquals(expectedPixels, pixels)
             }
         }
+    }
+
+    @Test
+    fun gif_dimensionBiggerThanMaxIntArraySize_returnsFailure() {
+        val result = Gif.from(File("../assets/domo-max_size.gif"))
+
+        assertEquals(GifTooLargeException(65535, 65535), result.exceptionOrNull())
     }
 
     private fun loadExpectedPixels(file: File): IntArray {

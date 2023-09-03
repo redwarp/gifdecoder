@@ -21,4 +21,15 @@ data class Dimension(val width: Int, val height: Int) {
     constructor(width: UShort, height: UShort) : this(width.toInt(), height.toInt())
 
     val size = width * height
+
+    /**
+     * As we use one big [ByteArray] to deserialize a picture, we can't handle an image with more
+     * than around [Int.MAX_VALUE] items.
+     * It is an approximation to return early.
+     */
+    val isSupported: Boolean
+        get() {
+            val pixelCount: Long = width.toLong() * height.toLong()
+            return pixelCount < Int.MAX_VALUE.toLong() - 10
+        }
 }

@@ -51,7 +51,7 @@ class ParserTest {
 
     @Test
     fun parse_withCorruptedImageData_fails() {
-        val gifFile = File("../assets/domo_corrupted.gif")
+        val gifFile = File("../assets/domo-corrupted.gif")
 
         val gifDescriptor = Parser.parse(gifFile)
 
