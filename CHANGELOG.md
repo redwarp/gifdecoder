@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Project
+
+* Update gradle to 8.7
+
 ## [1.5.0] (2023-09-03)
 
 ### Project
